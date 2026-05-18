@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mirae - Sistema de Avaliações</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Container Principal -->
+    <div id="app"></div>
+
+    <script>
+        // ============================================
+        // BANCO DE DADOS SIMULADO (LocalStorage)
+        // ============================================
+        
+        const DB = {
+            // Inicializar dados demo
+            init() {
+                if (!localStorage.getItem('mirae_users')) {
+                    const demoUsers = [
+                        {
+                            id: 1,
+                            nome: "Stefhany (Admin)",
+                            email: "stefhany@mirae.com",
+                            senha: "admin123",
+                            tipo: "admin",
+                            cargo: "CEO",
+                            departamento: "Diretoria",
+                            salario: 15000,
+                            tipoAvaliacao: "adm"
+                        },
+                        {
+                            id: 2,
+                            nome: "Mariana Silva",
+                            email: "mariana@mirae.com",
+                            senha: "123456",
+                            tipo: "colaborador",
+                            cargo: "Analista Operacional Financeiro",
+                            departamento: "Administrativo",
+                            salario: 4000,
+                            tipoAvaliacao: "adm"
+                        },
+                        {
+                            id: 3,
+                            nome: "Jullia Santos",
+                            email: "jullia@mirae.com",
+                            senha: "123456",
+                            tipo: "colaborador",
+                            cargo: "Analista Cadastros & Automação",
+                            departamento: "Administrativo",
+                            salario: 3500,
+                            tipoAvaliacao: "adm"
+                        },
+                        {
+                            id: 4,
+                            nome: "Carlos Mendes",
+                            email: "carlos@mirae.com",
+                            senha: "123456",
+                            tipo: "gestor",
+                            cargo: "Gestor de Escalas",
+                            departamento: "Escalas",
+                            salario: 4200,
+                            tipoAvaliacao: "escalas"
+                        }
+                    ];
+                    localStorage.setItem('mirae_users', JSON.stringify(demoUsers));
+                }
+                
+                if (!localStorage.getItem('mirae_avaliacoes')) {
+                    localStorage.setItem('mirae_avaliacoes', JSON.stringify({}));
+                }
+            },
+            
+            getUsers() {
+                return JSON.parse(localStorage.getItem('mirae_users') || '[]');
+            },
+            
+            getUser(email, senha) {
+                const users = this.getUsers();
+                return users.find(u => u.email === email && u.senha === senha);
+            },
+            
+            getUserById(id) {
+                const users = this.getUsers();
+                return users.find(u => u.id === id);
+            },
+            
+            getAvaliacoes() {
+                return JSON.parse(localStorage.getItem('mirae_avaliacoes') || '{}');
+            },
+            
+            saveAvaliacao(userId, trimestre, ano, data) {
+                const avaliacoes = this.getAvaliacoes();
+                const key = `${userId}_${ano}_${trimestre}`;
+                avaliacoes[key] = {
+                    userId,
+                    trimestre,
+                    ano,
+                    data,
+                    updatedAt: new Date().toISOString()
+                };
+                localStorage.setItem('mirae_avaliacoes', JSON.stringify(avaliacoes));
+            },
+            
+            addUser(userData) {
+                const users = this.getUsers();
+                const newId = Math.max(...users.map(u => u.id), 0) + 1;
+                const newUser = {
+                    id: newId,
+                    ...userData,
+                    createdAt: new Date().toISOString()
+                };
+                users.push(newUser);
+                localStorage.setItem('mirae_users', JSON.stringify(users));
+                return newUser;
+            },
+            
+            updateUser(id, userData) {
+                const users = this.getUsers();
+                const index = users.findIndex(u => u.id === id);
+                if (index !== -1) {
+                    users[index] = {
+                        ...users[index],
+                        ...userData,
+                        updatedAt: new Date().toISOString()
+                    };
+                    localStorage.setItem('mirae_users', JSON.stringify(users));
+                    return users[index];
+                }
+                return null;
+            },
+            
+            deleteUser(id) {
+                const users = this.getUsers();
+                const filtered = users.filter(u => u.id !== id);
+                localStorage.setItem('mirae_users', JSON.stringify(filtered));
+                return true;
+            }
+        };
+        
+        // Inicializar banco
+        DB.init();
+        
+        // ============================================
+        // SISTEMA DE AUTENTICAÇÃO
+        // ============================================
+        
+        const Auth = {
+            currentUser: null,
+            
+            login(email, senha) {
+                const user = DB.getUser(email, senha);
+                if (user) {
+                    this.currentUser = user;
+                    sessionStorage.setItem('mirae_current_user', JSON.stringify(user));
+                    return true;
+                }
+                return false;
+            },
+            
+            logout() {
+                this.currentUser = null;
+                sessionStorage.removeItem('mirae_current_user');
+                render();
+            },
+            
+            checkAuth() {
+                const stored = sessionStorage.getItem('mirae_current_user');
+                if (stored) {
+                    this.currentUser = JSON.parse(stored);
+                    return true;
+                }
+                return false;
+            },
+            
+            isAdmin() {
+                return this.currentUser?.tipo === 'admin';
+            },
+            
+            isGestor() {
+                return this.currentUser?.tipo === 'gestor';
+            }
+        };
+        
+        // ============================================
+        // COMPONENTES UI
+        // ============================================
+        
+        // Tela de Login
+        function LoginScreen() {
+            return `
+                <div class="min-h-screen flex items-center justify-center gradient-bg px-4">
+                    <div class="max-w-md w-full">
+                        <!-- Logo/Header -->
+                        <div class="text-center mb-8">
+                            <div class="inline-block bg-white rounded-full p-4 shadow-lg mb-4">
+                                <svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <h1 class="text-4xl font-bold text-white mb-2">Mirae Avaliações</h1>
+                            <p class="text-purple-100">Sistema de Gestão de Desempenho</p>
+                        </div>
+                        
+                        <!-- Card de Login -->
+                        <div class="bg-white rounded-2xl shadow-2xl p-8">
+                            <form id="loginForm" class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                                    <input type="email" id="email" required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                        placeholder="seu@email.com">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
+                                    <input type="password" id="senha" required
+                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
+                                        placeholder="••••••••">
+                                </div>
+                                
+                                <div id="loginError" class="hidden bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm"></div>
+                                
+                                <button type="submit"
+                                    class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold py-3 rounded-lg hover:from-purple-700 hover:to-purple-800 transition shadow-lg">
+                                    Entrar
+                                </button>
+                            </form>
+                            
+                            <!-- Info de Demo -->
+                            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                                <p class="text-xs text-gray-600 font-medium mb-2">Contas de demonstração:</p>
+                                <div class="space-y-1 text-xs text-gray-500">
+                                    <p>👤 <strong>Admin:</strong> stefhany@mirae.com / admin123</p>
+                                    <p>👤 <strong>Colaborador:</strong> mariana@mirae.com / 123456</p>
+                                    <p>👤 <strong>Gestor:</strong> carlos@mirae.com / 123456</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Dashboard Principal
+        function Dashboard() {
+            const user = Auth.currentUser;
+            
+            return `
+                <div class="min-h-screen bg-gray-50">
+                    <!-- Header -->
+                    <header class="bg-white shadow-sm border-b border-gray-200">
+                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <div class="flex justify-between items-center py-4">
+                                <div class="flex items-center space-x-4">
+                                    <div class="bg-purple-100 rounded-full p-2">
+                                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h1 class="text-xl font-bold text-gray-900">Mirae Avaliações</h1>
+                                        <p class="text-sm text-gray-500">${user.departamento}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-4">
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium text-gray-900">${user.nome}</p>
+                                        <p class="text-xs text-gray-500">${user.cargo}</p>
+                                    </div>
+                                    <button onclick="Auth.logout()" 
+                                        class="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
+                                        Sair
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+                    
+                    <!-- Conteúdo Principal -->
+                    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                        ${DashboardContent()}
+                    </main>
+                </div>
+            `;
+        }
+        
+        // Conteúdo do Dashboard baseado no tipo de usuário
+        function DashboardContent() {
+            const user = Auth.currentUser;
+            
+            // Se estiver avaliando alguém
+            if (window.currentUserId && window.currentTrimestre) {
+                return Te
+
+laAvaliacao(window.currentUserId, window.currentTrimestre);
+            }
+            
+            if (Auth.isAdmin()) {
+                return AdminDashboard();
+            } else if (Auth.isGestor()) {
+                return GestorDashboard();
+            } else {
+                return ColaboradorDashboard();
+            }
+        }
+        
+        //... continua...
