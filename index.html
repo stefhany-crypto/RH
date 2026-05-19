@@ -3,329 +3,971 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mirae - Sistema de Avaliações</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>MIRAE - Sistema de Avaliações PDI 360°</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: #f9f9f8; color: #333; }
         
-        body {
-            font-family: 'Inter', sans-serif;
-        }
+        .header { background: #1E7D90; color: white; padding: 1.5rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .logo { font-size: 1.8rem; font-weight: 700; letter-spacing: 0.5px; }
+        .logo-circle { display: inline-block; width: 12px; height: 12px; background: #E1B87F; border-radius: 50%; margin-left: 4px; vertical-align: middle; }
         
-        .gradient-bg {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
+        .btn-logout { background: #E1B87F; color: #1E7D90; border: none; padding: 0.6rem 1.2rem; border-radius: 6px; cursor: pointer; font-weight: 600; transition: transform 0.2s; }
+        .btn-logout:hover { transform: scale(1.05); }
         
-        .card-hover {
-            transition: all 0.3s ease;
-        }
+        .container { max-width: 1400px; margin: 2rem auto; padding: 0 1rem; }
         
-        .card-hover:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        .login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #1E7D90 0%, #446974 100%); }
+        .login-box { background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); width: 100%; max-width: 400px; }
+        .login-box h1 { color: #1E7D90; margin-bottom: 2rem; text-align: center; }
+        
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; color: #333; font-weight: 500; }
+        .form-group input, .form-group select { width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 6px; font-size: 1rem; transition: border-color 0.2s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #1E7D90; }
+        
+        .btn-primary { width: 100%; padding: 0.9rem; background: #1E7D90; color: white; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .btn-primary:hover { background: #15626e; }
+        
+        .dashboard { display: none; }
+        
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; border-bottom: 2px solid #ddd; }
+        .tab-btn { padding: 0.8rem 1.2rem; background: none; border: none; border-bottom: 3px solid transparent; cursor: pointer; font-weight: 600; color: #666; transition: all 0.2s; }
+        .tab-btn.active { color: #1E7D90; border-bottom-color: #1E7D90; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        .toolbar { display: flex; gap: 1rem; margin-bottom: 2rem; flex-wrap: wrap; }
+        .btn { padding: 0.7rem 1.4rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.2s; font-size: 0.95rem; }
+        .btn-add { background: #1E7D90; color: white; }
+        .btn-add:hover { background: #15626e; }
+        .btn-secondary { background: #446974; color: white; }
+        .btn-secondary:hover { background: #2d4a54; }
+        
+        .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+        .card { background: white; border-radius: 10px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s, box-shadow 0.2s; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+        
+        .card-title { font-size: 1.2rem; color: #1E7D90; margin-bottom: 0.5rem; font-weight: 600; }
+        .card-info { color: #666; font-size: 0.95rem; margin-bottom: 1rem; }
+        .card-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+        
+        .btn-small { padding: 0.5rem 1rem; font-size: 0.85rem; border-radius: 4px; border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .btn-eval { background: #1E7D90; color: white; }
+        .btn-eval:hover { background: #15626e; }
+        .btn-edit { background: #E1B87F; color: #1E7D90; }
+        .btn-edit:hover { background: #d4a86f; }
+        .btn-delete { background: #e74c3c; color: white; }
+        .btn-delete:hover { background: #c0392b; }
+        
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); animation: fadeIn 0.2s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        
+        .modal-content { background: white; margin: 2% auto; padding: 2rem; border-radius: 10px; max-width: 700px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.3s; }
+        @keyframes slideUp { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        
+        .close-btn { color: #aaa; float: right; font-size: 2rem; cursor: pointer; line-height: 0.5; }
+        .close-btn:hover { color: #000; }
+        
+        .form-title { color: #1E7D90; font-size: 1.3rem; margin-bottom: 1.5rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+        .form-row-full { grid-column: 1 / -1; }
+        
+        .pdi-grupo { margin: 2rem 0; padding: 1.5rem; background: #f9f9f8; border-left: 4px solid #1E7D90; border-radius: 4px; }
+        .pdi-grupo-title { font-size: 1.1rem; color: #1E7D90; font-weight: 600; margin-bottom: 1rem; }
+        .pdi-item { margin-bottom: 1.5rem; padding: 1rem; background: white; border-radius: 6px; }
+        .pdi-criterio { font-weight: 600; color: #333; margin-bottom: 0.5rem; }
+        .pdi-escala { display: flex; gap: 0.3rem; flex-wrap: wrap; margin-top: 0.5rem; }
+        .rating-btn { padding: 0.4rem 0.7rem; border: 2px solid #ddd; background: white; border-radius: 4px; cursor: pointer; font-weight: 500; font-size: 0.8rem; transition: all 0.2s; }
+        .rating-btn.selected { background: #1E7D90; color: white; border-color: #1E7D90; }
+        .rating-btn:hover { border-color: #1E7D90; }
+        
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-box { background: white; padding: 1.5rem; border-radius: 8px; border-left: 4px solid #1E7D90; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .stat-label { color: #666; font-size: 0.9rem; margin-bottom: 0.5rem; }
+        .stat-value { color: #1E7D90; font-size: 1.8rem; font-weight: 700; }
+        
+        .chart-container { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); margin-bottom: 2rem; position: relative; height: 400px; }
+        
+        .error { color: #e74c3c; font-size: 0.9rem; margin-top: 0.5rem; }
+        .success { color: #27ae60; font-size: 0.9rem; margin-top: 0.5rem; }
+        
+        .section-title { font-size: 1.5rem; color: #1E7D90; margin: 2rem 0 1rem 0; border-bottom: 3px solid #E1B87F; padding-bottom: 0.5rem; }
+        
+        .filter-group { display: flex; gap: 1rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+        .filter-group select { padding: 0.7rem 1rem; border: 2px solid #ddd; border-radius: 6px; font-size: 0.95rem; cursor: pointer; }
+        .filter-group select:focus { outline: none; border-color: #1E7D90; }
+        
+        @media (max-width: 768px) {
+            .form-row { grid-template-columns: 1fr; }
+            .cards-grid { grid-template-columns: 1fr; }
+            .modal-content { margin: 10%; }
         }
     </style>
 </head>
-<body class="bg-gray-50">
-    <!-- Container Principal -->
-    <div id="app"></div>
+<body>
 
-    <script>
-        // ============================================
-        // BANCO DE DADOS SIMULADO (LocalStorage)
-        // ============================================
+<!-- LOGIN PAGE -->
+<div id="loginPage" class="login-page">
+    <div class="login-box">
+        <h1><span class="logo">Mirae</span><span class="logo-circle"></span></h1>
+        <form id="loginForm" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="email">Email</label>
+                <input type="email" id="email" required placeholder="seu@email.com">
+            </div>
+            <div class="form-group">
+                <label for="password">Senha</label>
+                <input type="password" id="password" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn-primary">Entrar</button>
+            <div id="loginError"></div>
+        </form>
+        <p style="margin-top: 1.5rem; color: #666; font-size: 0.9rem; text-align: center;">
+            Demo: stefhany@audazhealth.com / admin123
+        </p>
+    </div>
+</div>
+
+<!-- DASHBOARD PAGE -->
+<div id="dashboardPage" class="dashboard">
+    <div class="header">
+        <div class="logo">Mirae<span class="logo-circle"></span></div>
+        <div>
+            <span id="userNameDisplay" style="margin-right: 1.5rem; font-weight: 500;"></span>
+            <button class="btn-logout" onclick="handleLogout()">Sair</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('colaboradores')">👥 Colaboradores</button>
+            <button class="tab-btn" onclick="switchTab('avaliacoes')">📋 Avaliações</button>
+            <button class="tab-btn" onclick="switchTab('premios')">🏆 Prêmios</button>
+            <button class="tab-btn" onclick="switchTab('dashboard')">📊 Dashboard</button>
+        </div>
         
-        const DB = {
-            // Inicializar dados demo
-            init() {
-                if (!localStorage.getItem('mirae_users')) {
-                    const demoUsers = [
-                        {
-                            id: 1,
-                            nome: "Stefhany (Admin)",
-                            email: "stefhany@mirae.com",
-                            senha: "admin123",
-                            tipo: "admin",
-                            cargo: "CEO",
-                            departamento: "Diretoria",
-                            salario: 15000,
-                            tipoAvaliacao: "adm"
-                        },
-                        {
-                            id: 2,
-                            nome: "Mariana Silva",
-                            email: "mariana@mirae.com",
-                            senha: "123456",
-                            tipo: "colaborador",
-                            cargo: "Analista Operacional Financeiro",
-                            departamento: "Administrativo",
-                            salario: 4000,
-                            tipoAvaliacao: "adm"
-                        },
-                        {
-                            id: 3,
-                            nome: "Jullia Santos",
-                            email: "jullia@mirae.com",
-                            senha: "123456",
-                            tipo: "colaborador",
-                            cargo: "Analista Cadastros & Automação",
-                            departamento: "Administrativo",
-                            salario: 3500,
-                            tipoAvaliacao: "adm"
-                        },
-                        {
-                            id: 4,
-                            nome: "Carlos Mendes",
-                            email: "carlos@mirae.com",
-                            senha: "123456",
-                            tipo: "gestor",
-                            cargo: "Gestor de Escalas",
-                            departamento: "Escalas",
-                            salario: 4200,
-                            tipoAvaliacao: "escalas"
-                        }
-                    ];
-                    localStorage.setItem('mirae_users', JSON.stringify(demoUsers));
-                }
-                
-                if (!localStorage.getItem('mirae_avaliacoes')) {
-                    localStorage.setItem('mirae_avaliacoes', JSON.stringify({}));
-                }
-            },
-            
-            getUsers() {
-                return JSON.parse(localStorage.getItem('mirae_users') || '[]');
-            },
-            
-            getUser(email, senha) {
-                const users = this.getUsers();
-                return users.find(u => u.email === email && u.senha === senha);
-            },
-            
-            getUserById(id) {
-                const users = this.getUsers();
-                return users.find(u => u.id === id);
-            },
-            
-            getAvaliacoes() {
-                return JSON.parse(localStorage.getItem('mirae_avaliacoes') || '{}');
-            },
-            
-            saveAvaliacao(userId, trimestre, ano, data) {
-                const avaliacoes = this.getAvaliacoes();
-                const key = `${userId}_${ano}_${trimestre}`;
-                avaliacoes[key] = {
-                    userId,
-                    trimestre,
-                    ano,
-                    data,
-                    updatedAt: new Date().toISOString()
-                };
-                localStorage.setItem('mirae_avaliacoes', JSON.stringify(avaliacoes));
-            },
-            
-            addUser(userData) {
-                const users = this.getUsers();
-                const newId = Math.max(...users.map(u => u.id), 0) + 1;
-                const newUser = {
-                    id: newId,
-                    ...userData,
-                    createdAt: new Date().toISOString()
-                };
-                users.push(newUser);
-                localStorage.setItem('mirae_users', JSON.stringify(users));
-                return newUser;
-            },
-            
-            updateUser(id, userData) {
-                const users = this.getUsers();
-                const index = users.findIndex(u => u.id === id);
-                if (index !== -1) {
-                    users[index] = {
-                        ...users[index],
-                        ...userData,
-                        updatedAt: new Date().toISOString()
-                    };
-                    localStorage.setItem('mirae_users', JSON.stringify(users));
-                    return users[index];
-                }
-                return null;
-            },
-            
-            deleteUser(id) {
-                const users = this.getUsers();
-                const filtered = users.filter(u => u.id !== id);
-                localStorage.setItem('mirae_users', JSON.stringify(filtered));
-                return true;
-            }
-        };
+        <!-- TAB: COLABORADORES -->
+        <div id="colaboradores" class="tab-content active">
+            <div class="toolbar">
+                <button class="btn btn-add" onclick="showModalAddColaborador()">+ Adicionar Colaborador</button>
+            </div>
+            <div id="colaboradoresList" class="cards-grid">Carregando...</div>
+        </div>
         
-        // Inicializar banco
-        DB.init();
+        <!-- TAB: AVALIAÇÕES -->
+        <div id="avaliacoes" class="tab-content">
+            <div class="toolbar">
+                <button class="btn btn-add" onclick="showModalNovaAvaliacao()">+ Nova Avaliação</button>
+            </div>
+            <div id="avaliacoesList">Carregando...</div>
+        </div>
         
-        // ============================================
-        // SISTEMA DE AUTENTICAÇÃO
-        // ============================================
+        <!-- TAB: PRÊMIOS -->
+        <div id="premios" class="tab-content">
+            <div class="toolbar">
+                <button class="btn btn-secondary" onclick="showModalConfigurarPremios()">⚙️ Configurar Prêmios</button>
+            </div>
+            <div id="premiosContainer">
+                <p>Nenhuma configuração de prêmios ainda. Clique em "Configurar Prêmios" para começar.</p>
+            </div>
+        </div>
         
-        const Auth = {
-            currentUser: null,
+        <!-- TAB: DASHBOARD -->
+        <div id="dashboard" class="tab-content">
+            <div class="filter-group">
+                <select id="filtroEquipe" onchange="atualizarDashboard()">
+                    <option value="">Todas as Equipes</option>
+                    <option value="ADM">Administrativo (ADM)</option>
+                    <option value="ESCALAS">Gestor de Escalas</option>
+                </select>
+                <select id="filtroTrimestre" onchange="atualizarDashboard()">
+                    <option value="">Todos os Trimestres</option>
+                    <option value="Q1">Q1</option>
+                    <option value="Q2">Q2</option>
+                    <option value="Q3">Q3</option>
+                    <option value="Q4">Q4</option>
+                </select>
+            </div>
             
-            login(email, senha) {
-                const user = DB.getUser(email, senha);
-                if (user) {
-                    this.currentUser = user;
-                    sessionStorage.setItem('mirae_current_user', JSON.stringify(user));
-                    return true;
-                }
-                return false;
-            },
+            <div class="stats" id="statsContainer">
+                <div class="stat-box">
+                    <div class="stat-label">Total Colaboradores</div>
+                    <div class="stat-value" id="totalColaboradores">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Avaliações Realizadas</div>
+                    <div class="stat-value" id="totalAvaliacoes">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Média Geral</div>
+                    <div class="stat-value" id="mediaGeral">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">Elegíveis A+</div>
+                    <div class="stat-value" id="elegivelAplus">0</div>
+                </div>
+            </div>
             
-            logout() {
-                this.currentUser = null;
-                sessionStorage.removeItem('mirae_current_user');
-                render();
-            },
+            <div class="chart-container">
+                <canvas id="chartEvolucao"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL: Adicionar/Editar Colaborador -->
+<div id="modalColaborador" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('modalColaborador')">&times;</span>
+        <h2 class="form-title" id="modalColabTitle">Adicionar Colaborador</h2>
+        <form onsubmit="handleSalvarColaborador(event)">
+            <input type="hidden" id="colId">
+            <div class="form-row form-row-full">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="colNome" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="colEmail" required>
+                </div>
+                <div class="form-group">
+                    <label>Cargo</label>
+                    <input type="text" id="colCargo" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Departamento</label>
+                    <input type="text" id="colDepartamento" required>
+                </div>
+                <div class="form-group">
+                    <label>Salário (R$)</label>
+                    <input type="number" id="colSalario" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo de Avaliação</label>
+                    <select id="colTipo" required style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 6px;">
+                        <option value="">Selecione...</option>
+                        <option value="ADM">Administrativo (ADM)</option>
+                        <option value="ESCALAS">Gestor de Escalas</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Senha</label>
+                    <input type="password" id="colSenha">
+                </div>
+            </div>
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Salvar</button>
+            <div id="colError"></div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Nova Avaliação -->
+<div id="modalAvaliacao" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('modalAvaliacao')">&times;</span>
+        <h2 class="form-title">Avaliação Trimestral</h2>
+        <form onsubmit="handleSalvarAvaliacao(event)">
+            <div class="form-group form-row-full">
+                <label>Colaborador</label>
+                <select id="evalColaborador" required style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 6px;">
+                    <option value="">Selecione...</option>
+                </select>
+            </div>
             
-            checkAuth() {
-                const stored = sessionStorage.getItem('mirae_current_user');
-                if (stored) {
-                    this.currentUser = JSON.parse(stored);
-                    return true;
-                }
-                return false;
-            },
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Trimestre</label>
+                    <select id="evalTrimestre" required style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 6px;">
+                        <option value="">Selecione...</option>
+                        <option value="Q1">Q1</option>
+                        <option value="Q2">Q2</option>
+                        <option value="Q3">Q3</option>
+                        <option value="Q4">Q4</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Ano</label>
+                    <input type="number" id="evalAno" value="2026" required>
+                </div>
+            </div>
             
-            isAdmin() {
-                return this.currentUser?.tipo === 'admin';
-            },
+            <!-- SUPER DESAFIOS -->
+            <h3 style="margin-top: 1.5rem; color: #1E7D90;">🎯 Super Desafios (30%)</h3>
+            <div id="desafiosContainer"></div>
             
-            isGestor() {
-                return this.currentUser?.tipo === 'gestor';
-            }
-        };
+            <!-- PDI 54 CRITÉRIOS -->
+            <h3 style="margin-top: 1.5rem; color: #1E7D90;">📋 PDI - 54 Critérios (70%)</h3>
+            <div id="pdiContainer"></div>
+            
+            <div style="margin-top: 1.5rem; padding: 1rem; background: #f9f9f8; border-radius: 6px;">
+                <strong>Nota Final:</strong> <span id="notaFinal" style="color: #1E7D90; font-size: 1.2rem;">0</span>
+                <strong style="margin-left: 2rem;">Bônus:</strong> <span id="bonusPerc" style="color: #E1B87F; font-size: 1.2rem;">0%</span>
+            </div>
+            
+            <button type="submit" class="btn-primary" style="margin-top: 1.5rem;">Salvar Avaliação</button>
+            <div id="evalError"></div>
+        </form>
+    </div>
+</div>
+
+<!-- MODAL: Configurar Prêmios -->
+<div id="modalPremios" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal('modalPremios')">&times;</span>
+        <h2 class="form-title">Configurar Prêmios e Bônus</h2>
+        <form onsubmit="handleSalvarPremios(event)">
+            <div class="form-group form-row-full">
+                <label>Equipe</label>
+                <select id="premioEquipe" required style="width: 100%; padding: 0.8rem; border: 2px solid #ddd; border-radius: 6px;">
+                    <option value="">Selecione...</option>
+                    <option value="ADM">Administrativo (ADM)</option>
+                    <option value="ESCALAS">Gestor de Escalas</option>
+                </select>
+            </div>
+            
+            <h3 style="margin-top: 1.5rem; color: #1E7D90;">Quantidade de Salários por Trimestre</h3>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Q1 (≥80 pontos)</label>
+                    <input type="number" id="premioQ1" min="0" step="0.5" placeholder="Ex: 2">
+                </div>
+                <div class="form-group">
+                    <label>Q2 (≥80 pontos)</label>
+                    <input type="number" id="premioQ2" min="0" step="0.5" placeholder="Ex: 2">
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Q3 (≥80 pontos)</label>
+                    <input type="number" id="premioQ3" min="0" step="0.5" placeholder="Ex: 2">
+                </div>
+                <div class="form-group">
+                    <label>Q4 (≥80 pontos)</label>
+                    <input type="number" id="premioQ4" min="0" step="0.5" placeholder="Ex: 2">
+                </div>
+            </div>
+            
+            <div class="form-group form-row-full">
+                <label>Premiação A+ Anual (≥80 em TODOS os 4 trimestres)</label>
+                <input type="number" id="premioAplus" min="0" step="0.5" placeholder="Ex: 3 salários">
+            </div>
+            
+            <button type="submit" class="btn-primary" style="margin-top: 1rem;">Salvar Configuração</button>
+            <div id="premioError"></div>
+        </form>
+    </div>
+</div>
+
+<script>
+const firebaseConfig = {
+    apiKey: "AIzaSyBKqS4xPX_CrqYYrZKT8QLxxqXXMZBqGqI",
+    authDomain: "pdimirae.firebaseapp.com",
+    projectId: "pdimirae",
+    storageBucket: "pdimirae.firebasestorage.app",
+    messagingSenderId: "653387815858",
+    appId: "1:653387815858:web:ac7a3e3f9b1e8c5f7e8d9a"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let usuarioAtual = null;
+let chart = null;
+let colaboradorEditando = null;
+
+// ESTRUTURA: 54 CRITÉRIOS PDI EM 7 GRUPOS
+const GRUPOS_PDI = [
+    {
+        nome: "1. POSTURA E COMPORTAMENTO PROFISSIONAL",
+        criterios: [
+            "Postura diante de problemas",
+            "Responsabilidade sobre erros",
+            "Forma de comunicar",
+            "Educação e respeito",
+            "Postura sob pressão",
+            "Comprometimento",
+            "Cumprimento de combinados",
+            "Postura com médicos/clientes"
+        ]
+    },
+    {
+        nome: "2. ATENDIMENTO E EXPERIÊNCIA DO MÉDICO",
+        criterios: [
+            "Clareza na comunicação",
+            "Agilidade nos retornos",
+            "Acolhimento e empatia",
+            "Organização das informações",
+            "Resolução de problemas",
+            "Empatia com demandas",
+            "Redução de conflitos",
+            "Postura ante reclamações"
+        ]
+    },
+    {
+        nome: "3. AUTONOMIA E DEPENDÊNCIA",
+        criterios: [
+            "Resolver sem supervisão",
+            "Buscar solução antes de perguntar",
+            "Interpretação de processos",
+            "Segurança na execução",
+            "Necessidade de acompanhamento",
+            "Decisões operacionais",
+            "Tentativa prévia de solução"
+        ]
+    },
+    {
+        nome: "4. RESOLUTIVIDADE",
+        criterios: [
+            "Resolve ou repassa",
+            "Capacidade investigativa",
+            "Velocidade de resolução",
+            "Antecipação de impactos",
+            "Organização de tratativas",
+            "Conclusão de pendências",
+            "Follow-up de demandas"
+        ]
+    },
+    {
+        nome: "5. ESTUDO E DESENVOLVIMENTO",
+        criterios: [
+            "Busca conhecimento sem cobrança",
+            "Estuda processos proativamente",
+            "Interesse em aprender",
+            "Evolução técnica",
+            "Retenção do aprendizado",
+            "Aplicação prática",
+            "Participação em treinamentos"
+        ]
+    },
+    {
+        nome: "6. ORGANIZAÇÃO E EXECUÇÃO",
+        criterios: [
+            "Organização de demandas",
+            "Atualização de sistemas",
+            "Cumprimento de prazos",
+            "Atenção aos detalhes",
+            "Controle de pendências",
+            "Retrabalho",
+            "Confiabilidade"
+        ]
+    },
+    {
+        nome: "7. EFICIÊNCIA E USO DE FERRAMENTAS",
+        criterios: [
+            "Uso eficiente de sistemas",
+            "Aprendizado de ferramentas",
+            "Busca por automações",
+            "Organização digital",
+            "Domínio de planilhas",
+            "Soluções tecnológicas",
+            "Interesse em tech",
+            "Redução de trabalho manual",
+            "Agilidade digital",
+            "Adaptação a mudanças"
+        ]
+    }
+];
+
+// ============ LOGIN ============
+async function handleLogin(event) {
+    event.preventDefault();
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('loginError');
+    
+    try {
+        errorDiv.innerHTML = '';
+        const snapshot = await db.collection('colaboradores')
+            .where('email', '==', email)
+            .where('senha', '==', password)
+            .get();
         
-        // ============================================
-        // COMPONENTES UI
-        // ============================================
+        if (snapshot.empty) {
+            errorDiv.innerHTML = '<div class="error">❌ Email ou senha inválidos</div>';
+            return;
+        }
         
-        // Tela de Login
-        function LoginScreen() {
+        usuarioAtual = snapshot.docs[0].data();
+        usuarioAtual.id = snapshot.docs[0].id;
+        
+        document.getElementById('loginPage').style.display = 'none';
+        document.getElementById('dashboardPage').style.display = 'block';
+        document.getElementById('userNameDisplay').textContent = usuarioAtual.nome;
+        
+        carregarColaboradores();
+        carregarAvaliacoes();
+        atualizarDashboard();
+    } catch (error) {
+        console.error('Erro ao fazer login:', error);
+        errorDiv.innerHTML = '<div class="error">❌ Erro ao conectar ao servidor</div>';
+    }
+}
+
+function handleLogout() {
+    usuarioAtual = null;
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('dashboardPage').style.display = 'none';
+    document.getElementById('loginForm').reset();
+}
+
+// ============ COLABORADORES ============
+async function carregarColaboradores() {
+    try {
+        const snapshot = await db.collection('colaboradores')
+            .where('ativo', '==', true)
+            .get();
+        
+        const html = snapshot.docs.map(doc => {
+            const col = doc.data();
             return `
-                <div class="min-h-screen flex items-center justify-center gradient-bg px-4">
-                    <div class="max-w-md w-full">
-                        <!-- Logo/Header -->
-                        <div class="text-center mb-8">
-                            <div class="inline-block bg-white rounded-full p-4 shadow-lg mb-4">
-                                <svg class="w-12 h-12 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <h1 class="text-4xl font-bold text-white mb-2">Mirae Avaliações</h1>
-                            <p class="text-purple-100">Sistema de Gestão de Desempenho</p>
-                        </div>
-                        
-                        <!-- Card de Login -->
-                        <div class="bg-white rounded-2xl shadow-2xl p-8">
-                            <form id="loginForm" class="space-y-6">
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
-                                    <input type="email" id="email" required
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                        placeholder="seu@email.com">
-                                </div>
-                                
-                                <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Senha</label>
-                                    <input type="password" id="senha" required
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition"
-                                        placeholder="••••••••">
-                                </div>
-                                
-                                <div id="loginError" class="hidden bg-red-50 text-red-600 px-4 py-3 rounded-lg text-sm"></div>
-                                
-                                <button type="submit"
-                                    class="w-full bg-gradient-to-r from-purple-600 to-purple-700 text-white font-semibold py-3 rounded-lg hover:from-purple-700 hover:to-purple-800 transition shadow-lg">
-                                    Entrar
-                                </button>
-                            </form>
-                            
-                            <!-- Info de Demo -->
-                            <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs text-gray-600 font-medium mb-2">Contas de demonstração:</p>
-                                <div class="space-y-1 text-xs text-gray-500">
-                                    <p>👤 <strong>Admin:</strong> stefhany@mirae.com / admin123</p>
-                                    <p>👤 <strong>Colaborador:</strong> mariana@mirae.com / 123456</p>
-                                    <p>👤 <strong>Gestor:</strong> carlos@mirae.com / 123456</p>
-                                </div>
-                            </div>
-                        </div>
+                <div class="card">
+                    <div class="card-title">${col.nome}</div>
+                    <div class="card-info">
+                        <div>📧 ${col.email}</div>
+                        <div>💼 ${col.cargo}</div>
+                        <div>🏢 ${col.departamento}</div>
+                        <div>💰 R$ ${(col.salario || 0).toLocaleString('pt-BR')}</div>
+                        <div>📋 ${col.tipoAvaliacao}</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn-small btn-eval" onclick="abrirAvaliacaoColaborador('${doc.id}')">📝 Avaliar</button>
+                        <button class="btn-small btn-edit" onclick="abrirEditarColaborador('${doc.id}')">✏️ Editar</button>
+                        <button class="btn-small btn-delete" onclick="deletarColaborador('${doc.id}')">🗑️ Remover</button>
                     </div>
                 </div>
             `;
-        }
+        }).join('');
         
-        // Dashboard Principal
-        function Dashboard() {
-            const user = Auth.currentUser;
-            
-            return `
-                <div class="min-h-screen bg-gray-50">
-                    <!-- Header -->
-                    <header class="bg-white shadow-sm border-b border-gray-200">
-                        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div class="flex justify-between items-center py-4">
-                                <div class="flex items-center space-x-4">
-                                    <div class="bg-purple-100 rounded-full p-2">
-                                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h1 class="text-xl font-bold text-gray-900">Mirae Avaliações</h1>
-                                        <p class="text-sm text-gray-500">${user.departamento}</p>
-                                    </div>
-                                </div>
-                                
-                                <div class="flex items-center space-x-4">
-                                    <div class="text-right">
-                                        <p class="text-sm font-medium text-gray-900">${user.nome}</p>
-                                        <p class="text-xs text-gray-500">${user.cargo}</p>
-                                    </div>
-                                    <button onclick="Auth.logout()" 
-                                        class="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition">
-                                        Sair
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </header>
-                    
-                    <!-- Conteúdo Principal -->
-                    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                        ${DashboardContent()}
-                    </main>
-                </div>
-            `;
-        }
-        
-        // Conteúdo do Dashboard baseado no tipo de usuário
-        function DashboardContent() {
-            const user = Auth.currentUser;
-            
-            // Se estiver avaliando alguém
-            if (window.currentUserId && window.currentTrimestre) {
-                return Te
+        document.getElementById('colaboradoresList').innerHTML = html || '<p>Nenhum colaborador adicionado</p>';
+    } catch (error) {
+        console.error('Erro ao carregar colaboradores:', error);
+    }
+}
 
-laAvaliacao(window.currentUserId, window.currentTrimestre);
-            }
-            
-            if (Auth.isAdmin()) {
-                return AdminDashboard();
-            } else if (Auth.isGestor()) {
-                return GestorDashboard();
-            } else {
-                return ColaboradorDashboard();
-            }
+function showModalAddColaborador() {
+    colaboradorEditando = null;
+    document.getElementById('modalColabTitle').textContent = 'Adicionar Colaborador';
+    document.getElementById('colId').value = '';
+    document.getElementById('colNome').value = '';
+    document.getElementById('colEmail').value = '';
+    document.getElementById('colCargo').value = '';
+    document.getElementById('colDepartamento').value = '';
+    document.getElementById('colSalario').value = '';
+    document.getElementById('colTipo').value = '';
+    document.getElementById('colSenha').value = '';
+    document.getElementById('modalColaborador').style.display = 'block';
+}
+
+async function abrirEditarColaborador(colId) {
+    try {
+        const doc = await db.collection('colaboradores').doc(colId).get();
+        const col = doc.data();
+        
+        colaboradorEditando = colId;
+        document.getElementById('modalColabTitle').textContent = 'Editar Colaborador';
+        document.getElementById('colId').value = colId;
+        document.getElementById('colNome').value = col.nome;
+        document.getElementById('colEmail').value = col.email;
+        document.getElementById('colCargo').value = col.cargo;
+        document.getElementById('colDepartamento').value = col.departamento;
+        document.getElementById('colSalario').value = col.salario;
+        document.getElementById('colTipo').value = col.tipoAvaliacao;
+        document.getElementById('colSenha').value = col.senha;
+        document.getElementById('modalColaborador').style.display = 'block';
+    } catch (error) {
+        console.error('Erro ao carregar colaborador:', error);
+    }
+}
+
+async function handleSalvarColaborador(event) {
+    event.preventDefault();
+    const errorDiv = document.getElementById('colError');
+    
+    try {
+        errorDiv.innerHTML = '';
+        
+        const dados = {
+            nome: document.getElementById('colNome').value,
+            email: document.getElementById('colEmail').value,
+            cargo: document.getElementById('colCargo').value,
+            departamento: document.getElementById('colDepartamento').value,
+            salario: parseFloat(document.getElementById('colSalario').value),
+            tipoAvaliacao: document.getElementById('colTipo').value,
+            senha: document.getElementById('colSenha').value || undefined,
+            ativo: true,
+            dataAtualizacao: new Date()
+        };
+        
+        // Remove senha vazia
+        if (!dados.senha) delete dados.senha;
+        
+        if (colaboradorEditando) {
+            // Editar
+            await db.collection('colaboradores').doc(colaboradorEditando).update(dados);
+            errorDiv.innerHTML = '<div class="success">✅ Colaborador atualizado!</div>';
+        } else {
+            // Adicionar
+            dados.dataCriacao = new Date();
+            await db.collection('colaboradores').add(dados);
+            errorDiv.innerHTML = '<div class="success">✅ Colaborador adicionado!</div>';
         }
         
-        //... continua...
+        setTimeout(() => {
+            closeModal('modalColaborador');
+            carregarColaboradores();
+        }, 1000);
+    } catch (error) {
+        console.error('Erro:', error);
+        errorDiv.innerHTML = '<div class="error">❌ Erro ao salvar colaborador</div>';
+    }
+}
+
+async function deletarColaborador(id) {
+    if (!confirm('Deseja remover este colaborador?')) return;
+    try {
+        await db.collection('colaboradores').doc(id).update({ ativo: false });
+        carregarColaboradores();
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+// ============ AVALIAÇÕES ============
+async function carregarAvaliacoes() {
+    try {
+        const snapshot = await db.collection('avaliacoes').get();
+        document.getElementById('avaliacoesList').innerHTML = `
+            <p>📊 Total de avaliações realizadas: <strong>${snapshot.size}</strong></p>
+        `;
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+function showModalNovaAvaliacao() {
+    document.getElementById('modalAvaliacao').style.display = 'block';
+    preencherSelectColaboradores();
+    preencherFormAvaliacao();
+}
+
+async function preencherSelectColaboradores() {
+    try {
+        const snapshot = await db.collection('colaboradores').where('ativo', '==', true).get();
+        const select = document.getElementById('evalColaborador');
+        select.innerHTML = '<option value="">Selecione...</option>';
+        snapshot.docs.forEach(doc => {
+            const opt = document.createElement('option');
+            opt.value = doc.id;
+            opt.textContent = doc.data().nome;
+            select.appendChild(opt);
+        });
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+function preencherFormAvaliacao() {
+    // DESAFIOS
+    const desafiosHtml = [1,2,3].map(i => `
+        <div style="margin-bottom: 1rem; padding: 1rem; background: #f9f9f8; border-radius: 6px;">
+            <label><strong>Desafio ${i}</strong></label>
+            <input type="text" id="desafio${i}_desc" placeholder="Descrição" style="width: 100%; padding: 0.6rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px;">
+            <label>Nota (0-10)</label>
+            <input type="number" id="desafio${i}_nota" min="0" max="10" onchange="calcularNota()" style="width: 100%; padding: 0.6rem; margin: 0.5rem 0; border: 1px solid #ddd; border-radius: 4px;">
+        </div>
+    `).join('');
+    document.getElementById('desafiosContainer').innerHTML = desafiosHtml;
+    
+    // PDI - 54 CRITÉRIOS EM 7 GRUPOS
+    const pdiHtml = GRUPOS_PDI.map((grupo, grupoIdx) => `
+        <div class="pdi-grupo">
+            <div class="pdi-grupo-title">${grupo.nome}</div>
+            ${grupo.criterios.map((crit, critIdx) => {
+                const id = grupoIdx * 10 + critIdx;
+                return `
+                    <div class="pdi-item">
+                        <div class="pdi-criterio">${crit}</div>
+                        <div class="pdi-escala" id="rating${id}">
+                            <button type="button" class="rating-btn" onclick="selecionarRating(${id}, 0)">Não Atende</button>
+                            <button type="button" class="rating-btn" onclick="selecionarRating(${id}, 25)">Parcial</button>
+                            <button type="button" class="rating-btn" onclick="selecionarRating(${id}, 50)">Atende</button>
+                            <button type="button" class="rating-btn" onclick="selecionarRating(${id}, 100)">Supera</button>
+                            <button type="button" class="rating-btn" onclick="selecionarRating(${id}, 110)">Excepcional</button>
+                        </div>
+                        <input type="hidden" id="pdi${id}_valor" value="0">
+                    </div>
+                `;
+            }).join('')}
+        </div>
+    `).join('');
+    document.getElementById('pdiContainer').innerHTML = pdiHtml;
+}
+
+function selecionarRating(index, valor) {
+    document.getElementById(`pdi${index}_valor`).value = valor;
+    const btns = document.querySelectorAll(`#rating${index} button`);
+    btns.forEach(btn => btn.classList.remove('selected'));
+    event.target.classList.add('selected');
+    calcularNota();
+}
+
+function calcularNota() {
+    let totalDesafios = 0;
+    for (let i = 1; i <= 3; i++) {
+        const nota = parseFloat(document.getElementById(`desafio${i}_nota`)?.value || 0);
+        totalDesafios += nota;
+    }
+    const mediaDesafios = totalDesafios / 3;
+    
+    let totalPDI = 0;
+    let countPDI = 0;
+    for (let g = 0; g < GRUPOS_PDI.length; g++) {
+        for (let c = 0; c < GRUPOS_PDI[g].criterios.length; c++) {
+            const id = g * 10 + c;
+            totalPDI += parseFloat(document.getElementById(`pdi${id}_valor`)?.value || 0);
+            countPDI++;
+        }
+    }
+    const mediaPDI = countPDI > 0 ? totalPDI / countPDI : 0;
+    
+    // ADM: Desafios 30% + PDI 70%
+    const notaFinal = (mediaDesafios * 0.30) + (mediaPDI * 0.70);
+    
+    let bonusPercent = 0;
+    if (notaFinal >= 80) bonusPercent = 100;
+    else if (notaFinal >= 70) bonusPercent = 75;
+    else if (notaFinal >= 60) bonusPercent = 50;
+    
+    document.getElementById('notaFinal').textContent = notaFinal.toFixed(1);
+    document.getElementById('bonusPerc').textContent = bonusPercent + '%';
+}
+
+async function handleSalvarAvaliacao(event) {
+    event.preventDefault();
+    const errorDiv = document.getElementById('evalError');
+    
+    try {
+        errorDiv.innerHTML = '';
+        
+        const dados = {
+            colaboradorId: document.getElementById('evalColaborador').value,
+            trimestre: document.getElementById('evalTrimestre').value,
+            ano: parseInt(document.getElementById('evalAno').value),
+            notaFinal: parseFloat(document.getElementById('notaFinal').textContent),
+            bonusPercent: parseInt(document.getElementById('bonusPerc').textContent),
+            data: new Date(),
+            avaliador: usuarioAtual.id
+        };
+        
+        await db.collection('avaliacoes').add(dados);
+        closeModal('modalAvaliacao');
+        carregarAvaliacoes();
+        atualizarDashboard();
+        errorDiv.innerHTML = '<div class="success">✅ Avaliação salva!</div>';
+    } catch (error) {
+        console.error('Erro:', error);
+        errorDiv.innerHTML = '<div class="error">❌ Erro ao salvar avaliação</div>';
+    }
+}
+
+function abrirAvaliacaoColaborador(colId) {
+    document.getElementById('evalColaborador').value = colId;
+    showModalNovaAvaliacao();
+}
+
+// ============ PRÊMIOS ============
+function showModalConfigurarPremios() {
+    document.getElementById('modalPremios').style.display = 'block';
+}
+
+async function handleSalvarPremios(event) {
+    event.preventDefault();
+    const errorDiv = document.getElementById('premioError');
+    
+    try {
+        errorDiv.innerHTML = '';
+        
+        const dados = {
+            equipe: document.getElementById('premioEquipe').value,
+            q1: parseFloat(document.getElementById('premioQ1').value || 0),
+            q2: parseFloat(document.getElementById('premioQ2').value || 0),
+            q3: parseFloat(document.getElementById('premioQ3').value || 0),
+            q4: parseFloat(document.getElementById('premioQ4').value || 0),
+            aplus: parseFloat(document.getElementById('premioAplus').value || 0),
+            dataCriacao: new Date()
+        };
+        
+        await db.collection('configuracaoPremios').add(dados);
+        closeModal('modalPremios');
+        carregarPremios();
+        errorDiv.innerHTML = '<div class="success">✅ Configuração salva!</div>';
+    } catch (error) {
+        console.error('Erro:', error);
+        errorDiv.innerHTML = '<div class="error">❌ Erro ao salvar</div>';
+    }
+}
+
+async function carregarPremios() {
+    try {
+        const snapshot = await db.collection('configuracaoPremios').get();
+        let html = '<div class="cards-grid">';
+        
+        if (snapshot.empty) {
+            html = '<p>Nenhuma configuração de prêmios ainda.</p>';
+        } else {
+            snapshot.docs.forEach(doc => {
+                const p = doc.data();
+                html += `
+                    <div class="card">
+                        <div class="card-title">🏆 ${p.equipe}</div>
+                        <div class="card-info">
+                            <div>Q1: ${p.q1} salário(s)</div>
+                            <div>Q2: ${p.q2} salário(s)</div>
+                            <div>Q3: ${p.q3} salário(s)</div>
+                            <div>Q4: ${p.q4} salário(s)</div>
+                            <div style="margin-top: 0.5rem; color: #E1B87F;"><strong>A+ Anual: ${p.aplus} salário(s)</strong></div>
+                        </div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+        }
+        
+        document.getElementById('premiosContainer').innerHTML = html;
+    } catch (error) {
+        console.error('Erro:', error);
+    }
+}
+
+// ============ DASHBOARD ============
+async function atualizarDashboard() {
+    try {
+        const equipe = document.getElementById('filtroEquipe')?.value || '';
+        const trimestre = document.getElementById('filtroTrimestre')?.value || '';
+        
+        const colSnapshot = await db.collection('colaboradores').where('ativo', '==', true).get();
+        let avalSnapshot = await db.collection('avaliacoes').get();
+        
+        // Filtrar
+        if (equipe) {
+            avalSnapshot = avalSnapshot.docs.filter(doc => {
+                const avaliacao = doc.data();
+                return colSnapshot.docs.find(c => c.id === avaliacao.colaboradorId && c.data().tipoAvaliacao === equipe);
+            });
+            avalSnapshot = { docs: avalSnapshot };
+        }
+        
+        if (trimestre) {
+            avalSnapshot.docs = avalSnapshot.docs.filter(doc => doc.data().trimestre === trimestre);
+        }
+        
+        document.getElementById('totalColaboradores').textContent = colSnapshot.size;
+        document.getElementById('totalAvaliacoes').textContent = avalSnapshot.docs.length;
+        
+        let mediaGeral = 0;
+        let elegivelAplus = 0;
+        if (avalSnapshot.docs.length > 0) {
+            let soma = 0;
+            avalSnapshot.docs.forEach(doc => {
+                soma += doc.data().notaFinal || 0;
+            });
+            mediaGeral = soma / avalSnapshot.docs.length;
+        }
+        document.getElementById('mediaGeral').textContent = mediaGeral.toFixed(1);
+        
+        // Calcular elegíveis A+
+        const colaboradores = {};
+        avalSnapshot.docs.forEach(doc => {
+            const col = doc.data().colaboradorId;
+            if (!colaboradores[col]) colaboradores[col] = [];
+            colaboradores[col].push(doc.data());
+        });
+        
+        Object.values(colaboradores).forEach(avals => {
+            if (avals.length === 4 && avals.every(a => a.notaFinal >= 80)) {
+                elegivelAplus++;
+            }
+        });
+        document.getElementById('elegivelAplus').textContent = elegivelAplus;
+        
+        // GRÁFICO
+        const trimestres = ['Q1', 'Q2', 'Q3', 'Q4'];
+        const dados = trimestres.map(q => {
+            let soma = 0;
+            let count = 0;
+            avalSnapshot.docs.forEach(doc => {
+                if (doc.data().trimestre === q) {
+                    soma += doc.data().notaFinal || 0;
+                    count++;
+                }
+            });
+            return count > 0 ? soma / count : 0;
+        });
+        
+        const ctx = document.getElementById('chartEvolucao').getContext('2d');
+        if (chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: trimestres,
+                datasets: [{
+                    label: 'Nota Média',
+                    data: dados,
+                    borderColor: '#1E7D90',
+                    backgroundColor: 'rgba(30, 125, 144, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointRadius: 6,
+                    pointBackgroundColor: '#E1B87F'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true, max: 110 } }
+            }
+        });
+    } catch (error) {
+        console.error('Erro ao carregar dashboard:', error);
+    }
+}
+
+// ============ UI HELPERS ============
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
+    event.target.classList.add('active');
+    
+    if (tabName === 'premios') carregarPremios();
+    if (tabName === 'dashboard') atualizarDashboard();
+}
+
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
+
+window.onclick = function(event) {
+    if (event.target.classList.contains('modal')) {
+        event.target.style.display = 'none';
+    }
+}
+</script>
+
+</body>
+</html>
