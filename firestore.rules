@@ -1,0 +1,338 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ─────────────────────────────────────────────────
+    function autenticado() {
+      return request.auth != null;
+    }
+    function uid() {
+      return request.auth.uid;
+    }
+    function role() {
+      return request.auth.token.get('role', '');
+    }
+    function equipeToken() {
+      return request.auth.token.get('equipe', '');
+    }
+    function isMaster() {
+      return autenticado() && role() == 'MASTER';
+    }
+    function isRH() {
+      return autenticado() && role() == 'RH';
+    }
+    function isRHouMaster() {
+      return autenticado() && role() in ['MASTER', 'RH'];
+    }
+    function isLider() {
+      return autenticado() && role() == 'LIDER';
+    }
+    function isProprioDoc(docUid) {
+      return autenticado() && uid() == docUid;
+    }
+    function mesmaEquipe(equipe) {
+      return autenticado() && equipeToken() == equipe;
+    }
+    function somenteAlterou(campos) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
+    }
+
+    // ── colaboradores ────────────────────────────────────────────
+    // CAMPOS PÚBLICOS (para todos da empresa): nome, email, equipe, cargo,
+    //   dataNascimento, role, ativo, displayName, avatarUrl, tipoAvaliacao
+    // CAMPOS PRIVADOS (só RH/Master ou o próprio): salario, valorVT, cnpj,
+    //   razaoSocial, tipoContrato, dataAdmissao, dataAtualizacao
+    //
+    // Problema: Firestore não permite restringir campos individuais em read.
+    // Solução implementada: colaborador vê o próprio doc completo; outros
+    // veem qualquer doc mas os campos financeiros devem ser buscados via
+    // /colaboradorFinanceiro/{uid} (subcoleção protegida abaixo).
+    // AÇÃO NECESSÁRIA: migrar salario/valorVT/cnpj/razaoSocial para a
+    // subcoleção colaboradorFinanceiro — enquanto não migrar, RH/Master
+    // devem ser os únicos que leem docs completos.
+    match /colaboradores/{docUid} {
+      // Qualquer autenticado lê (necessário para calendário, daily, menções).
+      // LIMITAÇÃO: enquanto 'salario' estiver neste doc, colaboradores podem
+      // ler salários uns dos outros via DevTools. Migrar para colaboradorFinanceiro.
+      allow read: if autenticado();
+      allow create: if isRHouMaster()
+                    && !('senha' in request.resource.data)
+                    && request.resource.data.keys().hasAll(['nome', 'email', 'role', 'ativo'])
+                    && request.resource.data.nome is string
+                    && request.resource.data.nome.size() > 0
+                    && request.resource.data.nome.size() <= 200
+                    && request.resource.data.email is string
+                    && request.resource.data.role in ['COLABORADOR', 'LIDER', 'RH', 'MASTER'];
+      allow update: if isRHouMaster()
+                    && !('senha' in request.resource.data);
+      allow update: if isProprioDoc(docUid)
+                    && !isRHouMaster()
+                    && somenteAlterou(['displayName', 'avatarUrl', 'updatedAt', 'atualizadoEm']);
+      allow delete: if false;
+
+      // ── colaboradores/{uid}/financeiro/dados ─────────────────────
+      // Salário, VT, CNPJ, razão social, data de admissão.
+      // Leitura: o próprio colaborador, RH/Master, e Lider da mesma equipe
+      // (Líder precisa para cálculo de bônus da sua equipe).
+      match /financeiro/{finDoc} {
+        allow read: if isProprioDoc(docUid)
+                    || isRHouMaster()
+                    || (isLider()
+                        && get(/databases/$(database)/documents/colaboradores/$(docUid)).data.equipe == equipeToken());
+        allow write: if isRHouMaster();
+      }
+    }
+
+    // ── avaliacoes ───────────────────────────────────────────────
+    match /avaliacoes/{docId} {
+      allow read: if isRHouMaster()
+                  || (isLider() && resource.data.equipe == equipeToken())
+                  || (autenticado() && resource.data.colaboradorId == uid());
+      allow create: if isMaster()
+                  || (isLider()
+                      && request.resource.data.equipe == equipeToken()
+                      && request.resource.data.keys().hasAll(['colaboradorId', 'equipe', 'trimestre', 'ano'])
+                      && request.resource.data.trimestre in [1, 2, 3, 4]);
+      allow update: if isMaster()
+                  || (isLider()
+                      && resource.data.equipe == equipeToken()
+                      && request.resource.data.equipe == equipeToken());
+      allow delete: if isMaster();
+    }
+
+    // ── equipes ──────────────────────────────────────────────────
+    match /equipes/{docId} {
+      allow read: if autenticado();
+      allow create, update: if isRHouMaster()
+                    && request.resource.data.keys().hasAll(['nome'])
+                    && request.resource.data.nome is string
+                    && request.resource.data.nome.size() > 0
+                    && request.resource.data.nome.size() <= 100;
+      allow delete: if isMaster();
+    }
+
+    // ── bonusConfigs ─────────────────────────────────────────────
+    match /bonusConfigs/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if isMaster();
+    }
+
+    // ── bonusCalculados ──────────────────────────────────────────
+    match /bonusCalculados/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colaboradorId == uid());
+      allow write: if false; // apenas Admin SDK (Cloud Functions)
+    }
+
+    // ── configs ──────────────────────────────────────────────────
+    match /configs/{docId} {
+      allow read: if autenticado();
+      allow write: if isMaster();
+    }
+
+    // ── denuncias ────────────────────────────────────────────────
+    match /denuncias/{docId} {
+      allow create: if request.resource.data.keys().hasAll(['tema', 'descricao'])
+                    && request.resource.data.descricao is string
+                    && request.resource.data.descricao.size() > 0
+                    && request.resource.data.descricao.size() <= 5000;
+      allow read, update: if isRHouMaster();
+      allow delete: if isMaster();
+    }
+
+    // ── notificacoesDevolutiva ───────────────────────────────────
+    match /notificacoesDevolutiva/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.get('destinoId','') == uid());
+      allow write: if false; // apenas Admin SDK
+    }
+
+    // ── notificacoesPJ ───────────────────────────────────────────
+    match /notificacoesPJ/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colaboradorId == uid());
+      allow write: if isRHouMaster();
+    }
+
+    // ── logsBackup ───────────────────────────────────────────────
+    match /logsBackup/{docId} {
+      allow read: if isMaster();
+      allow write: if false; // apenas Admin SDK
+    }
+
+    // ── lancamentosVTVR ──────────────────────────────────────────
+    match /lancamentosVTVR/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colabId == uid());
+      allow create: if isRHouMaster()
+                    && request.resource.data.keys().hasAll(['colabId', 'nome', 'mes', 'ano', 'total'])
+                    && request.resource.data.total is number
+                    && request.resource.data.total >= 0
+                    && request.resource.data.total <= 50000
+                    && request.resource.data.mes is int
+                    && request.resource.data.mes >= 1
+                    && request.resource.data.mes <= 12;
+      allow update: if isRHouMaster()
+                    || (autenticado()
+                        && resource.data.colabId == uid()
+                        && somenteAlterou(['nfNome','nfUrl','nfUploadEm','nfUploadPor','statusNF']));
+      allow delete: if isMaster();
+    }
+
+    // ── premioConfigs ────────────────────────────────────────────
+    match /premioConfigs/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if isMaster();
+    }
+
+    // ── metasLucratividade ───────────────────────────────────────
+    match /metasLucratividade/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if isMaster();
+    }
+
+    // ── vrConfigs ────────────────────────────────────────────────
+    match /vrConfigs/{docId} {
+      allow read: if isRHouMaster();
+      allow create: if isRHouMaster()
+                    && request.resource.data.keys().hasAll(['mes', 'ano', 'valor'])
+                    && request.resource.data.valor is number
+                    && request.resource.data.valor > 0
+                    && request.resource.data.valor <= 1000
+                    && request.resource.data.mes is int
+                    && request.resource.data.mes >= 1
+                    && request.resource.data.mes <= 12
+                    && request.resource.data.ano is int
+                    && request.resource.data.ano >= 2020;
+      allow update: if isRHouMaster();
+      allow delete: if isMaster(); // apenas Master exclui — UI já reflete isso
+    }
+
+    // ── denunciasStatus ──────────────────────────────────────────
+    match /denunciasStatus/{protocolo} {
+      allow read: if true; // protocolo é o ID — só quem tem o número acessa
+      allow write: if isRHouMaster();
+    }
+
+    // ── dailys ───────────────────────────────────────────────────
+    match /dailys/{docId} {
+      allow read: if autenticado();
+      allow create, update: if isRHouMaster()
+                  || (isLider() && request.resource.data.equipe == equipeToken());
+      allow delete: if isMaster();
+    }
+
+    // ── dailyTarefas ─────────────────────────────────────────────
+    match /dailyTarefas/{docId} {
+      allow read: if autenticado();
+      allow create: if isRHouMaster()
+                  // Líder só pode criar tarefas da própria equipe
+                  || (isLider() && request.resource.data.equipe == equipeToken())
+                  // Colaborador pode criar tarefa de si mesmo (Kanban → Daily)
+                  || (autenticado()
+                      && request.resource.data.responsavelId == uid()
+                      && request.resource.data.criadoPorId == uid()
+                      && request.resource.data.tipo == 'tarefa'
+                      && request.resource.data.descricao is string
+                      && request.resource.data.descricao.size() > 0
+                      && request.resource.data.descricao.size() <= 500);
+      allow update: if isRHouMaster()
+                  || (isLider() && resource.data.equipe == equipeToken())
+                  || (autenticado()
+                      && resource.data.responsavelId == uid()
+                      && somenteAlterou(['status','justificativa','concluidaEmData','atualizadoEm']));
+      allow delete: if isMaster();
+    }
+
+    // ── tarefasPessoais ──────────────────────────────────────────
+    match /tarefasPessoais/{docId} {
+      allow read: if autenticado() && resource.data.userId == uid();
+      allow create: if autenticado()
+                    && request.resource.data.userId == uid()
+                    && request.resource.data.titulo is string
+                    && request.resource.data.titulo.size() > 0
+                    && request.resource.data.titulo.size() <= 500;
+      allow update, delete: if autenticado() && resource.data.userId == uid();
+    }
+
+    // ── configTarefas ────────────────────────────────────────────
+    match /configTarefas/{docUid} {
+      allow read, write: if isProprioDoc(docUid);
+    }
+
+    // ── reservasMesas ────────────────────────────────────────────
+    // ID = sala__mesa__data → garante 1 reserva por mesa/dia (conflito = create falha)
+    match /reservasMesas/{docId} {
+      allow read: if autenticado();
+      allow create: if autenticado()
+                    && request.resource.data.userId == uid()
+                    && request.resource.data.keys().hasAll(['sala','mesaId','data','userId','userNome'])
+                    && request.resource.data.data is string
+                    && request.resource.data.data.size() == 10;
+      allow delete: if autenticado()
+                    && (resource.data.userId == uid() || isMaster());
+      // sem update: reserva ou cancela, não modifica
+    }
+
+    // ── solicitacoesSync ─────────────────────────────────────────
+    match /solicitacoesSync/{docUid} {
+      allow read, write: if isProprioDoc(docUid);
+    }
+
+    // ── kanbanBoards ─────────────────────────────────────────────
+    match /kanbanBoards/{boardId} {
+      allow read: if autenticado() && (
+        resource.data.donoId == uid() ||
+        (resource.data.tipo == 'equipe' && resource.data.equipe == equipeToken()) ||
+        isRHouMaster()
+      );
+      allow create: if autenticado()
+                    && request.resource.data.keys().hasAll(['tipo','nome','colunas'])
+                    && request.resource.data.tipo in ['individual','equipe']
+                    && request.resource.data.nome is string
+                    && request.resource.data.nome.size() > 0
+                    && request.resource.data.nome.size() <= 100
+                    // Board individual: donoId deve ser o próprio uid
+                    && (request.resource.data.tipo == 'equipe'
+                        || request.resource.data.donoId == uid());
+      allow update: if autenticado() && (
+        resource.data.donoId == uid() || isRHouMaster() ||
+        (isLider() && resource.data.equipe == equipeToken())
+      );
+      allow delete: if autenticado() && (
+        resource.data.donoId == uid() || isMaster()
+      );
+    }
+
+    // ── kanbanCards ──────────────────────────────────────────────
+    match /kanbanCards/{cardId} {
+      allow read: if autenticado() && (
+        resource.data.responsavelId == uid() ||
+        resource.data.criadoPorId == uid() ||
+        resource.data.equipe == equipeToken() ||
+        isRHouMaster()
+      );
+      allow create: if autenticado()
+                    && request.resource.data.keys().hasAll(['boardId','titulo','responsavelId','criadoPorId'])
+                    && request.resource.data.titulo is string
+                    && request.resource.data.titulo.size() > 0
+                    && request.resource.data.titulo.size() <= 300
+                    // Criador deve ser o próprio usuário logado
+                    && request.resource.data.criadoPorId == uid();
+      allow update: if autenticado() && (
+        resource.data.criadoPorId == uid() ||
+        resource.data.responsavelId == uid() ||
+        isRHouMaster() ||
+        isLider()
+      );
+      allow delete: if autenticado() && (
+        resource.data.criadoPorId == uid() || isRHouMaster()
+      );
+    }
+
+    // ── Nega tudo que não foi mapeado explicitamente ─────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

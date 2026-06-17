@@ -1,0 +1,195 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helpers ─────────────────────────────────────────────────
+    function autenticado() {
+      return request.auth != null;
+    }
+    function role() {
+      return request.auth.token.get('role', '');
+    }
+    function isMaster() {
+      return autenticado() && role() == 'MASTER';
+    }
+    function isRHouMaster() {
+      return autenticado() && role() in ['MASTER', 'RH'];
+    }
+    function isProprioDoc(uid) {
+      // Permite que o colaborador acesse seu próprio documento
+      return autenticado() && request.auth.uid == uid;
+    }
+
+    // ── colaboradores ────────────────────────────────────────────
+    // Leitura: RH/Master vêem todos; colaborador vê só o próprio doc
+    // Escrita: apenas RH ou Master
+    // Campo "senha" nunca pode ser gravado (foi migrado para Firebase Auth)
+    match /colaboradores/{uid} {
+      // Qualquer autenticado lê (necessário p/ calendário de aniversários,
+      // menções nas dailys e auto-análise). Escrita continua restrita a RH/Master.
+      allow read: if autenticado();
+      allow create: if isRHouMaster()
+                    && !('senha' in request.resource.data)
+                    && request.resource.data.keys().hasAll(['nome', 'email', 'role', 'ativo']);
+      allow update: if isRHouMaster()
+                    && !('senha' in request.resource.data);
+      // Colaborador pode atualizar apenas seu próprio displayName / avatar
+      allow update: if isProprioDoc(uid)
+                    && request.resource.data.diff(resource.data).affectedKeys()
+                       .hasOnly(['displayName', 'avatarUrl', 'updatedAt']);
+      allow delete: if false; // desativação via ativo:false
+    }
+
+    // ── avaliacoes ───────────────────────────────────────────────
+    // Leitura: RH/Master vêem todas; Lider vê da própria equipe; colaborador vê as suas
+    // Escrita: RH, Master ou Lider (para sua equipe)
+    match /avaliacoes/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && role() == 'LIDER'
+                      && resource.data.equipe == request.auth.token.get('equipe',''))
+                  || (autenticado() && resource.data.colaboradorId == request.auth.uid);
+      allow create, update: if isRHouMaster()
+                  || (autenticado() && role() == 'LIDER'
+                      && request.resource.data.equipe == request.auth.token.get('equipe',''));
+      allow delete: if isMaster();
+    }
+
+    // ── equipes ──────────────────────────────────────────────────
+    match /equipes/{docId} {
+      allow read: if autenticado();
+      allow write: if isRHouMaster();
+    }
+
+    // ── bonusConfigs ─────────────────────────────────────────────
+    match /bonusConfigs/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if isMaster();
+    }
+
+    // ── bonusCalculados ──────────────────────────────────────────
+    // RH/Master vêem todos; colaborador vê apenas o próprio
+    match /bonusCalculados/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colaboradorId == request.auth.uid);
+      allow write: if false; // escrito apenas pelas Cloud Functions (Admin SDK)
+    }
+
+    // ── configs (configurações globais do sistema) ────────────────
+    match /configs/{docId} {
+      allow read: if autenticado();
+      allow write: if isMaster();
+    }
+
+    // ── denuncias ────────────────────────────────────────────────
+    // Anônimas: qualquer um pode criar; apenas RH/Master lêem
+    match /denuncias/{docId} {
+      allow create: if true; // canal anônimo
+      allow read, update: if isRHouMaster();
+      allow delete: if isMaster();
+    }
+
+    // ── notificacoesDevolutiva ───────────────────────────────────
+    // Leitura por protocolo: usuário compara protocolo salvo localmente
+    match /notificacoesDevolutiva/{docId} {
+      allow read: if autenticado()
+                  || (resource.data.get('anonimo', false) == true);
+      allow write: if false; // escrito apenas pelas Cloud Functions
+    }
+
+    // ── notificacoesPJ ───────────────────────────────────────────
+    match /notificacoesPJ/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colaboradorId == request.auth.uid);
+      allow write: if isRHouMaster();
+    }
+
+    // ── logsBackup ───────────────────────────────────────────────
+    match /logsBackup/{docId} {
+      allow read: if isMaster();
+      allow write: if false; // escrito apenas pelas Cloud Functions
+    }
+
+    // ── lancamentosVTVR ──────────────────────────────────────────
+    // Leitura: RH/Master vêem todos; colaborador vê apenas os seus
+    // Escrita: RH/Master criam/editam; colaborador pode atualizar NF do próprio lançamento
+    match /lancamentosVTVR/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colabId == request.auth.uid);
+      allow create: if isRHouMaster();
+      allow update: if isRHouMaster()
+                    || (autenticado()
+                        && resource.data.colabId == request.auth.uid
+                        && request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['nfNome','nfUrl','nfUploadEm','nfUploadPor','statusNF']));
+      allow delete: if isMaster();
+    }
+
+    // ── premioConfigs ────────────────────────────────────────────
+    match /premioConfigs/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if isMaster();
+    }
+
+    // ── metasLucratividade ───────────────────────────────────────
+    match /metasLucratividade/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if isMaster();
+    }
+
+    // ── vrConfigs ────────────────────────────────────────────────
+    match /vrConfigs/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if isRHouMaster();
+    }
+
+    // ── denunciasStatus ──────────────────────────────────────────
+    // Lookup por protocolo: qualquer pessoa pode consultar o status
+    // da própria denúncia usando o número de protocolo (canal anônimo).
+    match /denunciasStatus/{protocolo} {
+      allow read: if true; // protocolo é o ID — só quem tem o número acessa
+      allow write: if isRHouMaster();
+    }
+
+    // ── dailys (registro diário por equipe) ──────────────────────
+    // Leitura: qualquer autenticado (todos veem as dailys)
+    // Escrita: Líder (da própria equipe), RH ou Master
+    match /dailys/{docId} {
+      allow read: if autenticado();
+      allow create, update: if isRHouMaster()
+                  || (autenticado() && role() == 'LIDER'
+                      && request.resource.data.equipe == request.auth.token.get('equipe',''));
+      allow delete: if isMaster();
+    }
+
+    // ── dailyTarefas (tarefas delegadas nas dailys) ──────────────
+    // Leitura: qualquer autenticado (transparência entre equipes)
+    // Criação: Líder/RH/Master
+    // Atualização: Líder/RH/Master, OU o próprio responsável
+    //              (apenas status, justificativa e atualizadoEm)
+    match /dailyTarefas/{docId} {
+      allow read: if autenticado();
+      allow create: if isRHouMaster()
+                  || (autenticado() && role() == 'LIDER');
+      allow update: if isRHouMaster()
+                  || (autenticado() && role() == 'LIDER'
+                      && resource.data.equipe == request.auth.token.get('equipe',''))
+                  || (autenticado()
+                      && resource.data.responsavelId == request.auth.uid
+                      && request.resource.data.diff(resource.data).affectedKeys()
+                         .hasOnly(['status','justificativa','atualizadoEm']));
+      allow delete: if isMaster();
+    }
+
+    // ── solicitacoesSync (pedido de sincronização de permissões) ──
+    // Usuário cria/lê apenas o próprio pedido; a Cloud Function
+    // processa e grava o resultado (Admin SDK ignora estas regras)
+    match /solicitacoesSync/{uid} {
+      allow read, write: if isProprioDoc(uid);
+    }
+
+    // ── Nega tudo que não foi mapeado explicitamente ─────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

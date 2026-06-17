@@ -1,0 +1,95 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "avaliacoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "colaboradorId", "order": "ASCENDING" },
+        { "fieldPath": "ano",           "order": "DESCENDING" },
+        { "fieldPath": "trimestre",     "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "avaliacoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "ano",       "order": "ASCENDING" },
+        { "fieldPath": "trimestre", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "avaliacoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "equipe",        "order": "ASCENDING" },
+        { "fieldPath": "ano",           "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "avaliacoes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "colaboradorId", "order": "ASCENDING" },
+        { "fieldPath": "ano",           "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "bonusCalculados",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "colaboradorId", "order": "ASCENDING" },
+        { "fieldPath": "ano",           "order": "DESCENDING" },
+        { "fieldPath": "trimestre",     "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "dailys",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "equipe", "order": "ASCENDING" },
+        { "fieldPath": "data",   "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "dailyTarefas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "equipe", "order": "ASCENDING" },
+        { "fieldPath": "data",   "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "dailyTarefas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "responsavelId", "order": "ASCENDING" },
+        { "fieldPath": "data",          "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "dailyTarefas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "data",   "order": "ASCENDING" },
+        { "fieldPath": "equipe", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tarefasPessoais",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "userId", "order": "ASCENDING" },
+        { "fieldPath": "ordem",  "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notificacoesDevolutiva",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "lida",      "order": "ASCENDING" },
+        { "fieldPath": "criadoEm", "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Copy-Item C:\\\\mirae-app\\\\firestore.rules C:\\\\mirae-app\\\\public\\\\firestore.rules -Force)",
+      "PowerShell(Copy-Item C:\\\\mirae-app\\\\storage.rules C:\\\\mirae-app\\\\public\\\\storage.rules -Force)",
+      "PowerShell(Get-ChildItem C:\\\\mirae-app -Recurse -File | Where-Object { $_.FullName -notmatch 'node_modules|\\\\.firebase' } | Select-Object @{n='Arquivo';e={$_.FullName.Replace\\('C:\\\\mirae-app\\\\',''\\)}} | Format-Table -AutoSize)",
+      "Bash(firebase functions:delete onColaboradorCreated onColaboradorStatusChanged onAvaliacaoCreated onDenunciaDevolutiva --region us-central1 --force)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(firebase deploy *)",
+      "Bash(firebase functions:delete colaboradorCriado colaboradorStatusAlterado avaliacaoCriada denunciaDevolutiva --region us-central1 --force)",
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(firebase functions:delete colaboradorCriado colaboradorStatusAlterado avaliacaoCriada denunciaDevolutiva --region southamerica-east1 --force)",
+      "Bash(winget install *)",
+      "Bash(gcloud version *)",
+      "PowerShell(\\(Get-Content C:\\\\mirae-app\\\\public\\\\index.html | Measure-Object -Line\\).Lines)",
+      "mcp__28a196d5-0c4f-4c94-9bd5-c721a547f062__slack_read_canvas",
+      "Bash(curl -s https://pdimirae.web.app/index.html)",
+      "Bash(curl -s https://pdimirae.web.app/sw.js)",
+      "Bash(node -e ' *)",
+      "Bash(node fix_buttons.js)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(npm install *)",
+      "Bash(firebase emulators:exec --only firestore --project pdimirae-test \"node test_rules.mjs\")",
+      "Bash(npx -y firebase-tools@13.0.0 emulators:exec --only firestore --project pdimirae-test \"node test_rules.mjs\")",
+      "Bash(npx -y firebase-tools@11.30.0 emulators:exec --only firestore --project pdimirae-test \"node test_rules.mjs\")",
+      "Bash(npx -y firebase-tools@10.9.2 emulators:exec --only firestore --project pdimirae-test \"node test_rules.mjs\")",
+      "Read(//c/Users/PC/Downloads/**)",
+      "Bash(python3 -c ' *)",
+      "Bash(ls /mnt/c/Users/PC/Downloads/*.xlsx 2>&1 | head -10)",
+      "Bash(ls /mnt/c/Users/ 2>&1)",
+      "Bash(grep -v \"//\\\\|function\\\\|timeout\\\\|duration\\\\|format\\\\|label\\\\|display\\\\|template\\\\|ttCriar\\\\|dataset\\\\|prazo\\\\|dom\\\\|html\")",
+      "Bash(node tests/run.js)",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git config *)"
+    ]
+  }
+}
