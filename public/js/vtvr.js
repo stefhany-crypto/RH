@@ -716,3 +716,15 @@ async function baixarNFsEmLote(){
     if(btn)btn.textContent='Baixar NFs (.zip)';
 }
 
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    renderMeuVTVRTab, uploadNFTab, uploadNF,
+    excluirLancVTVR, verificarNotifPJ, carregarVTVRColab,
+    contarDias, diasObrigatorios, getVRVigente, salvarVRGlobal,
+    carregarVTVR, carregarMaisLancamentos, renderVRHistorico, excluirVRConfig,
+    gerarLancamentos, renderPreview, recalcPreview, confirmarLancamentos,
+    renderPainelVTVR, _vtvr_filtrar,
+    exportarExcelVTVR, exportarPDFVTVR, exportarOmieVTVR, baixarNFsEmLote,
+    toggleCamposPJ,
+});

@@ -529,3 +529,11 @@ if('serviceWorker' in navigator && location.hostname!=='localhost' && location.h
         });
     });
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    handleLogin, handleLogout, startApp, buildTabs, refreshData, updateUI,
+    switchTab, openModalSenha, alterarSenha, aplicarTema, toggleTheme,
+    soltarBaloes, fecharAniversario, verificarAniversario,
+    renderHomeExtras, renderHome, verificarNovasAvaliacoes, renderMeuPDI,
+});

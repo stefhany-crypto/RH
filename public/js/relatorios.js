@@ -841,3 +841,17 @@ async function salvarDevolutiva(id){
     // Verificar lembrete de backup
     verificarLembreteBackup();
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    getAvalsRelFiltradas, destroyChart, mkFiltrosOpts, filtrarAvals, mkSel,
+    renderRelatorios, renderChart1, renderChart2, renderChart3, renderChart4, renderChart5,
+    renderRanking, setAnalyticsMenu, renderAnalytics, renderAnalyticsVTVR,
+    filtrarLancVTVR, renderChartsVTVR, resetarFiltrosRel,
+    toggleAnonimoForm, gerarProtocolo, enviarDenuncia, resetarFormDenuncia,
+    consultarProtocolo, carregarDenuncias, iniciarListenerDenuncias,
+    renderDailyDash, avaliarJustificativa, mostrarPopupDenuncia,
+    verDenunciaDoPopup, renderDenunciasStats, renderDenuncias,
+    atualizarStatusDenuncia, abrirDevolutiva, salvarDevolutiva,
+    excluirLancVTVR, verificarNotifPJ, carregarVTVRColab,
+});

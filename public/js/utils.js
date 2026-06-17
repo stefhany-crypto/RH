@@ -198,3 +198,15 @@ window.onclick=function(e){
         if(!naoFechar.includes(e.target.id)) closeModal(e.target.id);
     }
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    esc, jsq, P, IC, ico,
+    mostrarNotif, dispararConfete,
+    hojeISO, diaAnterior, fmtDataBR,
+    guardado, _opEmAndamento,
+    registrarListener, cancelarListener, cancelarTodosListeners,
+    avalsVisiveis, talentosParaAvaliar,
+    roleLabel, roleBadge, rankBadge,
+    reemplazarEmojisEnDOM, temJustificativaValida, foiAdiada, atendidaMesmoDia,
+});

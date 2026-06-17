@@ -482,3 +482,16 @@ async function kbSalvarColunas(){
         kbRenderBoard(); mostrarNotif('','Colunas salvas','Layout do quadro atualizado.','',2000);
     });
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    kbInit, kbGarantirBoardPessoal, kbGarantirBoardEquipe, kbTeardown,
+    kbRenderTopBar, kbSetBoard, kbRenderBoard, kbHtmlCol, kbHtmlCard,
+    kbDragStart, kbDragEnd, kbDragOver, kbDragLeave, kbDrop,
+    kbAbrirCard, kbFecharCard, kbRenderDetalheCard,
+    kbSalvarCampoCard, kbSalvarDetalheCard, kbExcluirCard,
+    kbNovoCard, kbNTogglePrio, kbCriarCard,
+    kbEnviarParaDaily, kbConverterParaTarefa, ttEnviarParaKanban,
+    kbNovoQuadroEquipe, kbCriarQuadroEquipe,
+    kbEditarColunas, kbRenderColList, kbColAdicionar, kbSalvarColunas,
+});

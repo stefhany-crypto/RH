@@ -1024,3 +1024,27 @@ async function marcarNotifLidas(){
         await batch.commit();
     }catch(e){}
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    carregarTarefasPessoais, renderTarefasPessoais,
+    ttUnificadas, ttKey, ttFindByKey, ttListasCustom, ttFiltrar,
+    ttRenderRail, ttFmtPrazo, ttTarefaHTML, _eiLabel,
+    ttSetEisenhower, ttRenderEisenhower, ttRenderLista, ttRenderSelBar,
+    ttToggleSelMode, ttToggleSelecao, ttEnviarSelecionadas, ttEnviarParaDaily,
+    ttExportarPDF, ttAbrirLista, ttSetSort, ttToggleConcluidas,
+    ttNovaLista, ttQuickAddKey, ttAdicionar, ttGarantirShadow,
+    ttToggleConcluir, ttAbrirDetalhe, ttFecharDetalhe, ttRenderDetalhe,
+    ttEditarCampo, ttSetPrioridade, ttSubKey, ttAddSub, ttToggleSub,
+    ttEditarSub, ttRemoverSub, ttSalvarSubs, ttExcluir,
+    ttProximaData, ttCriarProximaRecorrencia,
+    setDailyView, renderDaily, linhaTarefaHTML,
+    reatribuirTarefa, setStatusTarefa, excluirDaily, confirmarJustificativa,
+    openModalDaily, ultimaDataDaily, renderOntemModal, importarTarefasOntem,
+    linhaOntemHTML, marcarOntem, dragTarefaOntem,
+    levarParaHoje, addLinhaDependencia, levarParaDependencia, levarParaBloqueio,
+    dropEmHoje, dropEmDependencia, selectResponsavelHTML, addLinhaTarefa,
+    importarPendenciasOntem, salvarDaily, verificarTarefasDelegadas,
+    ddLimiteISO, ddFillEquipe, ddFillPessoa, ddPopulaSelects, ddTarefas,
+    iniciarListenerNotificacoes, marcarNotifLidas,
+});

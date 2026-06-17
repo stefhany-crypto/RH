@@ -246,3 +246,14 @@ function renderPainelPremio(){
             +'<div class="stat-card"><div class="stat-label">Meta '+ano+'</div><div class="stat-value" style="font-size:1.1rem;color:'+(metaPct!==null&&metaPct>=80?'#2E7D32':'#EF6C00')+';">'+metaLabel+'</div></div>';
     }
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    carregarBonusConfigs, salvarConfigBonus,
+    getMultiplicadorVigente, calcularValorBonus,
+    renderBonusConfigHistorico, renderPainelPremiacoes,
+    setTipoBonus, setTipoPremio,
+    carregarPremioConfigs, salvarConfigPremio, salvarMetaLucratividade,
+    getConfigPremio, getMetaLucratividade,
+    renderPremioConfigHistorico, renderPainelPremio,
+});

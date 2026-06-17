@@ -151,3 +151,29 @@ async function reativarColab(id, nome){
         mostrarNotif('','Colaborador reativado',nome+' foi reativado com sucesso!','',4000);
     });
 }
+
+function previewFoto(input){
+    if(!input.files||!input.files[0]) return;
+    const reader=new FileReader();
+    reader.onload=e=>{
+        const preview=document.getElementById('fColFotoPreview');
+        if(preview){preview.src=e.target.result;preview.style.display='block';}
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function removerFoto(){
+    const input=document.getElementById('fColFoto');
+    const preview=document.getElementById('fColFotoPreview');
+    if(input) input.value='';
+    if(preview){preview.src='';preview.style.display='none';}
+    window._removerFotoFlag=true;
+}
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    openModalEquipe, saveEquipe, renderEquipes, deleteEquipe,
+    toggleCamposPJ, openModalColab, saveColab,
+    renderColaboradores, filtrarColaboradores, deleteColab, reativarColab,
+    previewFoto, removerFoto,
+});

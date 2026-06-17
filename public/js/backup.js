@@ -131,3 +131,9 @@ async function backupAgora(btn){
 
 async function registrarLogSenha(){
     try{await db.collection('colaboradores').doc(user.id).update({ultimaTrocaSenha:new Date().toLocaleString('pt-BR'),trocouSenhaEm:new Date()});}catch(e){}
+}
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    verificarLembreteBackup, exportarBackup, backupAgora, registrarLogSenha,
+});

@@ -123,3 +123,11 @@ function openEvalFor(id){
         renderEvalForm();
     },150);
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    excluirAvaliacao, baixarPDI, sincronizarTipoFormulario,
+    renderEvalForm, setR, calcADM, calcKPI, showRes,
+    saveAvaliacao, closeModal, openModalAvaliacao, openEvalFor,
+    renderAvaliacoes,
+});

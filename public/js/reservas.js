@@ -212,3 +212,10 @@ async function cancelarReservaMesa(docId){
     try{await db.collection('reservasMesas').doc(docId).delete();renderMesas();}
     catch(e){alert('Erro: '+e.message);}
 }
+
+// ── ES-module: expõe ao escopo global ──────────────────────────
+Object.assign(window, {
+    verificarDevolutivasLocais,
+    mesaCancelarSelecao, setSala, renderMesaSVG, renderMesas,
+    selecionarMesa, confirmarReservaMesa, cancelarReservaMesa,
+});
