@@ -46,7 +46,9 @@
       "Bash(powershell -Command \"Expand-Archive -Path 'Melhorar design do app.zip' -DestinationPath 'mirae-design-novo' -Force\")",
       "Bash(git -C C:\\\\mirae-app status)",
       "Bash(git -C C:\\\\mirae-app diff --stat)",
-      "Bash(grep -n \"\\\\.login-page\\\\|\\\\.sidebar {$\\\\|\\\\.card {$\\\\|\\\\.topbar {$\\\\|\\\\.main-content {$\\\\|\\\\.btn-primary {$\\\\|\\\\.tab-content {$\\\\|\\\\.modal {$\\\\|\\\\.topbar-title\\\\|\\\\.sidebar-logo {$\\\\|\\\\.sidebar-nav {$\" public/index.html)"
+      "Bash(grep -n \"\\\\.login-page\\\\|\\\\.sidebar {$\\\\|\\\\.card {$\\\\|\\\\.topbar {$\\\\|\\\\.main-content {$\\\\|\\\\.btn-primary {$\\\\|\\\\.tab-content {$\\\\|\\\\.modal {$\\\\|\\\\.topbar-title\\\\|\\\\.sidebar-logo {$\\\\|\\\\.sidebar-nav {$\" public/index.html)",
+      "PowerShell(cd C:\\\\mirae-app; $r = Invoke-WebRequest \"https://pdimirae.web.app/index.html\"; $r.Content | Select-String \"Newsreader|Hanken|Bem-vindo de volta|023B48\" | Select-Object -First 5)",
+      "Bash(curl -s \"https://pdimirae.web.app/index.html\")"
     ]
   }
 }
