@@ -186,7 +186,9 @@ function _setFotoPreview(dataUrl){
 function previewFoto(input){
     if(!input.files||!input.files[0]) return;
     const file=input.files[0];
-    if(file.size>1024*1024){ mostrarNotif('','Imagem muito grande','Escolha uma imagem de até 1MB.','',3000); input.value=''; return; }
+    // Limite generoso só contra arquivos absurdos: a imagem é reduzida para
+    // 256px (JPEG) abaixo, então o tamanho do original não afeta o que é salvo.
+    if(file.size>20*1024*1024){ mostrarNotif('','Imagem muito grande','Escolha uma imagem de até 20MB.','',3000); input.value=''; return; }
     const reader=new FileReader();
     reader.onload=e=>{
         const img=new Image();
