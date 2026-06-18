@@ -330,6 +330,13 @@ service cloud.firestore {
       );
     }
 
+    // ── logsAuditoria ────────────────────────────────────────────
+    // Apenas MASTER e RH podem ler; escrita exclusiva do Admin SDK (Cloud Functions).
+    match /logsAuditoria/{docId} {
+      allow read: if isRHouMaster();
+      allow write: if false;
+    }
+
     // ── Nega tudo que não foi mapeado explicitamente ─────────────
     match /{document=**} {
       allow read, write: if false;

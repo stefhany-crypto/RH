@@ -818,3 +818,143 @@ exports.authUserCriado = functions
     }
     logger.warn("authUserCriado: usuario orfao detectado", { uid: userRecord.uid, email });
   });
+
+// ════════════════════════════════════════════════════════════════
+// 20. registrarAuditoria (helper interno — não é export HTTP)
+// ════════════════════════════════════════════════════════════════
+async function registrarAuditoria({ acao, entidade, entidadeId, antes, depois, autorId, autorNome, autorEmail }) {
+  try {
+    await db.collection("logsAuditoria").add({
+      acao,
+      entidade,
+      entidadeId: entidadeId || null,
+      antes: antes || null,
+      depois: depois || null,
+      autorId: autorId || null,
+      autorNome: autorNome || null,
+      autorEmail: autorEmail || null,
+      criadoEm: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (e) {
+    logger.error("registrarAuditoria: falha ao gravar log", e.message);
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+// 21. auditarColaborador — loga alterações críticas no doc do colaborador
+//     (role, equipe, ativo, salário via subcoleção financeiro)
+// ════════════════════════════════════════════════════════════════
+exports.auditarColaborador = functions
+  .region(REGION)
+  .firestore.document("colaboradores/{colabId}")
+  .onWrite(async (change, context) => {
+    const colabId = context.params.colabId;
+    const before  = change.before.exists ? change.before.data() : null;
+    const after   = change.after.exists  ? change.after.data()  : null;
+
+    // Exclusão (ativo=false é desativação, delete real não ocorre pela rule)
+    if (!after) {
+      await registrarAuditoria({
+        acao: "colaborador_excluido",
+        entidade: "colaboradores",
+        entidadeId: colabId,
+        antes: { nome: before?.nome, email: before?.email, role: before?.role },
+        autorId: null, autorNome: "sistema",
+      });
+      return;
+    }
+
+    const campos = [];
+    if (before && before.role !== after.role)
+      campos.push({ campo: "role", de: before.role, para: after.role });
+    if (before && before.equipe !== after.equipe)
+      campos.push({ campo: "equipe", de: before.equipe, para: after.equipe });
+    if (before && before.ativo !== after.ativo)
+      campos.push({ campo: "ativo", de: before.ativo, para: after.ativo });
+
+    if (!campos.length) return;
+
+    await registrarAuditoria({
+      acao: "colaborador_alterado",
+      entidade: "colaboradores",
+      entidadeId: colabId,
+      antes: Object.fromEntries(campos.map(c => [c.campo, c.de])),
+      depois: Object.fromEntries(campos.map(c => [c.campo, c.para])),
+      autorNome: after.atualizadoPorNome || null,
+      autorEmail: after.atualizadoPorEmail || null,
+    });
+  });
+
+// ════════════════════════════════════════════════════════════════
+// 22. auditarFinanceiro — loga alterações de salário/VT/CNPJ
+// ════════════════════════════════════════════════════════════════
+exports.auditarFinanceiro = functions
+  .region(REGION)
+  .firestore.document("colaboradores/{colabId}/financeiro/dados")
+  .onWrite(async (change, context) => {
+    const colabId = context.params.colabId;
+    const before  = change.before.exists ? change.before.data() : null;
+    const after   = change.after.exists  ? change.after.data()  : null;
+
+    const camposSalario = ["salario", "valorVT", "cnpj", "razaoSocial", "tipoContrato", "dataAdmissao"];
+    const alteracoes = {};
+    const anteriores = {};
+
+    camposSalario.forEach(campo => {
+      const vAntes = before ? (before[campo] ?? null) : null;
+      const vDepois = after ? (after[campo] ?? null) : null;
+      if (vAntes !== vDepois) {
+        anteriores[campo] = vAntes;
+        alteracoes[campo] = vDepois;
+      }
+    });
+
+    if (!Object.keys(alteracoes).length) return;
+
+    // Busca nome do colaborador para o log
+    let nomeColab = colabId;
+    try {
+      const snap = await db.collection("colaboradores").doc(colabId).get();
+      if (snap.exists) nomeColab = snap.data().nome || colabId;
+    } catch (e) {}
+
+    await registrarAuditoria({
+      acao: "financeiro_alterado",
+      entidade: "colaboradores/financeiro",
+      entidadeId: colabId,
+      antes: anteriores,
+      depois: alteracoes,
+      autorNome: after?._alteradoPorNome || null,
+      autorEmail: after?._alteradoPorEmail || null,
+    });
+  });
+
+// ════════════════════════════════════════════════════════════════
+// 23. auditarAvaliacao — loga criação e exclusão de avaliações
+// ════════════════════════════════════════════════════════════════
+exports.auditarAvaliacao = functions
+  .region(REGION)
+  .firestore.document("avaliacoes/{avalId}")
+  .onWrite(async (change, context) => {
+    const avalId = context.params.avalId;
+    const before = change.before.exists ? change.before.data() : null;
+    const after  = change.after.exists  ? change.after.data()  : null;
+
+    if (!before && after) {
+      await registrarAuditoria({
+        acao: "avaliacao_criada",
+        entidade: "avaliacoes",
+        entidadeId: avalId,
+        depois: { colaboradorId: after.colaboradorId, equipe: after.equipe, trimestre: after.trimestre, ano: after.ano, notaFinal: after.notaFinal, bonusPercent: after.bonusPercent },
+        autorNome: after.criadoPorNome || null,
+      });
+    } else if (before && !after) {
+      await registrarAuditoria({
+        acao: "avaliacao_excluida",
+        entidade: "avaliacoes",
+        entidadeId: avalId,
+        antes: { colaboradorId: before.colaboradorId, equipe: before.equipe, trimestre: before.trimestre, ano: before.ano, notaFinal: before.notaFinal },
+        autorNome: null,
+      });
+    }
+  });
