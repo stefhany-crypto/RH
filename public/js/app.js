@@ -14,6 +14,7 @@ async function startApp(userData){
     user=userData;
     document.getElementById('loginPage').classList.add('hidden');
     document.getElementById('dashboardPage').classList.remove('hidden');
+    const splash=document.getElementById('authLoading'); if(splash)splash.style.display='none';
     const nameEl=document.getElementById('userNameDisplay');
     const roleEl=document.getElementById('userRoleDisplay');
     const avatarEl=document.getElementById('sidebarAvatar');
@@ -71,8 +72,10 @@ auth.onAuthStateChanged(async (firebaseUser) => {
             auth.signOut();
         }
     } else {
-        // Se não estiver logado, exibe a tela de login e esconde o painel
-        document.getElementById('loginPage').classList.remove('hidden');
+        // Confirmado que NÃO há sessão: esconde a splash e exibe o login.
+        const splash=document.getElementById('authLoading'); if(splash)splash.style.display='none';
+        const lp=document.getElementById('loginPage');
+        lp.classList.remove('hidden'); lp.style.display='flex';
         document.getElementById('dashboardPage').classList.add('hidden');
         user = null;
         // Cancela TODOS os listeners em tempo real (evita erros de permissão após logout)
