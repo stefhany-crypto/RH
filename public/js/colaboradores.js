@@ -38,8 +38,10 @@ function openModalColab(id=null){
             if(P.rolesAtribuiveis().includes(t.role))roleSel.value=t.role;
         }
     }
-    modal.style.display='flex';
-    modal.style.flexDirection='column';
+    // Abre com 'block' (e sem flex-direction inline): a regra CSS
+    // #modalColab[style*="flex"]{display:block!important} faria a substring
+    // "flex" persistir no atributo style e impediria closeModal de ocultar.
+    modal.style.display='block';
 }
 async function saveColab(e){
     e.preventDefault();

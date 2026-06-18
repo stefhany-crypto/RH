@@ -509,25 +509,28 @@ function renderMeuPDI(){
 
 if('serviceWorker' in navigator && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
     window.addEventListener('load', ()=>{
+        // Havia um SW controlando esta página ao carregar? Se SIM, um
+        // controllerchange futuro é uma ATUALIZAÇÃO real (nova versão assumiu)
+        // e vale recarregar. Se NÃO (primeira instalação), o clients.claim
+        // inicial do SW dispararia controllerchange logo após o login e
+        // recarregaria a página à toa — causando o "entra, desloga e loga
+        // de novo em segundos". Por isso só registramos o reload quando já
+        // havia controlador.
+        const tinhaControlador = !!navigator.serviceWorker.controller;
         navigator.serviceWorker.register('/sw.js')
             .then(r=>{
                 console.log('Mirae PWA instalado');
                 r.update(); // verifica nova versão a cada abertura
-                // quando uma versão nova assumir, recarrega o app sozinho
-                r.addEventListener('updatefound', ()=>{
-                    const nw=r.installing;
-                    if(!nw)return;
-                    nw.addEventListener('statechange', ()=>{
-                        if(nw.state==='activated'){console.log('Nova versão — recarregando');location.reload();}
-                    });
-                });
             })
             .catch(e=>console.warn('SW erro:', e));
-        // se o controlador trocar (nova versão assumiu), recarrega
-        let recarregou=false;
-        navigator.serviceWorker.addEventListener('controllerchange', ()=>{
-            if(recarregou)return;recarregou=true;location.reload();
-        });
+        if(tinhaControlador){
+            let recarregou=false;
+            navigator.serviceWorker.addEventListener('controllerchange', ()=>{
+                if(recarregou)return;recarregou=true;
+                console.log('Nova versão — recarregando');
+                location.reload();
+            });
+        }
     });
 }
 
