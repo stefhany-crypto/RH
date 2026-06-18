@@ -175,7 +175,7 @@ service cloud.firestore {
       allow update: if isRHouMaster()
                     || (autenticado()
                         && resource.data.colabId == uid()
-                        && somenteAlterou(['nfNome','nfUrl','nfUploadEm','nfUploadPor','statusNF']));
+                        && somenteAlterou(['nfNome','nfUrl','nfUploadEm','nfUploadPor','statusNF','nfHistorico']));
       allow delete: if isMaster();
     }
 
