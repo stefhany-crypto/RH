@@ -90,7 +90,11 @@ function uploadNFTab(lancId,periodo,valor){
             const ref=storage.ref(`nf/${lancId}/${Date.now()}_${nomeSeguro}`);
             await ref.put(file);
             const nfUrl=await ref.getDownloadURL();
-            await db.collection('lancamentosVTVR').doc(lancId).update({nfNome:file.name,nfUrl,nfUploadEm:new Date().toLocaleString('pt-BR'),nfUploadPor:user.nome,statusNF:'emitida'});
+            const docAtual=await db.collection('lancamentosVTVR').doc(lancId).get();
+            const dadosAtuais=docAtual.exists?docAtual.data():{};
+            const histAnterior=dadosAtuais.nfHistorico||[];
+            if(dadosAtuais.nfNome) histAnterior.push({nfNome:dadosAtuais.nfNome,nfUrl:dadosAtuais.nfUrl||'',enviadoEm:dadosAtuais.nfUploadEm||''});
+            await db.collection('lancamentosVTVR').doc(lancId).update({nfNome:file.name,nfUrl,nfUploadEm:new Date().toLocaleString('pt-BR'),nfUploadPor:user.nome,statusNF:'emitida',nfHistorico:histAnterior});
         }catch(err){mostrarNotif('','Falha no upload','Não foi possível enviar a NF: '+err.message,'',6000);return;}
         mostrarNotif('','NF enviada!',`NF para ${periodo} (R$ ${valor.toFixed(2)}) registrada com sucesso.`,'bonus',5000);
         await carregarVTVRColab();renderMeuVTVRTab();
@@ -109,9 +113,13 @@ function uploadNF(lancId, periodo, valor){
             const ref=storage.ref(`nf/${lancId}/${Date.now()}_${nomeSeguro}`);
             await ref.put(file);
             const nfUrl=await ref.getDownloadURL();
+            const docAtual=await db.collection('lancamentosVTVR').doc(lancId).get();
+            const dadosAtuais=docAtual.exists?docAtual.data():{};
+            const histAnterior=dadosAtuais.nfHistorico||[];
+            if(dadosAtuais.nfNome) histAnterior.push({nfNome:dadosAtuais.nfNome,nfUrl:dadosAtuais.nfUrl||'',enviadoEm:dadosAtuais.nfUploadEm||''});
             await db.collection('lancamentosVTVR').doc(lancId).update({
                 nfNome:file.name, nfUrl, nfUploadEm:new Date().toLocaleString('pt-BR'),
-                nfUploadPor:user.nome, statusNF:'emitida'
+                nfUploadPor:user.nome, statusNF:'emitida', nfHistorico:histAnterior
             });
         }catch(err){mostrarNotif('','Falha no upload','Não foi possível enviar a NF: '+err.message,'',6000);return;}
         mostrarNotif('','NF registrada!',`NF para ${periodo} (R$ ${valor.toFixed(2)}) enviada com sucesso.`,'bonus',5000);

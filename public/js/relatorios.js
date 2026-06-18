@@ -33,7 +33,11 @@ function filtrarAvals(ano,tri,equipe,pessoa){
         return true;
     });
 }
-function mkSel(id,opts,label,cb){return `<select id="${id}" title="${label}" onchange="${cb}" style="padding:0.2rem 0.4rem;border:1px solid #E0E4E6;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:0.72rem;color:#1A2E38;background:#F5F2ED;cursor:pointer;outline:none;height:26px;max-width:115px;">${opts}</select>`;}
+function mkSel(id,opts,label,cb){
+    // cb é sempre um literal hardcoded (ex: 'renderChart1()') — sanitiza para segurança
+    const cbSafe=(cb||'').replace(/[^a-zA-Z0-9_().]/g,'');
+    return `<select id="${esc(id)}" title="${esc(label)}" onchange="${cbSafe}" style="padding:0.2rem 0.4rem;border:1px solid #E0E4E6;border-radius:5px;font-family:'DM Sans',sans-serif;font-size:0.72rem;color:#1A2E38;background:#F5F2ED;cursor:pointer;outline:none;height:26px;max-width:115px;">${opts}</select>`;
+}
 
 function renderRelatorios(){
     if(!P.verRelatorios())return;

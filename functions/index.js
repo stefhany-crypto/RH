@@ -578,12 +578,17 @@ exports.tarefaDelegada = functions
   .onCreate(async (snap) => {
     const t = snap.data();
     if (!t.responsavelId) return;
-    // Notifica menções em dependências (mesmo da própria equipe)
-    // e tarefas delegadas para outra equipe.
     const ehDependencia = t.tipo === "dependencia" && t.criadoPorId !== t.responsavelId;
     if (!t.crossTeam && !ehDependencia) return;
 
     try {
+      // Valida que quem criou tem permissão para delegar (LIDER ou MASTER)
+      if (t.criadoPorId) {
+        const criadorSnap = await db.collection("colaboradores").doc(t.criadoPorId).get();
+        const criador = criadorSnap.data();
+        if (!criador || !["LIDER", "MASTER", "RH"].includes(criador.role)) return;
+      }
+
       const colabSnap = await db.collection("colaboradores").doc(t.responsavelId).get();
       const colab = colabSnap.data();
       if (!colab || !isValidEmail(colab.email)) return;
