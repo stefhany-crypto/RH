@@ -13,9 +13,20 @@ async function handleLogout(){ await auth.signOut(); }
 // Renderiza o avatar da sidebar: foto (avatarUrl) ou a inicial do nome.
 function atualizarAvatarSidebar(){
     const avatarEl=document.getElementById('sidebarAvatar');
-    if(!avatarEl||!user) return;
-    if(user.avatarUrl){ avatarEl.innerHTML=`<img src="${user.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`; }
-    else avatarEl.textContent=(user.nome||'?')[0].toUpperCase();
+    if(avatarEl&&user){
+        if(user.avatarUrl){ avatarEl.innerHTML=`<img src="${user.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`; }
+        else avatarEl.textContent=(user.nome||'?')[0].toUpperCase();
+    }
+    // Topbar user
+    const ta=document.getElementById('topbarAvatar');
+    const tn=document.getElementById('topbarUserName');
+    const tr=document.getElementById('topbarUserRole');
+    if(ta&&user){
+        if(user.avatarUrl) ta.innerHTML=`<img src="${user.avatarUrl}" alt="">`;
+        else ta.textContent=(user.nome||'?')[0].toUpperCase();
+    }
+    if(tn&&user) tn.textContent=user.nome||user.email;
+    if(tr&&user) tr.textContent=typeof roleLabel==='function'?roleLabel(user.role):user.role;
 }
 async function startApp(userData){
     user=userData;
@@ -340,30 +351,27 @@ function renderHomeExtras(){
     // Versículo do dia (determinístico por data)
     const diaDoAno=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000);
     const v=VERSICULOS[diaDoAno%VERSICULOS.length];
-    const hero=document.getElementById('homeHero');
-    if(hero)hero.innerHTML=`
-        <div class="hero-purpose">PROPÓSITO MIRAE</div>
-        <div class="hero-title">Personificar o amor de Cristo à beira do leito.</div>
-        <div class="hero-verse">“${v.t}” <span>— ${v.r}</span></div>`;
-    // DNA Mirae — PAVAP em fita dourada + credo
+    // Hero: versículo
+    const hv=document.getElementById('homeHeroVerse');
+    if(hv) hv.innerHTML=`”${v.t}” <span>— ${v.r}</span>`;
+    // DNA Mirae — nova estrutura dark
     const dna=document.getElementById('homeDNA');
-    if(dna)dna.innerHTML=`
-        <div class="dna-card">
-            <div class="dna-head"><span class="dna-icon"></span><div><div class="dna-title">Nosso DNA</div><div class="dna-sub">O credo que nos move</div></div></div>
-            <div class="dna-grid">
-                <div class="dna-strand">
-                    ${VALORES_MIRAE.map(x=>`
-                        <div class="dna-valor">
-                            <div class="dna-medalha">${x.l}</div>
-                            <div><div class="valor-nome">${x.n}</div><div class="valor-desc">${x.d}</div></div>
-                        </div>`).join('')}
-                </div>
-                <div class="dna-credo">
-                    <div class="credo-item"><span>Missão</span>Impulsionar a performance hospitalar com médicos selecionados, treinados e liderados com excelência.</div>
-                    <div class="credo-item"><span>Visão</span>Impactar 200 milhões de vidas por ano até 2046.</div>
-                </div>
-            </div>
+    if(dna) dna.innerHTML=`
+        <div class=”home-dna-label”>Nossa Essência · PAVAP</div>
+        <div class=”home-dna-valores”>
+            ${(VALORES_MIRAE||[]).map(x=>`
+                <div class=”home-dna-valor”>
+                    <div class=”home-dna-medalha”>${x.l}</div>
+                    <div><div class=”home-dna-nome”>${x.n}</div><div class=”home-dna-desc”>${x.d}</div></div>
+                </div>`).join('')}
+        </div>
+        <div class=”home-dna-credo”>
+            <div><div class=”home-credo-title”>Missão</div><div class=”home-credo-text”>Impulsionar a performance hospitalar com médicos selecionados, treinados e liderados com excelência.</div></div>
+            <div><div class=”home-credo-title”>Visão</div><div class=”home-credo-text”>Impactar 200 milhões de vidas por ano até 2046.</div></div>
         </div>`;
+    // Team label no widget daily
+    const tl=document.getElementById('homeTeamLabel');
+    if(tl&&user?.equipe) tl.textContent=`Todos os dias · ${user.equipe}`;
 
     // Tarefas de hoje (minhas)
     const hojeStr=hojeISO();
@@ -399,41 +407,47 @@ function renderHomeExtras(){
 }
 
 function renderHome(){
-    if(!document.getElementById('homeHero'))return;
     renderHomeExtras();
-    // Saudação no topbar
+    // Saudação e data
     const hora=new Date().getHours();
+    const greet=hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
     const tt=document.getElementById('topbarTitle');
-    if(tt)tt.textContent=hora<12?'Bom dia, '+user.nome.split(' ')[0]:hora<18?'Boa tarde, '+user.nome.split(' ')[0]:'Boa noite, '+user.nome.split(' ')[0];
-    // PDI (notas/bônus) movido para a aba PDI — só roda se os elementos existirem
-    const stats=document.getElementById('homeStats');
-    if(!stats)return;
-    const myAvals=avaliacoes.filter(a=>a.colaboradorId===user.id).sort((a,b)=>b.data-a.data);
-    const lastNota=myAvals.length?myAvals[0].notaFinal:0;
-    const lastBonus=myAvals.length?myAvals[0].bonusPercent:0;
-    const t=talentos.find(ta=>ta.id===user.id)||user;
-    const lastValor=t.salario?calcularValorBonus(getMultiplicadorVigente(t.equipe,myAvals[0]?.trimestre,myAvals[0]?.ano),t.salario,lastBonus):0;
-    let html=`<div class="stat-card"><div class="stat-label">Minha Última Nota</div><div class="stat-value" style="color:${lastNota>=80?'#2E7D32':lastNota>=60?'#EF6C00':'#C62828'}">${lastNota.toFixed(1)}</div></div>`;
-    html+=`<div class="stat-card"><div class="stat-label">Minhas Avaliações</div><div class="stat-value">${myAvals.length}</div></div>`;
-    html+=`<div class="stat-card"><div class="stat-label">Último Bônus</div><div class="stat-value">${lastBonus}%</div></div>`;
-    if(t.salario&&lastBonus>0)html+=`<div class="stat-card"><div class="stat-label">Valor do Bônus</div><div class="stat-value" style="font-size:1.2rem;color:#2E7D32;">R$ ${lastValor.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div></div>`;
-    if(P.isMaster()||P.isRH()){html+=`<div class="stat-card"><div class="stat-label">Total Talentos</div><div class="stat-value">${talentos.length}</div></div>`;html+=`<div class="stat-card"><div class="stat-label">Média Global</div><div class="stat-value" style="color:var(--mirae-teal);">${(avaliacoes.reduce((a,b)=>a+b.notaFinal,0)/(avaliacoes.length||1)).toFixed(1)}</div></div>`;}
-    stats.innerHTML=html;
-    // Ranking card — só para quem pode ver
-    const rc=document.getElementById('homeRankCard');
-    if(rc){
-        if(P.verRelatorios()){
-            const visAvals=avalsVisiveis();
-            const sorted=[...visAvals].sort((a,b)=>b.notaFinal-a.notaFinal).slice(0,5);
-            document.getElementById('homeRank').innerHTML=sorted.length===0?'<p style="color:var(--text-muted);font-size:0.9rem;">Nenhuma avaliação ainda.</p>':sorted.map((a,i)=>{const t=talentos.find(ta=>ta.id===a.colaboradorId)||{nome:'?'};return `<div style="display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid #EEE;"><span><strong>#${i+1}</strong> ${esc(t.nome)}</span><span class="badge badge-success">${a.notaFinal.toFixed(1)}</span></div>`;}).join('');
-        }else{rc.style.display='none';}
+    const hg=document.getElementById('homeGreeting');
+    const hd=document.getElementById('homeDate');
+    if(tt) tt.textContent='Início';
+    if(hg) hg.textContent=greet+', '+user.nome.split(' ')[0]+'.';
+    if(hd){
+        const now=new Date();
+        const dias=['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+        const meses=['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+        hd.textContent=dias[now.getDay()]+', '+now.getDate()+' de '+meses[now.getMonth()]+' de '+now.getFullYear();
     }
-    const canvas=document.getElementById('homeChart');if(!canvas)return;
-    if(charts.home)charts.home.destroy();
-    const chartAvals=P.isMaster()||P.isRH()?avaliacoes:myAvals;
-    charts.home=new Chart(canvas.getContext('2d'),{type:'line',data:{labels:['Q1','Q2','Q3','Q4'],datasets:[{label:'Performance',data:[1,2,3,4].map(q=>{const f=chartAvals.filter(av=>av.trimestre==q);return f.length?f.reduce((a,c)=>a+c.notaFinal,0)/f.length:null;}),borderColor:'#1E7D90',tension:0.4,fill:true,backgroundColor:'rgba(30,125,144,0.1)',pointBackgroundColor:'#1E7D90'}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    // Stats cards
+    const stats=document.getElementById('homeStats');
+    if(stats){
+        const myAvals=avaliacoes.filter(a=>a.colaboradorId===user.id).sort((a,b)=>b.data-a.data);
+        const lastNota=myAvals.length?myAvals[0].notaFinal:null;
+        const lastBonus=myAvals.length?myAvals[0].bonusPercent:null;
+        const t=talentos.find(ta=>ta.id===user.id)||user;
+        const lastValor=(t.salario&&lastBonus>0)?calcularValorBonus(getMultiplicadorVigente(t.equipe,myAvals[0]?.trimestre,myAvals[0]?.ano),t.salario,lastBonus):0;
+        const defs=[
+            {label:'Última nota',value:lastNota!=null?lastNota.toFixed(1):'—',bg:'#EAF3EE',fg:'#3F8A6E'},
+            {label:'Avaliações',value:myAvals.length,bg:'#EEF2FB',fg:'#5272C0'},
+            {label:'Último bônus',value:lastBonus!=null?lastBonus+'%':'—',bg:'rgba(218,180,126,0.15)',fg:'#BE8C45'},
+            ...(P.isMaster()||P.isRH()?[
+                {label:'Total talentos',value:talentos.length,bg:'rgba(2,59,72,0.08)',fg:'#023B48'},
+                {label:'Média global',value:(avaliacoes.reduce((a,b)=>a+b.notaFinal,0)/(avaliacoes.length||1)).toFixed(1),bg:'rgba(2,59,72,0.08)',fg:'#023B48'}
+            ]:[]),
+            ...(t.salario&&lastBonus>0?[{label:'Valor bônus',value:'R$ '+lastValor.toLocaleString('pt-BR',{minimumFractionDigits:2}),bg:'rgba(63,138,110,0.10)',fg:'#2F6F58'}]:[])
+        ];
+        stats.innerHTML=defs.slice(0,4).map(s=>`
+            <div class="home-stat-card">
+                <div class="home-stat-icon" style="background:${s.bg};color:${s.fg};font-size:18px;font-weight:600;font-family:'Newsreader',serif;">${s.value[0]||'—'}</div>
+                <div class="home-stat-value" style="color:${s.fg}">${s.value}</div>
+                <div class="home-stat-label">${s.label}</div>
+            </div>`).join('');
+    }
 }
-
 function verificarNovasAvaliacoes(){
     const minhasAvals=avaliacoes.filter(a=>a.colaboradorId===user.id).sort((a,b)=>b.data-a.data);
     if(!minhasAvals.length)return;
