@@ -1542,6 +1542,25 @@
     <div style="width:42px;height:42px;border:3px solid rgba(255,255,255,0.15);border-top-color:#1E7D90;border-radius:50%;animation:authSpin 0.8s linear infinite;"></div>
 </div>
 <style>@keyframes authSpin{to{transform:rotate(360deg)}}</style>
+<script>
+// REDE DE SEGURANÇA (inline, sempre vem fresco da rede): garante que o
+// usuário NUNCA fique preso no spinner. Se em poucos segundos a sessão não
+// foi resolvida — app.js travou, versão de JS em cache desatualizada, ou
+// Firebase offline — esconde a splash e revela login OU dashboard. Roda
+// independente do app.js justamente para sobreviver a mismatch de cache.
+(function(){
+    function liberar(){
+        var s=document.getElementById('authLoading');
+        if(!s || s.style.display==='none') return;
+        var dp=document.getElementById('dashboardPage');
+        if(dp && !dp.classList.contains('hidden')){ s.style.display='none'; return; }
+        var lp=document.getElementById('loginPage');
+        if(lp){ lp.classList.remove('hidden'); lp.style.display='flex'; }
+        s.style.display='none';
+    }
+    setTimeout(liberar, 4000);
+})();
+</script>
 
 <!-- LOGIN -->
 <div id="loginPage" class="login-page hidden" style="display:none;min-height:100vh;background:#0B1A20;">
