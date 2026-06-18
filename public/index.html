@@ -1480,20 +1480,20 @@
         .kb-top-select-active { border-color:var(--teal); color:var(--teal); font-weight:600; background:var(--teal-dim); }
         .kb-board-wrap { overflow-x:auto; padding-bottom:1rem; }
         .kb-board { display:flex; gap:1.2rem; align-items:flex-start; }
-        .kb-col { flex:1; min-width:240px; max-width:380px; background:var(--white); border:1px solid var(--hairline); border-radius:0 0 var(--radius-lg) var(--radius-lg); box-shadow:var(--shadow-sm); display:flex; flex-direction:column; max-height:calc(100vh - 220px); }
-        .kb-col-stripe { height:4px; border-radius:var(--radius-lg) var(--radius-lg) 0 0; }
-        .kb-col-head { padding:0.9rem 1rem 0.7rem; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--hairline); flex-shrink:0; }
-        .kb-col-nome { font-size:0.82rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--dark); }
-        .kb-col-count { font-size:0.72rem; color:var(--muted); background:var(--cream); border-radius:20px; padding:0.05rem 0.5rem; min-width:20px; text-align:center; }
-        .kb-col-body { padding:0.7rem; display:flex; flex-direction:column; gap:0.6rem; overflow-y:auto; flex:1; min-height:80px; transition:background .15s; }
-        .kb-col-body.dragover { background:var(--teal-dim); }
-        .kb-card { background:var(--white); border:1.5px solid var(--border); border-radius:var(--radius-md); padding:0.85rem; cursor:pointer; transition:box-shadow .15s, transform .1s; user-select:none; }
-        .kb-card:hover { box-shadow:var(--shadow-sm); border-color:var(--teal); }
+        .kb-col { flex:none; width:300px; background:#F1ECE2; border-radius:16px; padding:14px; display:flex; flex-direction:column; max-height:calc(100vh - 200px); }
+        .kb-col-stripe { display:none; }
+        .kb-col-head { display:flex; align-items:center; justify-content:space-between; padding:4px 6px 12px; border-bottom:none; flex-shrink:0; }
+        .kb-col-nome { font-size:14px; font-weight:600; color:var(--dark); text-transform:none; letter-spacing:0; }
+        .kb-col-count { font-size:12px; color:#8a979b; background:#fff; border-radius:20px; padding:1px 8px; min-width:auto; }
+        .kb-col-body { display:flex; flex-direction:column; gap:10px; overflow-y:auto; flex:1; min-height:60px; transition:background .15s; padding:0; }
+        .kb-col-body.dragover { background:rgba(2,59,72,0.06); border-radius:10px; }
+        .kb-card { background:#fff; border:1px solid #ECE7DC; border-radius:12px; padding:13px; cursor:pointer; transition:box-shadow .15s, transform .1s; user-select:none; box-shadow:0 1px 2px rgba(2,59,72,.03); }
+        .kb-card:hover { box-shadow:0 6px 16px -8px rgba(2,59,72,.22); transform:translateY(-1px); border-color:var(--border); }
         .kb-card.dragging { opacity:0.45; transform:rotate(1.5deg) scale(0.97); }
-        .kb-card-titulo { font-size:0.88rem; font-weight:500; color:var(--dark); line-height:1.35; margin-bottom:0.3rem; }
+        .kb-card-titulo { font-size:14px; font-weight:500; color:var(--dark); line-height:1.4; margin-top:9px; margin-bottom:0; }
         .kb-card-desc { font-size:0.75rem; color:var(--muted); line-height:1.35; margin-bottom:0.35rem; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .kb-card-meta { display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center; margin-top:0.4rem; }
-        .kb-card-chip { font-size:0.68rem; padding:0.15rem 0.5rem; border-radius:20px; font-weight:500; }
+        .kb-card-meta { display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center; justify-content:space-between; margin-top:13px; }
+        .kb-card-chip { font-size:10.5px; padding:2px 8px; border-radius:6px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; }
         .kb-chip-alta { background:#FFEBEE; color:#C62828; }
         .kb-chip-media { background:#FFF3E0; color:#E65100; }
         .kb-chip-baixa { background:var(--teal-dim); color:var(--teal); }
@@ -1501,9 +1501,13 @@
         .kb-chip-vencido { background:#FFEBEE; color:#C62828; }
         .kb-card-resp { display:flex; align-items:center; gap:0.4rem; font-size:0.75rem; color:var(--muted); margin-top:0.45rem; }
         .kb-resp-avatar { width:20px; height:20px; border-radius:50%; background:var(--teal-dim); color:var(--teal); font-size:0.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-        .kb-col-add { padding:0 0.7rem 0.7rem; flex-shrink:0; }
+        .kb-col-add { padding:0 0 4px; flex-shrink:0; }
         .kb-col-add-btn { width:100%; padding:0.45rem; border:none; background:transparent; border-radius:10px; color:var(--muted); font-size:0.82rem; cursor:pointer; display:flex; align-items:center; gap:0.4rem; transition:background .15s; }
-        .kb-col-add-btn:hover { background:var(--cream); color:var(--dark); }
+        .kb-col-add-btn:hover { background:rgba(2,59,72,0.06); color:var(--dark); }
+        .kb-col-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .kb-card-footer { display:flex; align-items:center; justify-content:space-between; margin-top:13px; }
+        .kb-card-date { font-size:12px; color:#8a979b; display:flex; align-items:center; gap:5px; }
+        .kb-card-av { width:26px; height:26px; border-radius:50%; background:#023B48; color:#fff; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; flex-shrink:0; }
         .kb-board-head { display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:1rem; padding-bottom:0.8rem; border-bottom:1px solid var(--hairline); flex-wrap:wrap; gap:0.8rem; }
         .kb-mirror-badge { display:inline-flex; align-items:center; gap:4px; font-size:0.68rem; padding:0.12rem 0.5rem; border-radius:20px; background:rgba(201,160,90,0.12); color:#8a6820; margin-bottom:0.4rem; }
         .kb-empty-col { text-align:center; color:var(--muted); font-size:0.78rem; padding:1.5rem 0.5rem; }
@@ -1519,6 +1523,78 @@
         .home-stat-label { font-size:13px; color:var(--muted); margin-top:5px; }
         .home-grid { display:grid; grid-template-columns:1.55fr 1fr; gap:18px; align-items:start; }
         .home-col { display:flex; flex-direction:column; gap:18px; }
+        /* ── PDI novo layout ── */
+        .pdi-page { display:grid; grid-template-columns:1.4fr 1fr; gap:18px; align-items:start; max-width:1080px; }
+        .pdi-comp-card { background:#fff; border:1px solid var(--border); border-radius:18px; padding:26px; box-shadow:var(--shadow-sm); }
+        .pdi-comp-title { font-family:'Newsreader',serif; font-weight:500; font-size:22px; margin:0 0 22px; }
+        .pdi-tri-bar { display:flex; gap:4px; background:#F1ECE2; border-radius:10px; padding:4px; }
+        .pdi-tri-btn { border:0; background:transparent; border-radius:7px; padding:6px 12px; font-size:13px; font-family:inherit; cursor:pointer; color:var(--muted); font-weight:500; transition:.15s; }
+        .pdi-tri-btn.active { background:#fff; color:var(--dark); font-weight:600; box-shadow:0 1px 3px rgba(2,59,72,.08); }
+        .pdi-comp-list { display:flex; flex-direction:column; gap:20px; }
+        .pdi-comp-row { display:flex; flex-direction:column; gap:0; }
+        .pdi-comp-head { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:9px; }
+        .pdi-comp-nome { font-weight:600; font-size:15px; }
+        .pdi-comp-nota { font-family:'Newsreader',serif; font-size:18px; color:var(--dark); }
+        .pdi-comp-nota small { font-size:13px; color:#9aa9ad; font-family:'Hanken Grotesk',sans-serif; }
+        .pdi-comp-track { height:10px; background:#EFEAE0; border-radius:6px; overflow:hidden; }
+        .pdi-comp-fill { height:100%; border-radius:6px; transition:width .7s ease; }
+        .pdi-comp-desc { font-size:13px; color:var(--muted); margin:9px 0 0; line-height:1.5; }
+        .pdi-side { display:flex; flex-direction:column; gap:18px; }
+        .pdi-media-card { background:#023B48; color:#fff; border-radius:18px; padding:24px; text-align:center; }
+        .pdi-media-label { font-size:13px; color:#DAB47E; font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+        .pdi-media-num { font-family:'Newsreader',serif; font-size:58px; line-height:1; margin:12px 0 4px; }
+        .pdi-media-sub { font-size:13px; color:rgba(255,255,255,.7); }
+        .pdi-info-card { background:#fff; border:1px solid var(--border); border-radius:18px; padding:22px; box-shadow:var(--shadow-sm); }
+        .pdi-info-head { display:flex; align-items:center; gap:10px; margin-bottom:13px; }
+        .pdi-info-head-icon { color:#BE8C45; }
+        .pdi-info-head-title { font-weight:600; font-size:16px; }
+        .pdi-info-body { font-size:14.5px; line-height:1.6; color:#3a4a4f; margin:0; }
+        .pdi-feedback-autor { display:flex; align-items:center; gap:10px; margin-top:16px; padding-top:14px; border-top:1px solid #F1ECE2; }
+        .pdi-feedback-av { width:34px; height:34px; border-radius:9px; background:#DAB47E; color:#023B48; display:flex; align-items:center; justify-content:center; font-weight:700; font-family:'Newsreader',serif; flex-shrink:0; }
+        .pdi-feedback-name { font-size:13px; font-weight:600; }
+        .pdi-feedback-role { color:#8a979b; font-size:12px; }
+        .pdi-plano-list { display:flex; flex-direction:column; gap:11px; }
+        .pdi-plano-item { display:flex; gap:11px; align-items:flex-start; }
+        .pdi-plano-check { width:18px; height:18px; border-radius:6px; display:flex; align-items:center; justify-content:center; flex-shrink:0; margin-top:1px; }
+        .pdi-plano-txt { font-size:13.5px; line-height:1.45; }
+        /* ── Mural de reconhecimento (home) ── */
+        .home-mural-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+        .home-mural-title { font-weight:600; font-size:15px; }
+        .home-mural-tag { font-size:12px; color:var(--muted); }
+        .home-mural-form { margin-bottom:16px; }
+        .home-mural-input { width:100%; border:1px solid var(--border); border-radius:10px; padding:10px 12px; font-size:13.5px; font-family:inherit; color:var(--text); background:#FCFBF7; resize:none; line-height:1.5; box-sizing:border-box; }
+        .home-mural-input:focus { outline:none; border-color:var(--dark); }
+        .home-mural-send { background:#023B48; color:#fff; border:0; border-radius:10px; padding:9px 18px; font-size:13.5px; font-weight:600; font-family:inherit; cursor:pointer; display:flex; align-items:center; gap:8px; margin-top:8px; float:right; }
+        .home-mural-feed { display:flex; flex-direction:column; gap:14px; }
+        .home-mural-item { display:flex; gap:10px; }
+        .home-mural-av { width:34px; height:34px; border-radius:10px; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; font-family:'Newsreader',serif; flex-shrink:0; }
+        .home-mural-text { font-size:13.5px; line-height:1.5; color:var(--text); }
+        .home-mural-meta { font-size:12px; color:var(--muted); margin-top:4px; }
+        /* ── Minha mesa (home) ── */
+        .home-mesa-item { display:flex; align-items:center; gap:12px; padding:10px 0; }
+        .home-mesa-item + .home-mesa-item { border-top:1px solid var(--hairline); }
+        .home-mesa-icon { color:#BE8C45; }
+        .home-mesa-nome { font-size:14px; font-weight:500; }
+        .home-mesa-sub { font-size:12.5px; color:var(--muted); margin-top:2px; }
+        .home-mesa-btn { font-size:12.5px; color:var(--dark); background:#F1ECE2; border:0; border-radius:8px; padding:5px 12px; font-family:inherit; cursor:pointer; }
+        /* ── Daily tab restyle ── */
+        .daily-tab-header { display:flex; align-items:center; gap:11px; margin-bottom:6px; }
+        .daily-tab-icon { width:40px; height:40px; border-radius:11px; background:#EAF1F1; color:#023B48; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .daily-tab-title { font-family:'Newsreader',serif; font-size:22px; line-height:1.1; }
+        .daily-tab-sub { font-size:12.5px; color:var(--muted); }
+        .daily-filters { display:flex; gap:0.6rem; align-items:center; flex-wrap:wrap; margin-bottom:1.2rem; padding-bottom:1rem; border-bottom:1px solid var(--hairline); }
+        .daily-card-wrap { background:#fff; border:1px solid var(--border); border-radius:18px; padding:26px; box-shadow:var(--shadow-sm); }
+        .daily-squad-card { background:#023B48; color:#fff; border-radius:18px; padding:22px; position:relative; overflow:hidden; }
+        .daily-squad-card::before { content:''; position:absolute; width:170px; height:170px; border-radius:50%; background:rgba(218,180,126,.12); right:-60px; top:-70px; pointer-events:none; }
+        .daily-squad-label { display:flex; align-items:center; gap:9px; color:#DAB47E; font-size:13px; font-weight:600; position:relative; }
+        .daily-squad-sub { font-size:13.5px; color:rgba(255,255,255,.72); margin-top:10px; position:relative; line-height:1.5; }
+        .daily-quem-card { background:#fff; border:1px solid var(--border); border-radius:18px; padding:22px; box-shadow:var(--shadow-sm); }
+        .daily-quem-title { font-weight:600; font-size:15px; margin-bottom:14px; }
+        .daily-quem-list { display:flex; flex-direction:column; gap:13px; }
+        .daily-quem-item { display:flex; align-items:center; gap:11px; }
+        .daily-quem-av { width:34px; height:34px; border-radius:10px; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; font-family:'Newsreader',serif; flex-shrink:0; }
+        .daily-quem-nome { flex:1; font-size:14px; }
+        .daily-quem-badge { font-size:11.5px; font-weight:600; padding:3px 10px; border-radius:20px; }
         .home-hero-v2 { background:#023B48; color:#fff; border-radius:18px; padding:26px; position:relative; overflow:hidden; }
         .home-hero-v2::before { content:''; position:absolute; width:260px; height:260px; border-radius:50%; border:1px solid rgba(218,180,126,0.16); right:-90px; top:-110px; pointer-events:none; }
         .home-hero-label { font-size:11.5px; font-weight:700; color:#DAB47E; letter-spacing:.14em; text-transform:uppercase; position:relative; }
@@ -1697,13 +1773,7 @@
             <div class="home-grid">
                 <!-- Coluna esquerda -->
                 <div class="home-col">
-                    <!-- Hero: versículo + propósito -->
-                    <div id="homeHero" class="home-hero-v2">
-                        <div class="home-hero-label">Propósito Mirae</div>
-                        <div class="home-hero-purpose" id="homeHeroPurpose">Personificar o amor de Cristo à beira do leito.</div>
-                        <div class="home-hero-verse" id="homeHeroVerse"></div>
-                    </div>
-                    <!-- DNA Mirae: PAVAP + MVV -->
+                    <!-- DNA Mirae: NOSSA ESSÊNCIA (Propósito + Missão/Visão + PAVAP) -->
                     <div id="homeDNA" class="home-dna-section"></div>
                     <!-- Tarefas de hoje -->
                     <div class="home-card">
@@ -1723,6 +1793,10 @@
                         <div class="home-widget-sub" id="homeTeamLabel">Todos os dias</div>
                         <button class="home-widget-btn" onclick="switchTab('tabDaily')">Registrar daily</button>
                     </div>
+                    <!-- Minha Mesa -->
+                    <div class="home-card" id="homeMinhaMesa" style="display:none;"></div>
+                    <!-- Mural de reconhecimento -->
+                    <div class="home-card" id="homeMural"></div>
                     <!-- Aniversários -->
                     <div class="home-card">
                         <div class="home-card-header">
@@ -2074,20 +2148,42 @@
 
         <!-- ========== DAILY ========== -->
         <div id="tabDaily" class="tab-content">
-            <div class="section-header">
-                <h2>Daily</h2>
-                <div style="display:flex;gap:0.6rem;align-items:center;flex-wrap:wrap;">
-                    <div style="display:flex;border:1.5px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;">
-                        <button id="dvDailys" onclick="setDailyView('dailys')" style="padding:0.5rem 1rem;border:none;background:var(--teal,#1E7D90);color:white;font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;">Dailys</button>
-                        <button id="dvMinhas" onclick="setDailyView('minhas')" style="padding:0.5rem 1rem;border:none;background:white;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;cursor:pointer;">Minhas Tarefas</button>
+            <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:18px;align-items:start;max-width:1080px;">
+                <!-- Coluna principal: header + conteúdo -->
+                <div>
+                    <div class="daily-card-wrap" style="margin-bottom:18px;">
+                        <div class="daily-tab-header">
+                            <div class="daily-tab-icon" id="dailyTabIcon"></div>
+                            <div>
+                                <div class="daily-tab-title">Registrar daily</div>
+                                <div class="daily-tab-sub">Todos os dias às 09h30 · <span id="dailySquadLabel"></span></div>
+                            </div>
+                        </div>
+                        <div class="daily-filters" style="margin-top:18px;">
+                            <div style="display:flex;border:1.5px solid var(--border);border-radius:10px;overflow:hidden;">
+                                <button id="dvDailys" onclick="setDailyView('dailys')" style="padding:0.45rem 0.9rem;border:none;background:var(--dark);color:white;font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;">Dailys</button>
+                                <button id="dvMinhas" onclick="setDailyView('minhas')" style="padding:0.45rem 0.9rem;border:none;background:white;color:var(--muted);font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;cursor:pointer;">Minhas Tarefas</button>
+                            </div>
+                            <select id="dailyMes" onchange="renderDaily()" style="padding:0.45rem 0.7rem;border:1.5px solid var(--border);border-radius:10px;font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;"></select>
+                            <select id="dailyAno" onchange="renderDaily()" style="padding:0.45rem 0.7rem;border:1.5px solid var(--border);border-radius:10px;font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;"></select>
+                            <select id="dailyEquipeFiltro" onchange="renderDaily()" style="padding:0.45rem 0.7rem;border:1.5px solid var(--border);border-radius:10px;font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;"></select>
+                            <button class="btn-primary" id="btnNovaDaily" onclick="openModalDaily()" style="display:none;padding:0.45rem 1rem;">+ Registrar Daily</button>
+                        </div>
+                        <div id="dailyConteudo"></div>
                     </div>
-                    <select id="dailyMes" onchange="renderDaily()" style="padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;"></select>
-                    <select id="dailyAno" onchange="renderDaily()" style="padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;"></select>
-                    <select id="dailyEquipeFiltro" onchange="renderDaily()" style="padding:0.5rem 0.8rem;border:1.5px solid var(--border);border-radius:var(--radius-sm);font-family:'Hanken Grotesk',sans-serif;font-size:0.82rem;"></select>
-                    <button class="btn btn-primary" id="btnNovaDaily" onclick="openModalDaily()" style="display:none;">+ Registrar Daily</button>
+                </div>
+                <!-- Coluna lateral: squad status -->
+                <div style="display:flex;flex-direction:column;gap:18px;">
+                    <div class="daily-squad-card" id="dailySquadCard" style="display:none;">
+                        <div class="daily-squad-label" id="dailySquadTitle"></div>
+                        <div class="daily-squad-sub" id="dailySquadProgress"></div>
+                    </div>
+                    <div class="daily-quem-card" id="dailyQuemCard" style="display:none;">
+                        <div class="daily-quem-title">Quem já registrou</div>
+                        <div class="daily-quem-list" id="dailyQuemList"></div>
+                    </div>
                 </div>
             </div>
-            <div id="dailyConteudo"></div>
         </div>
 
         <!-- ========== DASH EXECUÇÃO DAILYS ========== -->

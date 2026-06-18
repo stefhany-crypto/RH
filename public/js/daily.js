@@ -547,6 +547,40 @@ function setDailyView(v){
 // MESES_NOME declarado em globals.js
 function renderDaily(){
     const cont=document.getElementById('dailyConteudo');if(!cont)return;
+    // Atualiza header com squad info
+    const squadLbl=document.getElementById('dailySquadLabel');
+    if(squadLbl) squadLbl.textContent=user&&user.equipe?user.equipe:'';
+    const tabIcon=document.getElementById('dailyTabIcon');
+    if(tabIcon) tabIcon.innerHTML=ico('pencil-line',{size:20,color:'#023B48'});
+    // Squad card lateral
+    const squadCard=document.getElementById('dailySquadCard');
+    const squadTitle=document.getElementById('dailySquadTitle');
+    const squadProg=document.getElementById('dailySquadProgress');
+    const quemCard=document.getElementById('dailyQuemCard');
+    const quemList=document.getElementById('dailyQuemList');
+    if(user&&user.equipe){
+        const equipeColabs=(todosColabs.length?todosColabs:talentos).filter(function(c){return c.equipe===user.equipe&&c.ativo!==false;});
+        const hojeStr=hojeISO();
+        const dailyHoje=dailys.filter(function(d){return d.data===hojeStr&&d.equipe===user.equipe;});
+        const registrados=dailyHoje.length?(dailyHoje[0].presentes||[]):[];
+        const total=equipeColabs.length||registrados.length;
+        if(squadCard){squadCard.style.display='';if(squadTitle)squadTitle.innerHTML=ico('users',{size:14,color:'#DAB47E'})+' Squad '+esc(user.equipe);if(squadProg)squadProg.textContent=registrados.length+' de '+(total)+' ja registraram a daily de hoje.';}
+        const cores=['#023B48','#BE8C45','#3F8A6E','#D98E6A'];
+        if(quemCard&&quemList){
+            quemCard.style.display='';
+            if(equipeColabs.length){
+                quemList.innerHTML=equipeColabs.map(function(c,i){
+                    const reg=registrados.some(function(r){return r.id===c.id||r.nome===c.nome;});
+                    const badgeBg=reg?'#E6F0EB':'#FEF3C7';const badgeFg=reg?'#2F6F58':'#92400E';
+                    return '<div class="daily-quem-item"><div class="daily-quem-av" style="background:'+cores[i%4]+';">'+((c.nome||'?')[0].toUpperCase())+'</div><span class="daily-quem-nome">'+esc(c.nome)+'</span><span class="daily-quem-badge" style="background:'+badgeBg+';color:'+badgeFg+';">'+(reg?'Registrou':'Pendente')+'</span></div>';
+                }).join('');
+            } else if(registrados.length){
+                quemList.innerHTML=registrados.map(function(r,i){return '<div class="daily-quem-item"><div class="daily-quem-av" style="background:'+cores[i%4]+';">'+((r.nome||'?')[0].toUpperCase())+'</div><span class="daily-quem-nome">'+esc(r.nome)+'</span><span class="daily-quem-badge" style="background:#E6F0EB;color:#2F6F58;">Registrou</span></div>';}).join('');
+            } else {
+                quemList.innerHTML='<div style="color:var(--muted);font-size:13.5px;">Nenhum registro hoje ainda.</div>';
+            }
+        }
+    }
     const hoje=new Date();
     // filtros mês/ano
     const mSel=document.getElementById('dailyMes'),aSel=document.getElementById('dailyAno');

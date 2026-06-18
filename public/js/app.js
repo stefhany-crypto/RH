@@ -347,40 +347,68 @@ function verificarAniversario(){
 }
 
 function renderHomeExtras(){
-    const primeiroNome=(user?.nome||'').split(' ')[0];
-    // Versículo do dia (determinístico por data)
-    const diaDoAno=Math.floor((Date.now()-new Date(new Date().getFullYear(),0,0))/86400000);
-    const v=VERSICULOS[diaDoAno%VERSICULOS.length];
-    // Hero: versículo
-    const hv=document.getElementById('homeHeroVerse');
-    if(hv) hv.innerHTML=`”${v.t}” <span>— ${v.r}</span>`;
-    // DNA Mirae — nova estrutura dark
+    // DNA Mirae — NOSSA ESSÊNCIA (Propósito + Missão/Visão + PAVAP)
     const dna=document.getElementById('homeDNA');
     if(dna) dna.innerHTML=`
-        <div class=”home-dna-label”>Nossa Essência · PAVAP</div>
-        <div class=”home-dna-valores”>
-            ${(VALORES_MIRAE||[]).map(x=>`
-                <div class=”home-dna-valor”>
-                    <div class=”home-dna-medalha”>${x.l}</div>
-                    <div><div class=”home-dna-nome”>${x.n}</div><div class=”home-dna-desc”>${x.d}</div></div>
-                </div>`).join('')}
+        <div class="home-dna-label" style="display:flex;align-items:center;gap:8px;">${ico('compass',{size:14,color:'#DAB47E'})} NOSSA ESSÊNCIA</div>
+        <div style="margin:14px 0 18px;">
+            <div style="font-size:11.5px;font-weight:600;color:#DAB47E;letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px;">Propósito</div>
+            <div style="font-family:'Newsreader',serif;font-style:italic;font-size:17px;line-height:1.5;color:#fff;">Personificar o amor de Cristo à beira do leito (João 3:16).</div>
         </div>
-        <div class=”home-dna-credo”>
-            <div><div class=”home-credo-title”>Missão</div><div class=”home-credo-text”>Impulsionar a performance hospitalar com médicos selecionados, treinados e liderados com excelência.</div></div>
-            <div><div class=”home-credo-title”>Visão</div><div class=”home-credo-text”>Impactar 200 milhões de vidas por ano até 2046.</div></div>
+        <div class="home-dna-credo" style="margin-bottom:18px;">
+            <div><div class="home-credo-title">Missão</div><div class="home-credo-text">Impulsionar a performance hospitalar com médicos selecionados, treinados e liderados com excelência.</div></div>
+            <div><div class="home-credo-title">Visão</div><div class="home-credo-text">Impactar 200 milhões de vidas por ano até 2046.</div></div>
+        </div>
+        <div style="font-size:11.5px;font-weight:700;color:#DAB47E;letter-spacing:.08em;text-transform:uppercase;margin-bottom:14px;position:relative;">Valores · PAVAP</div>
+        <div class="home-dna-valores">
+            ${(VALORES_MIRAE||[]).map(x=>`
+                <div class="home-dna-valor">
+                    <div class="home-dna-medalha">${x.l}</div>
+                    <div><div class="home-dna-nome">${x.n}</div><div class="home-dna-desc">${x.d}</div></div>
+                </div>`).join('')}
         </div>`;
     // Team label no widget daily
     const tl=document.getElementById('homeTeamLabel');
-    if(tl&&user?.equipe) tl.textContent=`Todos os dias · ${user.equipe}`;
-
+    if(tl&&user&&user.equipe) tl.textContent=`Todos os dias · ${user.equipe}`;
+    // Minha mesa
+    const mesaEl=document.getElementById('homeMinhaMesa');
+    if(mesaEl){
+        const minhasMesas=(reservasMesas||[]).filter(r=>r.userId===user.id&&r.data===hojeISO());
+        if(minhasMesas.length){
+            mesaEl.style.display='';
+            mesaEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('armchair',{size:14,color:'#BE8C45'})} Minha mesa</div><span class="home-card-link" onclick="switchTab('tabMesas')">Reservar →</span></div>`
+                +minhasMesas.map(r=>`<div class="home-mesa-item"><span class="home-mesa-icon">${ico('map-pin',{size:16,color:'#BE8C45'})}</span><div><div class="home-mesa-nome">${esc(r.mesaNome||'Mesa '+r.mesaId)}</div><div class="home-mesa-sub">${esc(r.sala||'')}</div></div></div>`).join('')
+                +`<button class="home-mesa-btn" style="margin-top:8px;width:100%;" onclick="switchTab('tabMesas')">Reservar outro dia</button>`;
+        } else {
+            mesaEl.style.display='';
+            mesaEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('armchair',{size:14,color:'#BE8C45'})} Minha mesa</div></div><div class="home-mesa-item"><span class="home-mesa-icon">${ico('map-pin',{size:16,color:'#BE8C45'})}</span><div><div class="home-mesa-nome" style="color:var(--muted);font-size:13.5px;">Nenhuma mesa reservada hoje</div></div></div><button class="home-mesa-btn" style="margin-top:8px;width:100%;" onclick="switchTab('tabMesas')">Reservar mesa</button>`;
+        }
+    }
+    // Mural de reconhecimento
+    const muralEl=document.getElementById('homeMural');
+    if(muralEl){
+        const cores=['#023B48','#BE8C45','#3F8A6E','#D98E6A'];
+        const feed=(kudos||[]).slice(0,4);
+        muralEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('heart',{size:14,color:'#BE8C45'})} Mural de reconhecimento</div><span class="home-mural-tag">Aberto a todos</span></div>
+            <div class="home-mural-form">
+                <input class="home-mural-input" id="muralParaInput" placeholder="Reconhecer quem?" style="margin-bottom:8px;height:36px;padding:8px 12px;">
+                <textarea class="home-mural-input" id="muralTextoInput" placeholder="Escreva um reconhecimento sincero..." rows="2"></textarea>
+                <div style="display:flex;justify-content:flex-end;"><button class="home-mural-send" onclick="enviarKudo()">${ico('send',{size:14,color:'#fff'})} Reconhecer</button></div>
+            </div>
+            ${feed.length?`<div class="home-mural-feed">${feed.map((k,i)=>`
+                <div class="home-mural-item">
+                    <div class="home-mural-av" style="background:${cores[i%cores.length]};">${(k.deNome||k.de||'?')[0].toUpperCase()}</div>
+                    <div><div class="home-mural-text">${esc(k.texto||k.mensagem||'')}</div>
+                    <div class="home-mural-meta"><b>${esc(k.deNome||k.de||'')}</b> reconheceu <b>${esc(k.paraNome||k.para||'')}</b> · ${esc(k.quando||k.data||'')}</div></div>
+                </div>`).join('')}</div>`:'<div style="color:var(--muted);font-size:13.5px;padding:4px 0;">Seja o primeiro a reconhecer alguém hoje!</div>'}`;
+    }
     // Tarefas de hoje (minhas)
     const hojeStr=hojeISO();
     const minhas=dailyTarefas.filter(t=>t.responsavelId===user.id&&t.data===hojeStr);
     const th=document.getElementById('homeTarefasHoje');
     if(th)th.innerHTML=minhas.length?minhas.map(t=>linhaTarefaHTML(t,true)).join(''):
         '<div style="color:var(--muted);font-size:0.88rem;padding:0.5rem 0;">Nenhuma tarefa registrada para você hoje. <br><span style="font-size:0.8rem;">Aparecerão aqui quando seu líder registrar a daily.</span></div>';
-
-    // Aniversários (próximos 30 dias)
+    // Aniversários (próximos 45 dias)
     const av=document.getElementById('homeAniversarios');
     if(av){
         const hoje=new Date();const ano=hoje.getFullYear();
@@ -401,11 +429,8 @@ function renderHomeExtras(){
                 ${tag}
             </div>`;}).join(''):'<div style="color:var(--muted);font-size:0.88rem;">Nenhum aniversário cadastrado nos próximos dias.<br><span style="font-size:0.8rem;">Cadastre as datas de nascimento em Talentos.</span></div>';
     }
-
-    // Surpresa de aniversário (uma vez no dia)
     verificarAniversario();
 }
-
 function renderHome(){
     renderHomeExtras();
     // Saudação e data
@@ -472,62 +497,92 @@ function renderMeuPDI(){
     const minhasAvals=avaliacoes.filter(a=>a.colaboradorId===user.id).sort((a,b)=>{if(a.ano!==b.ano)return b.ano-a.ano;return b.trimestre-a.trimestre;});
     const ultimaAval=minhasAvals[0];
     const t=talentos.find(ta=>ta.id===user.id)||{nome:user.nome,equipe:user.equipe,salario:0};
-    const valorBonus=ultimaAval&&t.salario?calcularValorBonus(getMultiplicadorVigente(t.equipe,ultimaAval.trimestre,ultimaAval.ano),t.salario,ultimaAval.bonusPercent):0;
-    if(!ultimaAval){container.innerHTML='<div style="text-align:center;padding:4rem;color:var(--text-muted);"><div style="font-size:3rem;margin-bottom:1rem;"></div><h3>Nenhuma avaliação registrada ainda</h3><p style="margin-top:0.5rem;">Aguarde sua primeira avaliação para ver seu PDI aqui.</p></div>';return;}
-    const corNota=ultimaAval.notaFinal>=80?'#2E7D32':ultimaAval.notaFinal>=60?'#E1B87F':'#E74C3C';
-    let html='<div class="meu-pdi-hero">'
-        +'<div><p style="opacity:0.8;font-size:0.85rem;margin-bottom:0.3rem;">Última Avaliação — Q'+ultimaAval.trimestre+'/'+ultimaAval.ano+'</p>'
-        +'<h2 style="font-size:1.5rem;margin-bottom:0.5rem;">'+user.nome+'</h2>'
-        +'<p style="opacity:0.7;font-size:0.9rem;">'+(t.equipe||user.equipe||'-')+' &nbsp;|&nbsp; '+(user.cargo||'-')+'</p></div>'
-        +'<div style="text-align:center;"><div style="font-size:0.8rem;opacity:0.8;margin-bottom:0.3rem;">NOTA FINAL</div>'
-        +'<div class="meu-pdi-nota" style="color:'+corNota+';">'+ultimaAval.notaFinal.toFixed(1)+'</div>'
-        +'<div style="margin-top:0.5rem;font-size:1rem;font-weight:700;">'+ultimaAval.bonusPercent+'% de Bônus</div>'
-        +(valorBonus>0?'<div style="font-size:0.9rem;opacity:0.9;margin-top:0.2rem;">R$ '+valorBonus.toLocaleString('pt-BR',{minimumFractionDigits:2})+'</div>':'')
-        +'</div>'
-        +'<div style="text-align:center;"><div style="font-size:0.8rem;opacity:0.8;margin-bottom:0.5rem;">META DE BÔNUS</div>'
-        +'<div style="width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,0.15);display:flex;align-items:center;justify-content:center;flex-direction:column;border:4px solid '+(ultimaAval.notaFinal>=80?'#2E7D32':'rgba(255,255,255,0.4)')+';">'
-        +'<span style="display:flex;align-items:center;justify-content:center;">'+(ultimaAval.notaFinal>=80?ico('award',{size:32,color:'#2E7D32'}):ultimaAval.notaFinal>=70?ico('target',{size:32,color:'#E1B87F'}):ultimaAval.notaFinal>=60?ico('chart',{size:32,color:'#EF6C00'}):ico('alert',{size:32,color:'rgba(255,255,255,0.6)'}))+'</span>'
-        +'<span style="font-size:0.75rem;opacity:0.9;margin-top:0.2rem;">'+(ultimaAval.notaFinal>=80?'Meta!':ultimaAval.notaFinal>=70?'Quase!':ultimaAval.notaFinal>=60?'Caminho':'')+'</span>'
-        +'</div></div></div>';
-    // Competências
-    if(ultimaAval.scores&&ultimaAval.scores.length>0){
-        html+='<div style="background:white;border-radius:15px;padding:1.5rem;box-shadow:var(--shadow);margin-bottom:1.5rem;"><h3 style="margin-bottom:1.5rem;color:var(--mirae-dark);">Desempenho por Competência</h3>';
+    if(!ultimaAval){
+        container.innerHTML=`<div class="pdi-page" style="display:block;"><div class="pdi-comp-card" style="text-align:center;padding:48px;"><div style="width:62px;height:62px;border-radius:16px;background:#F1ECE2;color:#BE8C45;display:flex;align-items:center;justify-content:center;margin:0 auto 18px;">${ico('target',{size:28,color:'#BE8C45'})}</div><h2 style="font-family:'Newsreader',serif;font-weight:500;font-size:24px;margin:0 0 8px;">Nenhuma avaliação ainda</h2><p style="color:var(--muted);font-size:15px;margin:0;max-width:360px;line-height:1.6;margin:0 auto;">Aguarde sua primeira avaliação para ver seu PDI aqui.</p></div></div>`;
+        return;
+    }
+    // Trimestres disponíveis
+    const tris=minhasAvals.map(a=>({key:a.id,label:`${a.trimestre}° tri`,ano:a.ano,tri:a.trimestre}));
+    if(!window._pdiTriSel)window._pdiTriSel=ultimaAval.id;
+    const selId=window._pdiTriSel;
+    const aval=minhasAvals.find(a=>a.id===selId)||ultimaAval;
+    // Competências com barras
+    const cores={0:'#023B48',1:'#3F8A6E',2:'#DAB47E',3:'#D98E6A',4:'#023B48'};
+    let compRows='';
+    if(aval.scores&&aval.scores.length>0){
         let idx=0;
-        PDI_GROUPS.forEach(g=>{
-            const scores=ultimaAval.scores.slice(idx,idx+g.c.length);
+        PDI_GROUPS.forEach((g,gi)=>{
+            const scores=aval.scores.slice(idx,idx+g.c.length);
             const media=scores.length?scores.reduce((a,b)=>a+b,0)/scores.length:0;
+            const notaEm5=(media/110*5).toFixed(1);
             const pct=Math.round(media/110*100);
-            const cor=pct>=80?'#2E7D32':pct>=60?'#1E7D90':pct>=40?'#E1B87F':'#E74C3C';
-            html+='<div class="competencia-bar"><span class="competencia-label">'+(g.n.split('.')[1]?.trim()||g.n.substring(0,20))+'</span>'
-                +'<div class="competencia-track"><div class="competencia-fill" style="width:'+pct+'%;background:'+cor+';"></div></div>'
-                +'<span style="font-size:0.8rem;font-weight:700;color:'+cor+';min-width:35px;text-align:right;">'+pct+'%</span></div>';
+            const cor=cores[gi%5];
+            const nome=g.n.split('.')[1]?.trim()||g.n.substring(0,22);
+            const desc=g.desc||'';
+            compRows+=`<div class="pdi-comp-row">
+                <div class="pdi-comp-head"><span class="pdi-comp-nome">${esc(nome)}</span><span class="pdi-comp-nota">${notaEm5}<small>/5</small></span></div>
+                <div class="pdi-comp-track"><div class="pdi-comp-fill" style="width:${pct}%;background:${cor};"></div></div>
+                ${desc?`<p class="pdi-comp-desc">${esc(desc)}</p>`:''}
+            </div>`;
             idx+=g.c.length;
         });
-        html+='</div>';
     }
-    // Histórico
-    html+='<div style="background:white;border-radius:15px;padding:1.5rem;box-shadow:var(--shadow);margin-bottom:1.5rem;"><h3 style="margin-bottom:1.2rem;color:var(--mirae-dark);">Histórico de Avaliações</h3>';
-    minhasAvals.forEach(a=>{
-        const cor=a.notaFinal>=80?'#2E7D32':a.notaFinal>=60?'#EF6C00':'#E74C3C';
-        const bg=a.notaFinal>=80?'#E8F5E9':a.notaFinal>=60?'#FFF3E0':'#FFEBEE';
-        html+='<div class="historico-item"><div><strong>Q'+a.trimestre+'/'+a.ano+'</strong></div>'
-            +'<div style="font-size:0.85rem;color:var(--text-muted);">Registrado por '+(a.avaliadorNome||'Sistema')+'</div>'
-            +'<div style="display:flex;gap:0.8rem;align-items:center;">'
-            +'<span style="font-weight:800;color:'+cor+';font-size:1.1rem;">'+a.notaFinal.toFixed(1)+'</span>'
-            +'<span style="background:'+bg+';color:'+cor+';padding:0.2rem 0.6rem;border-radius:20px;font-size:0.78rem;font-weight:700;">'+a.bonusPercent+'% bônus</span>'
-            +'<button class="btn-small" style="background:#E3F2FD;color:#1565C0;max-width:36px;flex:none;" onclick="baixarPDI(\"'+a.id+'\")"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;display:inline-block;"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg></button>'
-            +'</div></div>';
-    });
-    html+='</div>';
-    // Gráfico
-    html+='<div style="background:white;border-radius:15px;padding:1.5rem;box-shadow:var(--shadow);"><h3 style="margin-bottom:1.2rem;color:var(--mirae-dark);">Minha Evolução</h3><div style="height:280px;"><canvas id="meuPdiChart"></canvas></div></div>';
-    container.innerHTML=html;
+    // Nota em escala 5
+    const mediaEm5=(aval.notaFinal/110*5).toFixed(1);
+    const evolucao=minhasAvals.length>1?((aval.notaFinal-minhasAvals[1].notaFinal)/110*5).toFixed(1):null;
+    // Feedback do líder
+    const avaliadorNome=aval.avaliadorNome||'Seu líder';
+    const avaliadorInicial=(avaliadorNome[0]||'L').toUpperCase();
+    const feedbackTxt=aval.observacoes||aval.feedback||'Nenhum feedback registrado para este trimestre.';
+    // Plano de ação (itens do PDI)
+    const planos=aval.planos||aval.acoes||[];
+    const planoHTML=planos.length?planos.map(p=>{
+        const feito=p.feito||p.concluido;
+        return`<div class="pdi-plano-item">
+            <div class="pdi-plano-check" style="background:${feito?'#3F8A6E':'transparent'};border:2px solid ${feito?'#3F8A6E':'#cdd5d6'};">${feito?ico('check',{size:11,color:'#fff'}):''}</div>
+            <span class="pdi-plano-txt" style="${feito?'color:#9aa9ad;text-decoration:line-through;':''}">${esc(p.texto||p.descricao||p)}</span>
+        </div>`;}).join(''):'<div style="color:var(--muted);font-size:13.5px;">Nenhum item de plano de ação registrado.</div>';
+    container.innerHTML=`
+    <div class="pdi-page">
+        <div class="pdi-comp-card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px;">
+                <h2 class="pdi-comp-title">Avaliação por competências</h2>
+                <div class="pdi-tri-bar">
+                    ${tris.map(tr=>`<button class="pdi-tri-btn${tr.key===selId?' active':''}" onclick="window._pdiTriSel='${tr.key}';renderMeuPDI();">${tr.label}</button>`).join('')}
+                </div>
+            </div>
+            <div class="pdi-comp-list">${compRows||'<div style="color:var(--muted);">Sem dados de competências nesta avaliação.</div>'}</div>
+        </div>
+        <div class="pdi-side">
+            <div class="pdi-media-card">
+                <div class="pdi-media-label">Média do Trimestre</div>
+                <div class="pdi-media-num">${mediaEm5}</div>
+                <div class="pdi-media-sub">de 5,0${evolucao?` · evolução de ${Number(evolucao)>=0?'+':''}${evolucao} vs. tri. anterior`:''}</div>
+            </div>
+            <div class="pdi-info-card">
+                <div class="pdi-info-head"><span class="pdi-info-head-icon">${ico('message-square',{size:17,color:'#BE8C45'})}</span><span class="pdi-info-head-title">Feedback do líder</span></div>
+                <p class="pdi-info-body">${esc(feedbackTxt)}</p>
+                <div class="pdi-feedback-autor">
+                    <div class="pdi-feedback-av">${avaliadorInicial}</div>
+                    <div><div class="pdi-feedback-name">${esc(avaliadorNome)}</div><div class="pdi-feedback-role">${esc(aval.avaliadorCargo||'Líder')}</div></div>
+                </div>
+            </div>
+            <div class="pdi-info-card">
+                <div class="pdi-info-head"><span class="pdi-info-head-icon">${ico('route',{size:17,color:'#3F8A6E'})}</span><span class="pdi-info-head-title">Plano de ação</span></div>
+                <div class="pdi-plano-list">${planoHTML}</div>
+            </div>
+            <div class="pdi-info-card">
+                <div class="pdi-info-head"><span class="pdi-info-head-icon">${ico('chart',{size:17,color:'#023B48'})}</span><span class="pdi-info-head-title">Minha evolução</span></div>
+                <div style="height:180px;"><canvas id="meuPdiChart"></canvas></div>
+            </div>
+        </div>
+    </div>`;
     renderMeuVTVR();
     const sorted=[...minhasAvals].sort((a,b)=>a.ano!==b.ano?a.ano-b.ano:a.trimestre-b.trimestre);
     setTimeout(()=>{
         const cv=document.getElementById('meuPdiChart');if(!cv)return;
         if(charts.meuPdi)charts.meuPdi.destroy();
-        charts.meuPdi=new Chart(cv.getContext('2d'),{type:'line',data:{labels:sorted.map(a=>'Q'+a.trimestre+'/'+a.ano),datasets:[{label:'Nota',data:sorted.map(a=>a.notaFinal),borderColor:'#1E7D90',backgroundColor:'rgba(30,125,144,0.1)',tension:0.4,fill:true,pointBackgroundColor:sorted.map(a=>a.notaFinal>=80?'#2E7D32':a.notaFinal>=60?'#E1B87F':'#E74C3C'),pointRadius:8}]},options:{maintainAspectRatio:false,scales:{y:{min:0,max:110,grid:{color:'#f0f0f0'}}},plugins:{tooltip:{callbacks:{afterLabel:ctx=>'Bônus: '+(sorted[ctx.dataIndex]?.bonusPercent||0)+'%'}}}}});
+        charts.meuPdi=new Chart(cv.getContext('2d'),{type:'line',data:{labels:sorted.map(a=>`Q${a.trimestre}/${a.ano}`),datasets:[{label:'Nota',data:sorted.map(a=>(a.notaFinal/110*5)),borderColor:'#023B48',backgroundColor:'rgba(2,59,72,0.08)',tension:0.4,fill:true,pointBackgroundColor:sorted.map(a=>a.notaFinal>=88?'#3F8A6E':a.notaFinal>=66?'#DAB47E':'#D98E6A'),pointRadius:6}]},options:{maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'#F1ECE2'},ticks:{callback:v=>v.toFixed(1)}}},plugins:{tooltip:{callbacks:{afterLabel:ctx=>`Bônus: ${sorted[ctx.dataIndex]?.bonusPercent||0}%`}}}}});
     },100);
 }
 

@@ -155,31 +155,46 @@ function kbRenderBoard(){
 }
 
 function kbHtmlCol(col,cards,podeEditar){
-    return `<div style="display:flex;flex-direction:column;flex:1;min-width:240px;max-width:380px;">
-        <div class="kb-col-stripe" style="background:${col.cor||'#9CA3AF'};"></div>
-        <div class="kb-col" style="max-width:none;min-width:0;flex:1;">
-            <div class="kb-col-head"><span class="kb-col-nome">${esc(col.nome)}</span><span class="kb-col-count">${cards.length}</span></div>
-            <div class="kb-col-body" id="kbCol-${col.id}" ondragover="kbDragOver(event,'${col.id}')" ondrop="kbDrop(event,'${col.id}')" ondragleave="kbDragLeave(event)">
-                ${cards.length?cards.map(c=>kbHtmlCard(c)).join(''):`<div class="kb-empty-col">Nenhum card</div>`}
+    return `<div class="kb-col">
+        <div class="kb-col-head">
+            <div style="display:flex;align-items:center;gap:9px;">
+                <span class="kb-col-dot" style="background:${col.cor||'#9CA3AF'};"></span>
+                <span class="kb-col-nome">${esc(col.nome)}</span>
+                <span class="kb-col-count">${cards.length}</span>
             </div>
-            ${podeEditar?`<div class="kb-col-add"><button class="kb-col-add-btn" onclick="kbNovoCard('${col.id}')">${ico('plus',{size:14})} Adicionar card</button></div>`:''}
+            ${podeEditar?`<button style="background:none;border:0;color:#8a979b;cursor:pointer;padding:2px;" onclick="kbNovoCard('${col.id}')" title="Adicionar card">${ico('plus',{size:16,color:'#8a979b'})}</button>`:''}
         </div>
+        <div class="kb-col-body" id="kbCol-${col.id}" ondragover="kbDragOver(event,'${col.id}')" ondrop="kbDrop(event,'${col.id}')" ondragleave="kbDragLeave(event)">
+            ${cards.length?cards.map(c=>kbHtmlCard(c)).join(''):`<div class="kb-empty-col" style="color:#8a979b;font-size:13px;text-align:center;padding:16px 0;">Nenhum card</div>`}
+        </div>
+        ${podeEditar?`<div class="kb-col-add"><button class="kb-col-add-btn" onclick="kbNovoCard('${col.id}')">${ico('plus',{size:14})} Adicionar card</button></div>`:''}
     </div>`;
 }
 
 function kbHtmlCard(card){
     const prio=card.prioridade;
-    const prioHtml=prio?`<span class="kb-card-chip kb-chip-${prio}">${prio.charAt(0).toUpperCase()+prio.slice(1)}</span>`:'';
+    const prioColors={urgente:{bg:'#FEE2E2',fg:'#C62828'},alta:{bg:'#FEF3C7',fg:'#92400E'},media:{bg:'#DBEAFE',fg:'#1D4ED8'},baixa:{bg:'#DCFCE7',fg:'#166534'}};
+    const pc=prioColors[prio]||{bg:'#F1ECE2',fg:'#61757B'};
+    const prioHtml=prio?`<span class="kb-card-chip" style="background:${pc.bg};color:${pc.fg};">${prio.charAt(0).toUpperCase()+prio.slice(1)}</span>`:'';
     const delegado=card.criadoPorId&&card.criadoPorId!==user.id;
-    const delegadoHtml=delegado?`<div class="kb-mirror-badge">${ico('share',{size:11})} De: ${esc(card.criadoPorNome||'')}</div>`:'';
+    const delegadoHtml=delegado?`<div class="kb-mirror-badge" style="font-size:11px;color:var(--muted);margin-bottom:6px;">${ico('share',{size:11})} De: ${esc(card.criadoPorNome||'')}</div>`:'';
     let prazoHtml='';
-    if(card.prazo){const vencido=card.prazo<hojeISO()&&card.coluna!=='concluido';prazoHtml=`<span class="kb-card-chip ${vencido?'kb-chip-vencido':'kb-chip-prazo'}">${card.prazo.split('-').reverse().join('/')}</span>`;}
+    if(card.prazo){
+        const vencido=card.prazo<hojeISO()&&card.coluna!=='concluido';
+        const prazoLabel=card.prazo===hojeISO()?'Hoje':card.prazo.split('-').reverse().slice(0,2).join(' ');
+        prazoHtml=`<span class="kb-card-date" style="${vencido?'color:#C62828;':''}">${ico('calendar',{size:12,color:vencido?'#C62828':'#8a979b'})} ${prazoLabel}</span>`;
+    }
+    const av=(card.responsavelNome||'?')[0].toUpperCase();
+    const avColor=card.criadoPorId===user.id?'#023B48':'#BE8C45';
     return `<div class="kb-card" draggable="true" ondragstart="kbDragStart(event,'${card.id}')" ondragend="kbDragEnd(event)" onclick="kbAbrirCard('${card.id}')">
         ${delegadoHtml}
+        ${prioHtml}
         <div class="kb-card-titulo">${esc(card.titulo||'')}</div>
-        ${card.descricao?`<div class="kb-card-desc">${esc(card.descricao)}</div>`:''}
-        <div class="kb-card-meta">${prioHtml}${prazoHtml}</div>
-        <div class="kb-card-resp"><div class="kb-resp-avatar">${(card.responsavelNome||'?')[0].toUpperCase()}</div><span>${esc(card.responsavelNome||'')}</span></div>
+        ${card.descricao?`<div class="kb-card-desc" style="margin-top:6px;">${esc(card.descricao)}</div>`:''}
+        <div class="kb-card-footer">
+            ${prazoHtml||'<span></span>'}
+            <div class="kb-card-av" style="background:${avColor};" title="${esc(card.responsavelNome||'')}">${av}</div>
+        </div>
     </div>`;
 }
 
