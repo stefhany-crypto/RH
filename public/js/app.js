@@ -125,10 +125,8 @@ function buildTabs(){
         {id:'tabAnalytics',  icon:'chart',    label:'Análises',          show:true,                              group:'analytics'},
         {id:'tabDenuncias',  icon:'lock',     label:'Denúncias',         show:P.isMaster()||P.isRH(),            group:'analytics'},
     ];
-    const groups={principal:'Principal',gestao:'Gestão',analytics:'Analytics'};
-    let html='';let lastGroup='';
+    let html='';
     defs.filter(d=>d.show).forEach(d=>{
-        if(d.group!==lastGroup){html+=`<div class="sidebar-nav-label">${groups[d.group]}</div>`;lastGroup=d.group;}
         html+=`<button class="tab-btn" onclick="switchTab('${d.id}',event)"><span class="tab-btn-icon">${ico(d.icon,{size:18})}</span>${d.label}</button>`;
     });
     tabs.innerHTML=html;
@@ -373,7 +371,7 @@ function renderHomeExtras(){
     // Minha mesa
     const mesaEl=document.getElementById('homeMinhaMesa');
     if(mesaEl){
-        const minhasMesas=(reservasMesas||[]).filter(r=>r.userId===user.id&&r.data===hojeISO());
+        const minhasMesas=(window._reservasDia?Object.values(window._reservasDia).filter(r=>r.userId===user.id):[])
         if(minhasMesas.length){
             mesaEl.style.display='';
             mesaEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('armchair',{size:14,color:'#BE8C45'})} Minha mesa</div><span class="home-card-link" onclick="switchTab('tabMesas')">Reservar →</span></div>`
