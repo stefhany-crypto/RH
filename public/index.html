@@ -1458,6 +1458,10 @@
         .ei-q4 .ei-q-badge { background:#F1F5F9; color:var(--muted); }
         .ei-card { display:flex; align-items:flex-start; gap:0.5rem; padding:0.45rem 0.6rem; background:var(--white); border:1px solid var(--hairline); border-radius:10px; margin-bottom:0.4rem; cursor:pointer; transition:box-shadow .15s; }
         .ei-card:hover { box-shadow:var(--shadow-sm); }
+        .ei-card { cursor:grab; }
+        .ei-card:active { cursor:grabbing; }
+        .ei-card.ei-dragging { opacity:0.45; }
+        .ei-q.ei-drop { border-color:var(--teal); background:rgba(30,125,144,0.06); outline:2px dashed var(--teal); outline-offset:-4px; }
         .ei-card-title { font-size:0.82rem; color:var(--dark); flex:1; line-height:1.35; }
         .ei-card-meta { font-size:0.7rem; color:var(--muted); margin-top:2px; }
         .ei-unclass { background:var(--white); border:1.5px dashed var(--border); border-radius:var(--radius-md); padding:1rem; margin-bottom:1rem; }

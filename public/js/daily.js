@@ -164,7 +164,7 @@ function ttRenderEisenhower(){
         const key=ttKey(t);
         const prazoStr=t.prazo?` · ${fmtDataBR(t.prazo)}`:'';
         const prioStr=t.prioridade?` · ${TT_PRIO[t.prioridade]?.label||''}` :'';
-        return `<div class="ei-card" onclick="ttAbrirDetalhe('${jsq(key)}')">
+        return `<div class="ei-card" draggable="true" ondragstart="ttDragStart(event,'${jsq(key)}')" ondragend="ttDragEnd(event)" onclick="ttAbrirDetalhe('${jsq(key)}')">
             <div style="flex:1;min-width:0;">
                 <div class="ei-card-title">${esc(t.titulo||'(sem título)')}</div>
                 ${(prazoStr||prioStr)?`<div class="ei-card-meta">${esc((prazoStr+prioStr).slice(3))}</div>`:''}
@@ -172,8 +172,8 @@ function ttRenderEisenhower(){
             ${t._daily?`<span style="font-size:0.65rem;color:var(--teal);font-weight:600;white-space:nowrap;">Daily</span>`:''}
         </div>`;
     }
-    function quadrante(cls,n,badge,hint,items){
-        return `<div class="ei-q ${cls}">
+    function quadrante(cls,n,badge,hint,items,urg,imp){
+        return `<div class="ei-q ${cls}" ondragover="ttDragOver(event)" ondragleave="ttDragLeave(event)" ondrop="ttDropEisenhower(event,${urg},${imp})">
             <div class="ei-q-header">
                 <span class="ei-q-badge">${badge}</span>
                 <span class="ei-q-title">${n}</span>
@@ -186,16 +186,53 @@ function ttRenderEisenhower(){
     }
     cont.innerHTML=`
         <div class="ei-grid">
-            ${quadrante('ei-q1','Fazer Agora','Urgente + Importante','Execute imediatamente — não delegue.',q1)}
-            ${quadrante('ei-q2','Agendar','Importante · Não urgente','Planeje com antecedência — é o que mais gera resultado.',q2)}
-            ${quadrante('ei-q3','Delegar','Urgente · Não importante','Alguém pode fazer por você.',q3)}
-            ${quadrante('ei-q4','Eliminar','Não urgente · Não importante','Avalie se realmente precisa ser feito.',q4)}
+            ${quadrante('ei-q1','Fazer Agora','Urgente + Importante','Execute imediatamente — não delegue.',q1,true,true)}
+            ${quadrante('ei-q2','Agendar','Importante · Não urgente','Planeje com antecedência — é o que mais gera resultado.',q2,false,true)}
+            ${quadrante('ei-q3','Delegar','Urgente · Não importante','Alguém pode fazer por você.',q3,true,false)}
+            ${quadrante('ei-q4','Eliminar','Não urgente · Não importante','Avalie se realmente precisa ser feito.',q4,false,false)}
         </div>
         ${nc.length?`<div class="ei-unclass">
             <div class="ei-unclass-title">${ico('alert',{size:13,color:'var(--muted)'})} Não classificadas — ${nc.length} tarefa(s)</div>
             <div style="font-size:0.77rem;color:var(--muted);margin-bottom:0.7rem;">Clique em cada tarefa e marque Urgente / Importante para posicioná-la na matriz.</div>
             ${nc.map(cardHTML).join('')}
         </div>`:''}`;
+}
+
+// ── Drag-and-drop entre quadrantes da matriz de Eisenhower ──
+let _ttDragKey=null;
+function ttDragStart(e,key){
+    _ttDragKey=key;
+    if(e.dataTransfer){ e.dataTransfer.effectAllowed='move'; try{e.dataTransfer.setData('text/plain',key);}catch(_){} }
+    if(e.target&&e.target.classList) e.target.classList.add('ei-dragging');
+}
+function ttDragEnd(e){
+    if(e.target&&e.target.classList) e.target.classList.remove('ei-dragging');
+    document.querySelectorAll('.ei-q.ei-drop').forEach(q=>q.classList.remove('ei-drop'));
+}
+function ttDragOver(e){
+    e.preventDefault();
+    if(e.dataTransfer) e.dataTransfer.dropEffect='move';
+    e.currentTarget.classList.add('ei-drop');
+}
+function ttDragLeave(e){
+    // só remove se o ponteiro saiu de fato do quadrante (não para um filho)
+    if(!e.currentTarget.contains(e.relatedTarget)) e.currentTarget.classList.remove('ei-drop');
+}
+async function ttDropEisenhower(e,urg,imp){
+    e.preventDefault();
+    e.currentTarget.classList.remove('ei-drop');
+    let key=_ttDragKey;
+    if(!key&&e.dataTransfer){ try{key=e.dataTransfer.getData('text/plain');}catch(_){} }
+    _ttDragKey=null;
+    if(!key)return;
+    const t=ttFindByKey(key)||ttUnificadas().find(x=>ttKey(x)===key);
+    if(!t||!t.id)return;
+    if(t.urgente===urg&&t.importante===imp)return; // já está neste quadrante
+    await guardado('ttDrop_'+t.id, async () => {
+        await db.collection('tarefasPessoais').doc(t.id).update({urgente:urg,importante:imp,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+        t.urgente=urg; t.importante=imp;
+        ttRenderLista();
+    });
 }
 
 function ttRenderLista(){
@@ -1031,6 +1068,7 @@ Object.assign(window, {
     ttUnificadas, ttKey, ttFindByKey, ttListasCustom, ttFiltrar,
     ttRenderRail, ttFmtPrazo, ttTarefaHTML, _eiLabel,
     ttSetEisenhower, ttRenderEisenhower, ttRenderLista, ttRenderSelBar,
+    ttDragStart, ttDragEnd, ttDragOver, ttDragLeave, ttDropEisenhower,
     ttToggleSelMode, ttToggleSelecao, ttEnviarSelecionadas, ttEnviarParaDaily,
     ttExportarPDF, ttAbrirLista, ttSetSort, ttToggleConcluidas,
     ttNovaLista, ttQuickAddKey, ttAdicionar, ttGarantirShadow,
