@@ -1,4 +1,4 @@
-const CACHE = 'mirae-pdi-v61';
+﻿const CACHE = 'mirae-pdi-v62';
 const ASSETS = [
     '/', '/index.html', '/manifest.json',
     '/js/globals.js', '/js/utils.js', '/js/permissoes.js', '/js/app.js',
@@ -29,22 +29,22 @@ self.addEventListener('fetch', e => {
 
     const url = new URL(e.request.url);
     const isNav    = e.request.mode === 'navigate';
-    // JS da aplicação (não vendor): precisa estar SEMPRE fresco quando online,
-    // senão correções não chegam ao usuário (ficava preso em código antigo).
+    // JS da aplicaÃ§Ã£o (nÃ£o vendor): precisa estar SEMPRE fresco quando online,
+    // senÃ£o correÃ§Ãµes nÃ£o chegam ao usuÃ¡rio (ficava preso em cÃ³digo antigo).
     const isAppJs  = url.pathname.startsWith('/js/') && url.pathname.endsWith('.js') && !url.pathname.startsWith('/js/vendor/');
-    // Bibliotecas de terceiros, CSS, imagens e fontes: grandes e estáveis → cache-first.
+    // Bibliotecas de terceiros, CSS, imagens e fontes: grandes e estÃ¡veis â†’ cache-first.
     const isStatic = !isAppJs && (/\.(css|png|svg|webp|ico|woff2?|ttf)$/.test(url.pathname) || url.pathname.startsWith('/js/vendor/') || url.pathname.endsWith('.js'));
 
     if(isNav || isAppJs){
-        // HTML e JS da aplicação: network-first (sempre fresco online; cache só
-        // como fallback offline). Elimina o problema de "código antigo em cache".
+        // HTML e JS da aplicaÃ§Ã£o: network-first (sempre fresco online; cache sÃ³
+        // como fallback offline). Elimina o problema de "cÃ³digo antigo em cache".
         e.respondWith(
             fetch(new Request(e.request.url, { cache: 'no-store' }))
                 .then(res => { caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res; })
                 .catch(() => caches.match(e.request))
         );
     } else if(isStatic){
-        // vendor/CSS/imagens/fontes: cache-first — bateu no cache, não vai à rede
+        // vendor/CSS/imagens/fontes: cache-first â€” bateu no cache, nÃ£o vai Ã  rede
         e.respondWith(
             caches.match(e.request).then(cached => {
                 if(cached) return cached;
@@ -55,7 +55,7 @@ self.addEventListener('fetch', e => {
             })
         );
     } else {
-        // Demais requisições: network-first com fallback
+        // Demais requisiÃ§Ãµes: network-first com fallback
         e.respondWith(
             fetch(e.request)
                 .then(res => { caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res; })
