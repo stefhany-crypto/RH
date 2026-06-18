@@ -49,7 +49,9 @@
       "Bash(grep -n \"\\\\.login-page\\\\|\\\\.sidebar {$\\\\|\\\\.card {$\\\\|\\\\.topbar {$\\\\|\\\\.main-content {$\\\\|\\\\.btn-primary {$\\\\|\\\\.tab-content {$\\\\|\\\\.modal {$\\\\|\\\\.topbar-title\\\\|\\\\.sidebar-logo {$\\\\|\\\\.sidebar-nav {$\" public/index.html)",
       "PowerShell(cd C:\\\\mirae-app; $r = Invoke-WebRequest \"https://pdimirae.web.app/index.html\"; $r.Content | Select-String \"Newsreader|Hanken|Bem-vindo de volta|023B48\" | Select-Object -First 5)",
       "Bash(curl -s \"https://pdimirae.web.app/index.html\")",
-      "PowerShell(cd C:\\\\mirae-app; $c = Get-Content public\\\\index.html -Raw -Encoding UTF8; $idx = $c.IndexOf\\('</style>'\\); Write-Host \"Index: $idx\"; $c.Substring\\([Math]::Max\\(0,$idx-100\\), 120\\))"
+      "PowerShell(cd C:\\\\mirae-app; $c = Get-Content public\\\\index.html -Raw -Encoding UTF8; $idx = $c.IndexOf\\('</style>'\\); Write-Host \"Index: $idx\"; $c.Substring\\([Math]::Max\\(0,$idx-100\\), 120\\))",
+      "Bash(grep -v \"topbar\\\\|//\\\\|style=\\\\\"\")",
+      "Bash(grep -v \"//\\\\|atualizarAvatar\\\\|topbar\")"
     ]
   }
 }
