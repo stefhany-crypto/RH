@@ -86,7 +86,8 @@ function uploadNFTab(lancId,periodo,valor){
         if(file.size>5*1024*1024){mostrarNotif('','Arquivo muito grande','A NF deve ter no máximo 5MB.','',4000);return;}
         mostrarNotif('','Enviando NF...','Aguarde o upload do arquivo.','',3000);
         try{
-            const ref=storage.ref(`nf/${lancId}/${Date.now()}_${file.name}`);
+            const nomeSeguro=file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+            const ref=storage.ref(`nf/${lancId}/${Date.now()}_${nomeSeguro}`);
             await ref.put(file);
             const nfUrl=await ref.getDownloadURL();
             await db.collection('lancamentosVTVR').doc(lancId).update({nfNome:file.name,nfUrl,nfUploadEm:new Date().toLocaleString('pt-BR'),nfUploadPor:user.nome,statusNF:'emitida'});
@@ -104,7 +105,8 @@ function uploadNF(lancId, periodo, valor){
         if(file.size>5*1024*1024){mostrarNotif('','Arquivo muito grande','A NF deve ter no máximo 5MB.','',4000);return;}
         mostrarNotif('','Enviando NF...','Aguarde o upload do arquivo.','',3000);
         try{
-            const ref=storage.ref(`nf/${lancId}/${Date.now()}_${file.name}`);
+            const nomeSeguro=file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
+            const ref=storage.ref(`nf/${lancId}/${Date.now()}_${nomeSeguro}`);
             await ref.put(file);
             const nfUrl=await ref.getDownloadURL();
             await db.collection('lancamentosVTVR').doc(lancId).update({

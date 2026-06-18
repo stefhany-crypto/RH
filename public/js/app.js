@@ -45,14 +45,15 @@ auth.onAuthStateChanged(async (firebaseUser) => {
                     if (tok.claims.role !== user.role || (tok.claims.equipe||'') !== (user.equipe||'')) {
                         const ref = db.collection('solicitacoesSync').doc(firebaseUser.uid);
                         await ref.set({ status: 'pendente', criadoEm: firebase.firestore.FieldValue.serverTimestamp() });
-                        await new Promise((resolve, reject) => {
+                        // Aguarda sync com timeout — se demorar, continua com permissões atuais (não desloga)
+                        await new Promise((resolve) => {
                             let timer;
                             const unsub = ref.onSnapshot(snap => {
                                 if (snap.data()?.status === 'concluido') {
                                     clearTimeout(timer); unsub(); resolve();
                                 }
-                            });
-                            timer = setTimeout(() => { unsub(); reject(new Error('timeout sync')); }, 10000);
+                            }, () => { clearTimeout(timer); resolve(); });
+                            timer = setTimeout(() => { unsub(); resolve(); }, 10000);
                         });
                         await firebaseUser.getIdToken(true);
                     }
@@ -259,7 +260,7 @@ async function alterarSenha(){
         const cred=firebase.auth.EmailAuthProvider.credential(user.email,atual);
         await auth.currentUser.reauthenticateWithCredential(cred);
         await auth.currentUser.updatePassword(nova);
-        await registrarLogSenha();
+        try{ await registrarLogSenha(); }catch(e){}
         msg.innerHTML='<div class="badge badge-success">Senha alterada com sucesso!</div>';
         setTimeout(()=>closeModal('modalSenha'),1500);
     }catch(err){

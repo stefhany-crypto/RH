@@ -7,10 +7,15 @@ async function kbInit(){
     if(!user)return;
     if(!kbIniciado){
         kbIniciado=true;
-        if(!talentos.length && user.equipe){
-            const snap=await db.collection('colaboradores').where('ativo','==',true).where('equipe','==',user.equipe).get();
-            kbTalentos=snap.docs.map(d=>({id:d.id,...d.data()}));
-        } else { kbTalentos=talentos; }
+        // Usa talentos já carregados; se ainda vazio, busca do Firestore como fallback
+        if(talentos.length){
+            kbTalentos=talentos;
+        } else if(user.equipe){
+            try{
+                const snap=await db.collection('colaboradores').where('ativo','==',true).where('equipe','==',user.equipe).get();
+                kbTalentos=snap.docs.map(d=>({id:d.id,...d.data()}));
+            }catch(e){ kbTalentos=[]; }
+        }
 
         // Garante que os boards obrigatórios existam ANTES de ativar o listener
         await kbGarantirBoardPessoal();
@@ -46,6 +51,7 @@ async function kbGarantirBoardPessoal(){
 }
 
 async function kbGarantirBoardEquipe(equipe){
+    if(!equipe||typeof equipe!=='string') return;
     try{
         const idFixo='kbeq_'+equipe.replace(/[^a-zA-Z0-9]/g,'_').toLowerCase();
         const snap=await db.collection('kanbanBoards').doc(idFixo).get();
@@ -114,10 +120,11 @@ function kbRenderTopBar(){
 function kbSetBoard(boardId){
     const board=kanbanBoards.find(b=>b.id===boardId);
     if(!board)return;
+    // Evita recriar listener se já está no board correto
+    if(kbBoardAtivo?.id===boardId){ kbRenderTopBar(); return; }
     kbBoardAtivo=board;
     let q;
     if(board.tipo==='individual'){
-        // Visão pessoal: todos os cards onde o dono é responsável (mirror unificado)
         q=db.collection('kanbanCards').where('responsavelId','==',board.donoId);
     } else {
         q=db.collection('kanbanCards').where('boardId','==',boardId);
