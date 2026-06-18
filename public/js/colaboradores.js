@@ -74,6 +74,13 @@ async function saveColab(e){
             batch.update(db.collection('colaboradores').doc(id), data);
             batch.set(db.collection('colaboradores').doc(id).collection('financeiro').doc('dados'), dadosFinanceiros, {merge:true});
             await batch.commit();
+            // Se editou o próprio perfil, reflete nome/foto na sidebar na hora
+            // (sem precisar deslogar e logar de novo).
+            if(user && id===user.id){
+                user.nome=data.nome; user.avatarUrl=data.avatarUrl;
+                if(typeof atualizarAvatarSidebar==='function') atualizarAvatarSidebar();
+                const nameEl=document.getElementById('userNameDisplay'); if(nameEl) nameEl.textContent=user.nome||user.email;
+            }
             closeModal('modalColab'); refreshData();
             mostrarNotif('','Colaborador atualizado','Dados salvos com sucesso.','',3000);
         }else{
