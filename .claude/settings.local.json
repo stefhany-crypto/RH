@@ -38,7 +38,9 @@
       "Bash(grep -n \"innerHTML\\\\s*=\\\\s*\\\\`\" daily.js)",
       "Bash(grep -h \"Object\\\\.assign\\(window\" C:/mirae-app/public/js/*.js | tr ',' '\\\\n' | grep -oP \"[a-zA-Z_][a-zA-Z0-9_]*\" | sort -u > /tmp/window_exports.txt *)",
       "Bash(grep -v \"//\\\\|cancelar\\\\|confirm\\\\|guardado\")",
-      "Bash(grep -v \"//\")"
+      "Bash(grep -v \"//\")",
+      "Bash(git --no-pager diff --cached --stat)",
+      "Bash(git --no-pager diff .claude/settings.local.json)"
     ]
   }
 }
