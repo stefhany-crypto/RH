@@ -20,7 +20,10 @@ async function startApp(userData){
     const avatarEl=document.getElementById('sidebarAvatar');
     if(nameEl)nameEl.textContent=user.nome||user.email;
     if(roleEl)roleEl.innerHTML=typeof roleBadge==='function'?roleBadge(user.role):user.role;
-    if(avatarEl)avatarEl.textContent=(user.nome||'?')[0].toUpperCase();
+    if(avatarEl){
+        if(user.avatarUrl){ avatarEl.innerHTML=`<img src="${user.avatarUrl}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`; }
+        else avatarEl.textContent=(user.nome||'?')[0].toUpperCase();
+    }
     buildTabs();
     ttCarregado=false; tarefasPessoais=[]; // reseta gestor de tarefas pessoais
     await refreshData();

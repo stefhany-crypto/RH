@@ -16,6 +16,10 @@ function openModalColab(id=null){
     toggleCamposPJ('CLT');
     document.getElementById('editColabId').value=id||'';
     document.getElementById('modalColabTitle').textContent=id?'Editar Talento':'Cadastrar Talento';
+    // Reseta o estado da foto a cada abertura
+    const fb=document.getElementById('fColFotoBase64'); if(fb) fb.value='';
+    window._removerFotoFlag=false;
+    _setFotoPreview('');
     // Popula roles atribuíveis
     const roleSel=document.getElementById('fColRole');
     roleSel.innerHTML=P.rolesAtribuiveis().map(r=>`<option value="${r}">${roleLabel(r)}</option>`).join('');
@@ -34,6 +38,8 @@ function openModalColab(id=null){
             if(document.getElementById('fColVT'))document.getElementById('fColVT').value=t.valorVT||0;
             if(document.getElementById('fColCNPJ'))document.getElementById('fColCNPJ').value=t.cnpj||'';
             if(document.getElementById('fColRazaoSocial'))document.getElementById('fColRazaoSocial').value=t.razaoSocial||'';
+            // Carrega a foto existente, se houver
+            if(t.avatarUrl){ if(fb) fb.value=t.avatarUrl; _setFotoPreview(t.avatarUrl); }
             // Só mostra role atual se está nas opções atribuíveis
             if(P.rolesAtribuiveis().includes(t.role))roleSel.value=t.role;
         }
@@ -57,7 +63,9 @@ async function saveColab(e){
     if(['LIDER','RH'].includes(novoRole)&&!equipeVal){mostrarNotif('','Campo obrigatório','Líderes e RH precisam ter uma equipe definida.','',3000);return;}
     const tipoContratoVal=document.getElementById('fColContrato')?.value||'CLT';
     // Dados públicos: visíveis para todos os autenticados
-    const data={nome:document.getElementById('fColNome').value,email:document.getElementById('fColEmail').value,equipe:document.getElementById('fColEquipe').value,cargo:document.getElementById('fColCargo').value,dataNascimento:document.getElementById('fColNascimento')?.value||'',tipoAvaliacao:document.getElementById('fColLogica').value,tipoContrato:tipoContratoVal,role:novoRole,ativo:true,dataAtualizacao:new Date()};
+    // Foto (avatar): data URL compacto já redimensionado em previewFoto.
+    const avatarUrl=document.getElementById('fColFotoBase64')?.value||'';
+    const data={nome:document.getElementById('fColNome').value,email:document.getElementById('fColEmail').value,equipe:document.getElementById('fColEquipe').value,cargo:document.getElementById('fColCargo').value,dataNascimento:document.getElementById('fColNascimento')?.value||'',tipoAvaliacao:document.getElementById('fColLogica').value,tipoContrato:tipoContratoVal,role:novoRole,ativo:true,avatarUrl:avatarUrl,dataAtualizacao:new Date()};
     // Dados financeiros: subcoleção protegida — só RH/Master e o próprio colaborador leem
     const dadosFinanceiros={salario:parseFloat(document.getElementById('fColSalario').value)||0,valorVT:parseFloat(document.getElementById('fColVT')?.value||0),cnpj:tipoContratoVal==='PJ'?(document.getElementById('fColCNPJ')?.value||''):'',razaoSocial:tipoContratoVal==='PJ'?(document.getElementById('fColRazaoSocial')?.value||''):'',dataAdmissao:document.getElementById('fColAdmissao')?.value||''};
     await guardado('saveColab_'+(id||'novo'), async () => {
@@ -122,7 +130,7 @@ async function renderColaboradores(){
                     <span style="font-size:0.7rem;font-weight:700;padding:0.2rem 0.5rem;border-radius:4px;${cor}">${tipo}</span>
                 </div>
             </div>
-            <div class="card-title">${esc(t.nome)}</div>
+            <div class="card-title" style="display:flex;align-items:center;gap:0.5rem;">${t.avatarUrl?`<img src="${esc(t.avatarUrl)}" alt="" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:''}<span>${esc(t.nome)}</span></div>
             <div class="card-info">${esc(t.cargo)}<br>${esc(t.email)}${lastNota!==null?`<br>Última: <strong>${lastNota.toFixed(1)}</strong>`:''}</div>
             <div class="card-actions">
                 ${!isInativo?`<button class="btn-small btn-eval" onclick="openEvalFor('${t.id}')">Avaliar</button>`:''}
@@ -154,21 +162,52 @@ async function reativarColab(id, nome){
     });
 }
 
+// Renderiza a foto no círculo de preview (div #fotoPreview, não é <img>)
+function _setFotoPreview(dataUrl){
+    const div=document.getElementById('fotoPreview');
+    if(!div) return;
+    if(dataUrl){
+        div.style.backgroundImage=`url('${dataUrl}')`;
+        div.style.backgroundSize='cover';
+        div.style.backgroundPosition='center';
+        div.textContent='';
+    }else{
+        div.style.backgroundImage='';
+        div.textContent='';
+    }
+}
 function previewFoto(input){
     if(!input.files||!input.files[0]) return;
+    const file=input.files[0];
+    if(file.size>1024*1024){ mostrarNotif('','Imagem muito grande','Escolha uma imagem de até 1MB.','',3000); input.value=''; return; }
     const reader=new FileReader();
     reader.onload=e=>{
-        const preview=document.getElementById('fColFotoPreview');
-        if(preview){preview.src=e.target.result;preview.style.display='block';}
+        const img=new Image();
+        img.onload=()=>{
+            // Redimensiona para no máx 256px (mantém proporção) e comprime em
+            // JPEG — evita estourar o limite de 1MB por documento do Firestore.
+            const max=256; let w=img.width, h=img.height;
+            if(w>h){ if(w>max){ h=Math.round(h*max/w); w=max; } }
+            else   { if(h>max){ w=Math.round(w*max/h); h=max; } }
+            const canvas=document.createElement('canvas');
+            canvas.width=w; canvas.height=h;
+            canvas.getContext('2d').drawImage(img,0,0,w,h);
+            const dataUrl=canvas.toDataURL('image/jpeg',0.85);
+            const hidden=document.getElementById('fColFotoBase64'); if(hidden) hidden.value=dataUrl;
+            _setFotoPreview(dataUrl);
+            window._removerFotoFlag=false;
+        };
+        img.onerror=()=>{ mostrarNotif('','Imagem inválida','Não foi possível ler o arquivo.','',3000); };
+        img.src=e.target.result;
     };
-    reader.readAsDataURL(input.files[0]);
+    reader.readAsDataURL(file);
 }
 
 function removerFoto(){
     const input=document.getElementById('fColFoto');
-    const preview=document.getElementById('fColFotoPreview');
     if(input) input.value='';
-    if(preview){preview.src='';preview.style.display='none';}
+    const hidden=document.getElementById('fColFotoBase64'); if(hidden) hidden.value='';
+    _setFotoPreview('');
     window._removerFotoFlag=true;
 }
 
