@@ -1,4 +1,4 @@
-const CACHE = 'mirae-pdi-v57';
+const CACHE = 'mirae-pdi-v58';
 const ASSETS = [
     '/', '/index.html', '/manifest.json',
     '/js/globals.js', '/js/utils.js', '/js/permissoes.js', '/js/app.js',
@@ -29,17 +29,22 @@ self.addEventListener('fetch', e => {
 
     const url = new URL(e.request.url);
     const isNav    = e.request.mode === 'navigate';
-    const isStatic = /\.(js|css|png|svg|webp|ico|woff2?|ttf)$/.test(url.pathname);
+    // JS da aplicação (não vendor): precisa estar SEMPRE fresco quando online,
+    // senão correções não chegam ao usuário (ficava preso em código antigo).
+    const isAppJs  = url.pathname.startsWith('/js/') && url.pathname.endsWith('.js') && !url.pathname.startsWith('/js/vendor/');
+    // Bibliotecas de terceiros, CSS, imagens e fontes: grandes e estáveis → cache-first.
+    const isStatic = !isAppJs && (/\.(css|png|svg|webp|ico|woff2?|ttf)$/.test(url.pathname) || url.pathname.startsWith('/js/vendor/') || url.pathname.endsWith('.js'));
 
-    if(isNav){
-        // HTML: sempre da rede para garantir versão fresca; fallback para cache offline
+    if(isNav || isAppJs){
+        // HTML e JS da aplicação: network-first (sempre fresco online; cache só
+        // como fallback offline). Elimina o problema de "código antigo em cache".
         e.respondWith(
             fetch(new Request(e.request.url, { cache: 'no-store' }))
                 .then(res => { caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res; })
                 .catch(() => caches.match(e.request))
         );
     } else if(isStatic){
-        // JS/CSS/imagens/fontes: cache-first — bateu no cache, não vai à rede
+        // vendor/CSS/imagens/fontes: cache-first — bateu no cache, não vai à rede
         e.respondWith(
             caches.match(e.request).then(cached => {
                 if(cached) return cached;
