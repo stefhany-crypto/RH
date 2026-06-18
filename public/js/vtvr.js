@@ -736,5 +736,5 @@ Object.assign(window, {
     gerarLancamentos, renderPreview, recalcPreview, confirmarLancamentos,
     renderPainelVTVR, _vtvr_filtrar,
     exportarExcelVTVR, exportarPDFVTVR, exportarOmieVTVR, baixarNFsEmLote,
-    toggleCamposPJ,
+    toggleCamposPJ, renderMeuVTVR,
 });

@@ -1047,4 +1047,5 @@ Object.assign(window, {
     importarPendenciasOntem, salvarDaily, verificarTarefasDelegadas,
     ddLimiteISO, ddFillEquipe, ddFillPessoa, ddPopulaSelects, ddTarefas,
     iniciarListenerNotificacoes, marcarNotifLidas,
+    carregarDaily,
 });
