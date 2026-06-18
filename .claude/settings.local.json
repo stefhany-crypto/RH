@@ -42,7 +42,10 @@
       "Bash(git --no-pager diff --cached --stat)",
       "Bash(git --no-pager diff .claude/settings.local.json)",
       "Bash(curl -s \"https://pdimirae.web.app/js/colaboradores.js\")",
-      "Bash(curl -s \"https://pdimirae.web.app/sw.js\")"
+      "Bash(curl -s \"https://pdimirae.web.app/sw.js\")",
+      "Bash(powershell -Command \"Expand-Archive -Path 'Melhorar design do app.zip' -DestinationPath 'mirae-design-novo' -Force\")",
+      "Bash(git -C C:\\\\mirae-app status)",
+      "Bash(git -C C:\\\\mirae-app diff --stat)"
     ]
   }
 }
