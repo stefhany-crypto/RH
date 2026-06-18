@@ -34,7 +34,8 @@
       "Bash(git add *)",
       "Bash(git commit *)",
       "Bash(git config *)",
-      "Bash(grep -ohP \"onclick=\\\\\\\\\\\\\\\\?\\\\\"[^\\\\\\\\\\\\\\\\\\\\\"]+\\\\\\\\\\\\\\\\?\\\\\"\" C:/mirae-app/public/js/*.js)"
+      "Bash(grep -ohP \"onclick=\\\\\\\\\\\\\\\\?\\\\\"[^\\\\\\\\\\\\\\\\\\\\\"]+\\\\\\\\\\\\\\\\?\\\\\"\" C:/mirae-app/public/js/*.js)",
+      "Bash(grep -n \"innerHTML\\\\s*=\\\\s*\\\\`\" daily.js)"
     ]
   }
 }
