@@ -365,25 +365,27 @@ async function confirmarLancamentos(){
             if(t)db.collection('notificacoesPJ').add({colabId:p.colabId,nome:t.nome,email:t.email,mes:p.mes,ano:p.ano,valor:p.total,tipo:'vtvr',dataEnvio:agora,lida:false,mensagem:`Seu reembolso de VT/VR referente a ${p.mes}/${p.ano} foi processado. Valor: R$ ${p.total.toFixed(2)}. Por favor, emita a NF com este valor.`});
         });
         if(pjsLanc.length){
-            const tfBatch=db.batch();
-            pjsLanc.forEach(p=>{
-                const ref=db.collection('tarefasPessoais').doc();
-                const prazo=new Date(p.anoCalculo||p.ano,(p.mesCalculo||p.mes)-1+1,0);
-                tfBatch.set(ref,{
-                    userId:p.colabId,
-                    titulo:`Emitir NF de Reembolso — ${MESES_NOME[p.mes]||p.mes}/${p.ano} — R$ ${p.total.toFixed(2)}`,
-                    lista:'Minhas Tarefas',
-                    urgente:true,importante:true,
-                    concluida:false,concluidaEm:null,
-                    prazo,origem:'nf_pj',
-                    notas:`Emita a NF no valor R$ ${p.total.toFixed(2)} referente ao reembolso VT/VR de ${MESES_NOME[p.mesCalculo||p.mes]||p.mesCalculo}/${p.anoCalculo||p.ano} e faça o upload na aba VT/VR.`,
-                    equipe:p.equipe||null,subtarefas:[],recorrencia:null,prioridade:'alta',
-                    ordem:Date.now(),
-                    criadoEm:firebase.firestore.FieldValue.serverTimestamp(),
-                    atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()
+            try{
+                const tfBatch=db.batch();
+                pjsLanc.forEach(p=>{
+                    const ref=db.collection('tarefasPessoais').doc();
+                    const prazo=new Date(p.anoCalculo||p.ano,(p.mesCalculo||p.mes)-1+1,0);
+                    tfBatch.set(ref,{
+                        userId:p.colabId,
+                        titulo:`Emitir NF de Reembolso — ${MESES_NOME[p.mes]||p.mes}/${p.ano} — R$ ${p.total.toFixed(2)}`,
+                        lista:'Minhas Tarefas',
+                        urgente:true,importante:true,
+                        concluida:false,concluidaEm:null,
+                        prazo,origem:'nf_pj',
+                        notas:`Emita a NF no valor R$ ${p.total.toFixed(2)} referente ao reembolso VT/VR de ${MESES_NOME[p.mesCalculo||p.mes]||p.mesCalculo}/${p.anoCalculo||p.ano} e faça o upload na aba VT/VR.`,
+                        equipe:p.equipe||null,subtarefas:[],recorrencia:null,prioridade:'alta',
+                        ordem:Date.now(),
+                        criadoEm:firebase.firestore.FieldValue.serverTimestamp(),
+                        atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()
+                    });
                 });
-            });
-            await tfBatch.commit();
+                await tfBatch.commit();
+            }catch(eTf){console.error('[VTVR] Erro ao criar tarefas automáticas de NF:',eTf);}
         }
         document.getElementById('previewLancamentos').style.display='none';
         previewData=[];

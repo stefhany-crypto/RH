@@ -320,9 +320,17 @@ async function enviarDenuncia(){
         ...(anonimo?{}:{remetente:(user?user.nome:'Não identificado'),remetenteEmail:(user?user.email:null)}),
     };
 
-    await db.collection('denuncias').add(doc);
+    try{
+        await db.collection('denuncias').add(doc);
+    }catch(e){
+        console.error('[DENUNCIA] Erro ao salvar denúncia:',e);
+        mostrarNotif('','Erro ao enviar denúncia',e?.message||e?.code||'Tente novamente.','',7000);
+        return;
+    }
     // Espelho público mínimo p/ consulta por protocolo (sem texto, sem envolvidos, sem remetente)
-    await db.collection('denunciasStatus').doc(protocolo).set({tema,status:'nova',devolutiva:null,devolutivaEm:null,dataHoraEnvio:agora.toLocaleString('pt-BR')});
+    try{
+        await db.collection('denunciasStatus').doc(protocolo).set({tema,status:'nova',devolutiva:null,devolutivaEm:null,dataHoraEnvio:agora.toLocaleString('pt-BR')});
+    }catch(e){console.error('[DENUNCIA] Erro ao salvar denunciasStatus:',e);}
 
     // Salva protocolo no localStorage do dispositivo
     const protocolos = JSON.parse(localStorage.getItem('mirae_protocolos')||'[]');

@@ -248,7 +248,7 @@ service cloud.firestore {
     match /tarefasPessoais/{docId} {
       allow read: if autenticado() && resource.data.userId == uid();
       allow create: if autenticado()
-                    && request.resource.data.userId == uid()
+                    && (request.resource.data.userId == uid() || isMaster())
                     && request.resource.data.titulo is string
                     && request.resource.data.titulo.size() > 0
                     && request.resource.data.titulo.size() <= 500;
