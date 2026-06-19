@@ -260,10 +260,8 @@ function switchTab(id,event){
     if(id==='tabMeuPDI')renderMeuPDI();
     if(id==='tabDaily')renderDaily();
     if(id==='tabTarefas'){
-        // Renderiza a rail imediatamente com dados que já existem (sync)
-        // para nunca ficar em branco enquanto o async carrega
-        if(typeof ttRenderRail==='function')try{ttRenderRail();}catch(e){}
-        if(typeof renderTarefasPessoais==='function')renderTarefasPessoais();
+        if(window.ttRenderRail)try{window.ttRenderRail();}catch(e){}
+        if(window.renderTarefasPessoais)window.renderTarefasPessoais();
     }
     if(id==='tabKanban')kbInit();
     if(id==='tabMesas'){renderMesaSVG(window._reservasDia||{});renderMesas();}

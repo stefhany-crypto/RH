@@ -438,13 +438,7 @@ async function ttAdicionar(titulo){
     });
 }
 
-async function ttGarantirShadow(key){
-    let t=ttFindByKey(key); if(t)return t;
-    if(!key||!key.startsWith('daily:'))return null;
-    const oid=key.slice(6); const dt=(dailyTarefas||[]).find(x=>x.id===oid); if(!dt)return null;
-    const doc={userId:user.id,origem:'daily',origemTarefaId:oid,titulo:dt.descricao,equipe:dt.equipe||'',notas:'',concluida:false,concluidaEm:null,prazo:dt.data||null,prioridade:null,lista:'Daily',subtarefas:[],recorrencia:null,ordem:Date.now(),criadoEm:firebase.firestore.FieldValue.serverTimestamp(),atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()};
-    const ref=await db.collection('tarefasPessoais').add(doc); const novo={id:ref.id,...doc}; tarefasPessoais.push(novo); return novo;
-}
+async function ttGarantirShadowOLD_REMOVIDO(){/* duplicata removida — ver ttGarantirShadow abaixo */}
 
 async function ttToggleConcluir(key){
     const t=await ttGarantirShadow(key); if(!t)return;
