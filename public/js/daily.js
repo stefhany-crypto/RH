@@ -225,14 +225,13 @@ async function ttDropEisenhower(e,urg,imp){
     if(!key&&e.dataTransfer){ try{key=e.dataTransfer.getData('text/plain');}catch(_){} }
     _ttDragKey=null;
     if(!key)return;
-    const t=ttFindByKey(key)||ttUnificadas().find(x=>ttKey(x)===key);
-    if(!t||!t.id)return;
-    if(t.urgente===urg&&t.importante===imp)return; // já está neste quadrante
-    await guardado('ttDrop_'+t.id, async () => {
-        await db.collection('tarefasPessoais').doc(t.id).update({urgente:urg,importante:imp,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
-        t.urgente=urg; t.importante=imp;
-        ttRenderLista();
-    });
+    // Garante que a tarefa existe no Firestore (materializa virtuais)
+    const t=await ttGarantirShadow(key);
+    if(!t)return;
+    if(t.urgente===urg&&t.importante===imp)return;
+    await db.collection('tarefasPessoais').doc(t.id).update({urgente:urg,importante:imp,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+    t.urgente=urg; t.importante=imp;
+    ttRenderLista();
 }
 
 function ttRenderLista(){
@@ -1096,6 +1095,69 @@ async function marcarNotifLidas(){
     }catch(e){}
 }
 
+// ── Materializa tarefa virtual (daily sem shadow) em tarefasPessoais ──
+async function ttGarantirShadow(key){
+    let t=ttFindByKey(key)||ttUnificadas().find(x=>ttKey(x)===key);
+    if(!t)return null;
+    if(t.id)return t; // já tem doc real
+    // é virtual: cria shadow
+    const doc={userId:user.id,origem:'daily',origemTarefaId:t.origemTarefaId,titulo:t.titulo,equipe:t.equipe||null,notas:'',concluida:false,concluidaEm:null,prazo:t.prazo||null,prioridade:null,lista:'Daily',subtarefas:[],recorrencia:null,urgente:null,importante:null,ordem:Date.now(),criadoEm:firebase.firestore.FieldValue.serverTimestamp(),atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()};
+    const ref=await db.collection('tarefasPessoais').add(doc);
+    const shadow={id:ref.id,...doc,_daily:true};
+    tarefasPessoais.push(shadow);
+    return shadow;
+}
+
+// ── Enviar tarefa para o Kanban ──
+async function ttEnviarParaKanban(key){
+    const boards=kanbanBoards||[];
+    if(!boards.length){mostrarNotif('','Nenhum quadro Kanban encontrado','Crie um quadro no Kanban antes de enviar.','',5000);return;}
+    const t=ttFindByKey(key)||ttUnificadas().find(x=>ttKey(x)===key);
+    if(!t)return;
+    // Seleciona quadro e coluna
+    const boardOpts=boards.map((b,i)=>`${i}: ${b.nome||b.titulo||'Quadro '+(i+1)}`).join('\n');
+    const bIdx=parseInt(prompt(`Escolha o quadro (número):\n${boardOpts}`));
+    if(isNaN(bIdx)||!boards[bIdx])return;
+    const board=boards[bIdx];
+    const cols=board.colunas||board.cols||[];
+    if(!cols.length){mostrarNotif('','Quadro sem colunas','Adicione colunas ao quadro antes de enviar.','',5000);return;}
+    const colOpts=cols.map((c,i)=>`${i}: ${c.nome||c.titulo||'Coluna '+(i+1)}`).join('\n');
+    const cIdx=parseInt(prompt(`Escolha a coluna:\n${colOpts}`));
+    if(isNaN(cIdx)||!cols[cIdx])return;
+    const col=cols[cIdx];
+    try{
+        await db.collection('kbCards').add({boardId:board.id,colId:col.id,titulo:t.titulo,descricao:t.notas||'',responsavelId:user.id,responsavelNome:user.nome,prioridade:t.prioridade||null,prazo:t.prazo||null,tags:[],checklist:[],criadoPorId:user.id,criadoPorNome:user.nome,criadoEm:firebase.firestore.FieldValue.serverTimestamp(),atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
+        mostrarNotif('','Tarefa enviada para o Kanban!',`"${t.titulo}" foi adicionada à coluna "${col.nome||col.titulo||'Coluna'}" no quadro "${board.nome||board.titulo||'Quadro'}".`,'bonus',4000);
+    }catch(e){mostrarNotif('','Erro ao enviar','Tente novamente.','',5000);}
+}
+
+// ── Mural de reconhecimento: enviar kudo ──
+async function enviarKudo(){
+    const paraEl=document.getElementById('muralParaInput');
+    const textoEl=document.getElementById('muralTextoInput');
+    const pubEl=document.getElementById('muralPublicoToggle');
+    const para=(paraEl?.value||'').trim();
+    const texto=(textoEl?.value||'').trim();
+    if(!para){paraEl?.focus();return;}
+    if(!texto){textoEl?.focus();return;}
+    const publico=pubEl?pubEl.checked:true;
+    try{
+        await db.collection('kudos').add({
+            de:user.id,deNome:user.nome,para,paraNome:para,
+            texto,publico,
+            quando:new Date().toLocaleDateString('pt-BR'),
+            criadoEm:firebase.firestore.FieldValue.serverTimestamp()
+        });
+        if(paraEl)paraEl.value='';
+        if(textoEl)textoEl.value='';
+        mostrarNotif('','Reconhecimento enviado!',`"${para}" foi reconhecido(a).`,'bonus',4000);
+        // Recarrega feed
+        const snap=await db.collection('kudos').orderBy('criadoEm','desc').limit(10).get();
+        kudos=snap.docs.map(d=>({id:d.id,...d.data()}));
+        if(typeof renderHomeExtras==='function')renderHomeExtras();
+    }catch(e){mostrarNotif('','Erro ao enviar reconhecimento',e?.message||'Tente novamente.','',6000);}
+}
+
 // ── ES-module: expõe ao escopo global ──────────────────────────
 Object.assign(window, {
     carregarTarefasPessoais, renderTarefasPessoais,
@@ -1105,7 +1167,7 @@ Object.assign(window, {
     ttDragStart, ttDragEnd, ttDragOver, ttDragLeave, ttDropEisenhower,
     ttToggleSelMode, ttToggleSelecao, ttEnviarSelecionadas, ttEnviarParaDaily,
     ttExportarPDF, ttAbrirLista, ttSetSort, ttToggleConcluidas,
-    ttNovaLista, ttQuickAddKey, ttAdicionar, ttGarantirShadow,
+    ttNovaLista, ttQuickAddKey, ttAdicionar, ttGarantirShadow, ttEnviarParaKanban, enviarKudo,
     ttToggleConcluir, ttAbrirDetalhe, ttFecharDetalhe, ttRenderDetalhe,
     ttEditarCampo, ttSetPrioridade, ttSubKey, ttAddSub, ttToggleSub,
     ttEditarSub, ttRemoverSub, ttSalvarSubs, ttExcluir,

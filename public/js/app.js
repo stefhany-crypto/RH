@@ -387,19 +387,26 @@ function renderHomeExtras(){
     if(muralEl){
         const cores=['#023B48','#BE8C45','#3F8A6E','#D98E6A'];
         const feed=(kudos||[]).slice(0,4);
-        muralEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('heart',{size:14,color:'#BE8C45'})} Mural de reconhecimento</div><span class="home-mural-tag">Aberto a todos</span></div>
+        const nomes=(todosColabs.length?todosColabs:talentos).filter(cc=>cc.id!==user.id).map(cc=>cc.nome).sort();
+        muralEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('heart',{size:14,color:'#BE8C45'})} Mural de reconhecimento</div></div>
             <div class="home-mural-form">
-                <input class="home-mural-input" id="muralParaInput" placeholder="Reconhecer quem?" style="margin-bottom:8px;height:36px;padding:8px 12px;">
-                <textarea class="home-mural-input" id="muralTextoInput" placeholder="Escreva um reconhecimento sincero..." rows="2"></textarea>
-                <div style="display:flex;justify-content:flex-end;"><button class="home-mural-send" onclick="enviarKudo()">${ico('send',{size:14,color:'#fff'})} Reconhecer</button></div>
+                <input class="home-mural-input" id="muralParaInput" list="muralPessoasList" placeholder="Para quem é o reconhecimento?" style="margin-bottom:8px;height:36px;padding:8px 12px;">
+                <datalist id="muralPessoasList">${nomes.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+                <textarea class="home-mural-input" id="muralTextoInput" placeholder="Escreva um reconhecimento sincero..." rows="2" style="margin-bottom:8px;"></textarea>
+                <div style="display:flex;align-items:center;justify-content:space-between;">
+                    <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;">
+                        <input type="checkbox" id="muralPublicoToggle" checked style="accent-color:var(--teal);">
+                        Visível a todos
+                    </label>
+                    <button class="home-mural-send" onclick="enviarKudo()">${ico('send',{size:14,color:'#fff'})} Reconhecer</button>
+                </div>
             </div>
-            ${feed.length?`<div class="home-mural-feed">${feed.map((k,i)=>`
+            ${feed.filter(k=>k.publico!==false).length?`<div class="home-mural-feed">${feed.filter(k=>k.publico!==false).map((k,i)=>`
                 <div class="home-mural-item">
                     <div class="home-mural-av" style="background:${cores[i%cores.length]};">${(k.deNome||k.de||'?')[0].toUpperCase()}</div>
                     <div><div class="home-mural-text">${esc(k.texto||k.mensagem||'')}</div>
                     <div class="home-mural-meta"><b>${esc(k.deNome||k.de||'')}</b> reconheceu <b>${esc(k.paraNome||k.para||'')}</b> · ${esc(k.quando||k.data||'')}</div></div>
-                </div>`).join('')}</div>`:'<div style="color:var(--muted);font-size:13.5px;padding:4px 0;">Seja o primeiro a reconhecer alguém hoje!</div>'}`;
-    }
+                </div>`).join('')}</div>`:'<div style="color:var(--muted);font-size:13.5px;padding:4px 0;">Seja o primeiro a reconhecer alguém hoje!</div>'}`    }
     // Tarefas de hoje (minhas)
     const hojeStr=hojeISO();
     const minhas=dailyTarefas.filter(t=>t.responsavelId===user.id&&t.data===hojeStr);
@@ -624,7 +631,6 @@ function renderMeuPDI(){
             </div>
         </div>
     </div>`;
-    renderMeuVTVR();
     const sorted=[...minhasAvals].sort((a,b)=>a.ano!==b.ano?a.ano-b.ano:a.trimestre-b.trimestre);
     setTimeout(()=>{
         const cv=document.getElementById('meuPdiChart');if(!cv)return;
