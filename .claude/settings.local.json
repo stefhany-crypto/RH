@@ -58,7 +58,10 @@
       "Bash(git -C C:/mirae-app commit -m ' *)",
       "Bash(git -C C:/mirae-app add .claude/settings.local.json)",
       "Bash(git -C C:/mirae-app add firestore.rules functions/index.js public/js/vtvr.js)",
-      "Bash(git -C C:/mirae-app add firestore.rules public/js/daily.js)"
+      "Bash(git -C C:/mirae-app add firestore.rules public/js/daily.js)",
+      "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\app.js\")",
+      "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\vtvr.js\")",
+      "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\relatorios.js\")"
     ]
   }
 }
