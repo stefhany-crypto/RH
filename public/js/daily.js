@@ -29,8 +29,8 @@
 async function carregarTarefasPessoais(){
     if(!user)return;
     try{
-        const snap=await db.collection('tarefasPessoais').where('userId','==',user.id).orderBy('ordem','desc').limit(400).get();
-        tarefasPessoais=snap.docs.map(d=>({id:d.id,...d.data()}));
+        const snap=await db.collection('tarefasPessoais').where('userId','==',user.id).limit(400).get();
+        tarefasPessoais=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>(b.ordem||0)-(a.ordem||0));
         ttCarregado=true;
     }catch(e){console.error('Erro ao carregar tarefas pessoais:',e);}
 }
@@ -1135,32 +1135,7 @@ async function ttEnviarParaKanban(key){
     }catch(e){mostrarNotif('','Erro ao enviar','Tente novamente.','',5000);}
 }
 
-// ── Mural de reconhecimento: enviar kudo ──
-async function enviarKudo(){
-    const paraEl=document.getElementById('muralParaInput');
-    const textoEl=document.getElementById('muralTextoInput');
-    const pubEl=document.getElementById('muralPublicoToggle');
-    const para=(paraEl?.value||'').trim();
-    const texto=(textoEl?.value||'').trim();
-    if(!para){paraEl?.focus();return;}
-    if(!texto){textoEl?.focus();return;}
-    const publico=pubEl?pubEl.checked:true;
-    try{
-        const agora=new Date();
-        const ref=await db.collection('kudos').add({
-            de:user.id,deNome:user.nome,para,paraNome:para,
-            texto,publico,
-            quando:agora.toLocaleDateString('pt-BR'),
-            criadoEm:firebase.firestore.FieldValue.serverTimestamp()
-        });
-        if(paraEl)paraEl.value='';
-        if(textoEl)textoEl.value='';
-        // Atualiza feed localmente sem refazer query (evita dependência de índice)
-        kudos=[{id:ref.id,de:user.id,deNome:user.nome,para,paraNome:para,texto,publico,quando:agora.toLocaleDateString('pt-BR'),criadoEm:{toDate:()=>agora}},...kudos];
-        if(typeof renderHomeExtras==='function')renderHomeExtras();
-        mostrarNotif('','Reconhecimento enviado!',`${para} foi reconhecido(a).`,'bonus',4000);
-    }catch(e){console.error('[KUDO]',e);mostrarNotif('','Erro ao enviar reconhecimento',e?.message||e?.code||'Tente novamente.','',8000);}
-}
+// enviarKudo está em app.js (mesmo módulo que renderiza o botão)
 
 // ── ES-module: expõe ao escopo global ──────────────────────────
 Object.assign(window, {
@@ -1171,7 +1146,7 @@ Object.assign(window, {
     ttDragStart, ttDragEnd, ttDragOver, ttDragLeave, ttDropEisenhower,
     ttToggleSelMode, ttToggleSelecao, ttEnviarSelecionadas, ttEnviarParaDaily,
     ttExportarPDF, ttAbrirLista, ttSetSort, ttToggleConcluidas,
-    ttNovaLista, ttQuickAddKey, ttAdicionar, ttGarantirShadow, ttEnviarParaKanban, enviarKudo,
+    ttNovaLista, ttQuickAddKey, ttAdicionar, ttGarantirShadow, ttEnviarParaKanban,
     ttToggleConcluir, ttAbrirDetalhe, ttFecharDetalhe, ttRenderDetalhe,
     ttEditarCampo, ttSetPrioridade, ttSubKey, ttAddSub, ttToggleSub,
     ttEditarSub, ttRemoverSub, ttSalvarSubs, ttExcluir,
