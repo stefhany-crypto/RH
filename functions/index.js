@@ -958,3 +958,94 @@ exports.auditarAvaliacao = functions
       });
     }
   });
+
+// ════════════════════════════════════════════════════════════════
+// 24. uploadNFDrive — upload de NF para Google Drive
+// ════════════════════════════════════════════════════════════════
+const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+async function driveFindOrCreateFolder(token, name, parentId) {
+  const q = `name='${name.replace(/'/g,"\'")}' and '${parentId}' in parents and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id)`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const searchData = await searchRes.json();
+  if (searchData.files && searchData.files.length > 0) return searchData.files[0].id;
+  const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] }),
+  });
+  const createData = await createRes.json();
+  if (!createData.id) throw new Error('Falha ao criar pasta: ' + JSON.stringify(createData));
+  return createData.id;
+}
+
+exports.uploadNFDrive = functions
+  .region(REGION)
+  .runWith({ timeoutSeconds: 120, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login obrigatório.');
+
+    const { lancId, fileBase64, mimeType } = data;
+    if (!lancId || !fileBase64) throw new functions.https.HttpsError('invalid-argument', 'Campos obrigatórios ausentes.');
+
+    const lancDoc = await db.collection('lancamentosVTVR').doc(lancId).get();
+    if (!lancDoc.exists) throw new functions.https.HttpsError('not-found', 'Lançamento não encontrado.');
+    const lanc = lancDoc.data();
+
+    const configDoc = await db.collection('config').doc('drive').get();
+    const rootFolderId = configDoc.exists ? configDoc.data().nfFolderId : null;
+    if (!rootFolderId) throw new functions.https.HttpsError('failed-precondition', 'Pasta do Drive não configurada. Acesse Configurações > Drive e informe o ID da pasta raiz.');
+
+    const ano = lanc.anoCalculo || lanc.ano || new Date().getFullYear();
+    const mes = lanc.mesCalculo || lanc.mes || new Date().getMonth() + 1;
+    const mesNome = MESES_PT[mes - 1] || String(mes);
+    const valorFmt = (lanc.total || 0).toFixed(2).replace('.', ',');
+    const fileName = `${lanc.nome} - R$ ${valorFmt} - ${mesNome}.${ano}.pdf`;
+
+    const { google } = require('googleapis');
+    const auth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/drive'] });
+    const client = await auth.getClient();
+    const tokenRes = await client.getAccessToken();
+    const token = tokenRes.token;
+
+    const yearFolderId  = await driveFindOrCreateFolder(token, String(lanc.ano || ano), rootFolderId);
+    const monthFolderId = await driveFindOrCreateFolder(token, mesNome, yearFolderId);
+
+    const fileBuffer = Buffer.from(fileBase64, 'base64');
+    const boundary = 'MiraeNFUpload';
+    const metaJson = JSON.stringify({ name: fileName, parents: [monthFolderId] });
+    const pre  = Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metaJson}\r\n--${boundary}\r\nContent-Type: ${mimeType || 'application/pdf'}\r\n\r\n`, 'utf-8');
+    const post = Buffer.from(`\r\n--${boundary}--`, 'utf-8');
+    const body = Buffer.concat([pre, fileBuffer, post]);
+
+    const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': `multipart/related; boundary=${boundary}`,
+        'Content-Length': String(body.length),
+      },
+      body,
+    });
+    const uploadData = await uploadRes.json();
+    if (!uploadData.id) throw new functions.https.HttpsError('internal', 'Falha no upload para o Drive: ' + JSON.stringify(uploadData));
+
+    const driveUrl = uploadData.webViewLink || `https://drive.google.com/file/d/${uploadData.id}/view`;
+    const dadosAtuais = lanc;
+    const hist = dadosAtuais.nfHistorico || [];
+    if (dadosAtuais.nfNome) hist.push({ nfNome: dadosAtuais.nfNome, nfUrl: dadosAtuais.nfUrl || '', enviadoEm: dadosAtuais.nfUploadEm || '' });
+
+    await db.collection('lancamentosVTVR').doc(lancId).update({
+      nfNome: fileName,
+      nfUrl: driveUrl,
+      nfDriveId: uploadData.id,
+      nfUploadEm: new Date().toLocaleString('pt-BR'),
+      nfUploadPor: context.auth.token.name || context.auth.uid,
+      statusNF: 'emitida',
+      nfHistorico: hist,
+    });
+
+    return { driveUrl, fileName };
+  });

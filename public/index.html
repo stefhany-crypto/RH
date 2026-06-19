@@ -1991,6 +1991,16 @@
         
         <!-- VT/VR -->
         <div id="tabVTVR" class="tab-content">
+            <!-- Config Google Drive para NFs (apenas MASTER) -->
+            <div class="config-block" id="driveConfigBlock" style="display:none;">
+                <div class="config-block-title">Pasta do Google Drive — NFs PJ</div>
+                <div class="config-block-sub">As NFs enviadas pelos PJs serão salvas nesta pasta do Drive, organizadas por Ano / Mês. Compartilhe a pasta raiz com a conta de serviço do Firebase e cole o ID da pasta abaixo.</div>
+                <div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap;margin-top:1rem;">
+                    <div class="form-group" style="margin:0;flex:1;min-width:220px;"><label>ID da pasta raiz no Google Drive</label><input type="text" id="driveFolderIdInput" placeholder="Ex: 1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms" style="padding:0.8rem;border:1.5px solid #E0E0E0;border-radius:10px;width:100%;font-family:inherit;box-sizing:border-box;"></div>
+                    <button class="btn-primary" style="width:auto;padding:0.8rem 1.2rem;" onclick="salvarDriveFolderId()">Salvar</button>
+                </div>
+                <div id="driveFolderAtual" style="margin-top:0.6rem;font-size:0.78rem;color:var(--muted);"></div>
+            </div>
             <!-- Config VR Global -->
             <div class="config-block" id="vrConfigBlock">
                 <div class="config-block-title">Configurar VR Global do Mês</div>

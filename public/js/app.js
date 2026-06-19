@@ -255,7 +255,7 @@ function switchTab(id,event){
         if(id==='tabMeuVTVR'){renderMeuVTVRTab();}
     if(id==='tabBonusConfig'){renderPainelPremiacoes();renderPainelPremio();}
     if(id==='tabDenuncias'){renderDenuncias();renderDenunciasStats();}
-    if(id==='tabVTVR'){renderPainelVTVR();}
+    if(id==='tabVTVR'){renderPainelVTVR();if(typeof _carregarDriveConfig==='function')_carregarDriveConfig();}
     if(id==='tabDenuncia'){verificarDevolutivasLocais();}
     if(id==='tabMeuPDI')renderMeuPDI();
     if(id==='tabDaily')renderDaily();
@@ -388,7 +388,14 @@ function renderHomeExtras(){
     const muralEl=document.getElementById('homeMural');
     if(muralEl){
         const cores=['#023B48','#BE8C45','#3F8A6E','#D98E6A'];
-        const feed=(kudos||[]).slice(0,4);
+        const agora=new Date();
+        const qStart=new Date(agora.getFullYear(),Math.floor(agora.getMonth()/3)*3,1);
+        const kudosTri=(kudos||[]).filter(k=>{
+            if(!k.criadoEm)return true;
+            const d=k.criadoEm.toDate?k.criadoEm.toDate():new Date(k.criadoEm);
+            return d>=qStart;
+        });
+        const feed=kudosTri.filter(k=>k.publico!==false).slice(0,4);
         const nomesColabs=(todosColabs.length?todosColabs:talentos).filter(cc=>cc.id!==user.id).map(cc=>cc.nome).sort();
         muralEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('heart',{size:14,color:'#BE8C45'})} Mural de reconhecimento</div></div>
             <div class="home-mural-form">
@@ -405,7 +412,7 @@ function renderHomeExtras(){
                     <button class="home-mural-send" onclick="enviarKudo()">${ico('send',{size:14,color:'#fff'})} Reconhecer</button>
                 </div>
             </div>
-            ${feed.filter(k=>k.publico!==false).length?`<div class="home-mural-feed">${feed.filter(k=>k.publico!==false).map((k,i)=>`
+            ${feed.length?`<div class="home-mural-feed">${feed.map((k,i)=>`
                 <div class="home-mural-item">
                     <div class="home-mural-av" style="background:${cores[i%cores.length]};">${(k.deNome||k.de||'?')[0].toUpperCase()}</div>
                     <div><div class="home-mural-text">${esc(k.texto||k.mensagem||'')}</div>

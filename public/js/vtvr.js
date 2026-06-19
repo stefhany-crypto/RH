@@ -79,51 +79,41 @@ function renderMeuVTVRTab(){
         if(cv2){if(charts.meuVTComp){try{charts.meuVTComp.destroy();}catch(e){}}charts.meuVTComp=new Chart(cv2.getContext('2d'),{type:'bar',data:{labels,datasets:[{label:'VT',data:meusOrd.map(l=>l.totalVT),backgroundColor:'rgba(30,125,144,0.8)',borderRadius:4},{label:'VR',data:meusOrd.map(l=>l.totalVR),backgroundColor:'rgba(201,160,90,0.8)',borderRadius:4}]},options:{maintainAspectRatio:false,scales:{y:{grid:{color:'#f0f0f0'}}},plugins:{legend:{position:'bottom'}}}});}
     },150);
 }
+function _nfFileToBase64(file){
+    return new Promise((resolve,reject)=>{
+        const r=new FileReader();
+        r.onload=()=>resolve(r.result.split(',')[1]);
+        r.onerror=reject;
+        r.readAsDataURL(file);
+    });
+}
+async function _uploadNFParaDrive(lancId,file,periodo,valor,onOk){
+    if(file.size>10*1024*1024){mostrarNotif('','Arquivo muito grande','A NF deve ter no máximo 10 MB.','',4000);return;}
+    mostrarNotif('','Enviando NF para o Drive...','Aguarde, pode levar alguns segundos.','',4000);
+    try{
+        const fileBase64=await _nfFileToBase64(file);
+        const fn=firebase.app().functions('southamerica-east1');
+        const {data}=await fn.httpsCallable('uploadNFDrive')({lancId,fileBase64,mimeType:file.type});
+        mostrarNotif('','NF salva no Drive!',`${data.fileName} (R$ ${valor.toFixed(2)}) enviada com sucesso.`,'bonus',6000);
+        if(onOk)await onOk();
+    }catch(err){
+        const msg=err.message||err.details||'Erro desconhecido';
+        mostrarNotif('','Falha no upload',msg,'',7000);
+    }
+}
 function uploadNFTab(lancId,periodo,valor){
     const input=document.createElement('input');input.type='file';input.accept='application/pdf';
     input.onchange=async(e)=>{
         const file=e.target.files[0];if(!file)return;
-        if(file.size>5*1024*1024){mostrarNotif('','Arquivo muito grande','A NF deve ter no máximo 5MB.','',4000);return;}
-        mostrarNotif('','Enviando NF...','Aguarde o upload do arquivo.','',3000);
-        try{
-            const nomeSeguro=file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
-            const ref=storage.ref(`nf/${lancId}/${Date.now()}_${nomeSeguro}`);
-            await ref.put(file);
-            const nfUrl=await ref.getDownloadURL();
-            const docAtual=await db.collection('lancamentosVTVR').doc(lancId).get();
-            const dadosAtuais=docAtual.exists?docAtual.data():{};
-            const histAnterior=dadosAtuais.nfHistorico||[];
-            if(dadosAtuais.nfNome) histAnterior.push({nfNome:dadosAtuais.nfNome,nfUrl:dadosAtuais.nfUrl||'',enviadoEm:dadosAtuais.nfUploadEm||''});
-            await db.collection('lancamentosVTVR').doc(lancId).update({nfNome:file.name,nfUrl,nfUploadEm:new Date().toLocaleString('pt-BR'),nfUploadPor:user.nome,statusNF:'emitida',nfHistorico:histAnterior});
-        }catch(err){mostrarNotif('','Falha no upload','Não foi possível enviar a NF: '+err.message,'',6000);return;}
-        mostrarNotif('','NF enviada!',`NF para ${periodo} (R$ ${valor.toFixed(2)}) registrada com sucesso.`,'bonus',5000);
-        await carregarVTVRColab();renderMeuVTVRTab();
+        await _uploadNFParaDrive(lancId,file,periodo,valor,async()=>{await carregarVTVRColab();renderMeuVTVRTab();});
     };
     input.click();
 }
-function uploadNF(lancId, periodo, valor){
-    // Cria input de arquivo temporário
+function uploadNF(lancId,periodo,valor){
     const input=document.createElement('input');input.type='file';input.accept='application/pdf';
     input.onchange=async(e)=>{
         const file=e.target.files[0];if(!file)return;
-        if(file.size>5*1024*1024){mostrarNotif('','Arquivo muito grande','A NF deve ter no máximo 5MB.','',4000);return;}
-        mostrarNotif('','Enviando NF...','Aguarde o upload do arquivo.','',3000);
-        try{
-            const nomeSeguro=file.name.replace(/[^a-zA-Z0-9.\-_]/g,'_');
-            const ref=storage.ref(`nf/${lancId}/${Date.now()}_${nomeSeguro}`);
-            await ref.put(file);
-            const nfUrl=await ref.getDownloadURL();
-            const docAtual=await db.collection('lancamentosVTVR').doc(lancId).get();
-            const dadosAtuais=docAtual.exists?docAtual.data():{};
-            const histAnterior=dadosAtuais.nfHistorico||[];
-            if(dadosAtuais.nfNome) histAnterior.push({nfNome:dadosAtuais.nfNome,nfUrl:dadosAtuais.nfUrl||'',enviadoEm:dadosAtuais.nfUploadEm||''});
-            await db.collection('lancamentosVTVR').doc(lancId).update({
-                nfNome:file.name, nfUrl, nfUploadEm:new Date().toLocaleString('pt-BR'),
-                nfUploadPor:user.nome, statusNF:'emitida', nfHistorico:histAnterior
-            });
-        }catch(err){mostrarNotif('','Falha no upload','Não foi possível enviar a NF: '+err.message,'',6000);return;}
-        mostrarNotif('','NF registrada!',`NF para ${periodo} (R$ ${valor.toFixed(2)}) enviada com sucesso.`,'bonus',5000);
-        carregarVTVR();renderMeuPDI();
+        await _uploadNFParaDrive(lancId,file,periodo,valor,()=>{carregarVTVR();renderMeuPDI();});
     };
     input.click();
 }
@@ -368,14 +358,36 @@ async function confirmarLancamentos(){
             });
             await batch.commit();
         }
-        // Notificar PJs
-        previewData.filter(p=>p.tipoContrato==='PJ').forEach(p=>{
+        // Notificar PJs + criar tarefa automática em Minhas Tarefas
+        const pjsLanc=previewData.filter(p=>p.tipoContrato==='PJ');
+        pjsLanc.forEach(p=>{
             const t=talentos.find(ta=>ta.id===p.colabId);
             if(t)db.collection('notificacoesPJ').add({colabId:p.colabId,nome:t.nome,email:t.email,mes:p.mes,ano:p.ano,valor:p.total,tipo:'vtvr',dataEnvio:agora,lida:false,mensagem:`Seu reembolso de VT/VR referente a ${p.mes}/${p.ano} foi processado. Valor: R$ ${p.total.toFixed(2)}. Por favor, emita a NF com este valor.`});
         });
+        if(pjsLanc.length){
+            const tfBatch=db.batch();
+            pjsLanc.forEach(p=>{
+                const ref=db.collection('tarefasPessoais').doc();
+                const prazo=new Date(p.anoCalculo||p.ano,(p.mesCalculo||p.mes)-1+1,0);
+                tfBatch.set(ref,{
+                    userId:p.colabId,
+                    titulo:`Emitir NF de Reembolso — ${MESES_NOME[p.mes]||p.mes}/${p.ano} — R$ ${p.total.toFixed(2)}`,
+                    lista:'Minhas Tarefas',
+                    urgente:true,importante:true,
+                    concluida:false,concluidaEm:null,
+                    prazo,origem:'nf_pj',
+                    notas:`Emita a NF no valor R$ ${p.total.toFixed(2)} referente ao reembolso VT/VR de ${MESES_NOME[p.mesCalculo||p.mes]||p.mesCalculo}/${p.anoCalculo||p.ano} e faça o upload na aba VT/VR.`,
+                    equipe:p.equipe||null,subtarefas:[],recorrencia:null,prioridade:'alta',
+                    ordem:Date.now(),
+                    criadoEm:firebase.firestore.FieldValue.serverTimestamp(),
+                    atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()
+                });
+            });
+            await tfBatch.commit();
+        }
         document.getElementById('previewLancamentos').style.display='none';
         previewData=[];
-        mostrarNotif('','Lançamentos confirmados!','PJs foram notificados para emitir NF.','bonus',5000);
+        mostrarNotif('','Lançamentos confirmados!','PJs foram notificados e a tarefa de NF foi criada automaticamente.','bonus',5000);
         carregarVTVR();
     });
 }
@@ -727,6 +739,31 @@ async function baixarNFsEmLote(){
 }
 
 
+async function salvarDriveFolderId(){
+    const val=document.getElementById('driveFolderIdInput')?.value?.trim();
+    if(!val){mostrarNotif('','Campo vazio','Cole o ID da pasta do Google Drive.','',3000);return;}
+    await guardado('driveFolderIdSave',async()=>{
+        await db.collection('config').doc('drive').set({nfFolderId:val,atualizadoEm:new Date(),atualizadoPor:user.nome},{merge:true});
+        mostrarNotif('','Pasta configurada!','As próximas NFs serão enviadas para esta pasta.','bonus',4000);
+        document.getElementById('driveFolderAtual').textContent='Pasta ativa: '+val;
+    });
+}
+async function _carregarDriveConfig(){
+    const blk=document.getElementById('driveConfigBlock');
+    if(!blk)return;
+    if(!P.isMaster()){blk.style.display='none';return;}
+    blk.style.display='';
+    try{
+        const snap=await db.collection('config').doc('drive').get();
+        if(snap.exists&&snap.data().nfFolderId){
+            const inp=document.getElementById('driveFolderIdInput');
+            if(inp)inp.value=snap.data().nfFolderId;
+            const info=document.getElementById('driveFolderAtual');
+            if(info)info.textContent='Pasta ativa: '+snap.data().nfFolderId;
+        }
+    }catch(e){}
+}
+
 // ── ES-module: expõe ao escopo global ──────────────────────────
 Object.assign(window, {
     renderMeuVTVRTab, uploadNFTab, uploadNF,
@@ -736,5 +773,5 @@ Object.assign(window, {
     gerarLancamentos, renderPreview, recalcPreview, confirmarLancamentos,
     renderPainelVTVR, _vtvr_filtrar,
     exportarExcelVTVR, exportarPDFVTVR, exportarOmieVTVR, baixarNFsEmLote,
-    toggleCamposPJ, renderMeuVTVR,
+    toggleCamposPJ, renderMeuVTVR, salvarDriveFolderId,
 });

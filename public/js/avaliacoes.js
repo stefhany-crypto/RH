@@ -11,7 +11,10 @@
         const aud=a.avaliadorNome||'Sistema';
         const pdfBtn=`<button class="btn-small" style="background:#E3F2FD;color:#1565C0;max-width:36px;" title="PDF" onclick="baixarPDI('${a.id}')"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;display:inline-block;"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 13h6M9 17h6"/></svg></button>`;
         const delBtn=P.excluirAvaliacao()?`<button class="btn-small btn-delete" style="max-width:36px;" title="Excluir" onclick="excluirAvaliacao('${a.id}','${jsq(t.nome)}',${a.trimestre},${a.ano})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;display:inline-block;"><path d="M4 7h16M9 7V5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/></svg></button>`:'';
-        return `<tr><td style="font-size:0.8rem;white-space:nowrap;">${dh}</td><td style="font-weight:700;">${esc(t.nome)}</td><td><span class="badge" style="background:#EEE;">${esc(t.equipe||'-')}</span></td><td style="white-space:nowrap;">Q${a.trimestre}/${a.ano}</td><td><span class="badge ${a.notaFinal>=80?'badge-success':'badge-warning'}">${a.notaFinal.toFixed(1)}</span></td><td style="font-weight:700;color:var(--mirae-teal);">${a.bonusPercent}%</td><td style="font-size:0.78rem;color:var(--text-muted);">${esc(aud)}</td><td style="display:flex;gap:0.3rem;">${pdfBtn}${delBtn}</td></tr>`;
+        const fbExiste=a.observacoes||a.feedback||'';
+        const fbBtn=P.criarAvaliacao(t?.equipe)?`<button class="btn-small" style="background:#FFF8EC;color:#BE8C45;font-size:0.7rem;" title="Feedback" onclick="document.getElementById('fbRow_${a.id}').style.display=document.getElementById('fbRow_${a.id}').style.display==='none'?'':'none'">Feedback</button>`:'';
+        const fbRow=P.criarAvaliacao(t?.equipe)?`<tr id="fbRow_${a.id}" style="display:none;"><td colspan="8" style="padding:8px 12px;background:#FFFDF7;"><div style="font-size:0.82rem;font-weight:600;margin-bottom:6px;color:var(--mirae-teal);">Feedback do líder — Q${a.trimestre}/${a.ano} · ${esc(t.nome)}</div><textarea id="feedbackLiderInput_${a.id}" rows="3" style="width:100%;padding:0.6rem;border:1.5px solid #E0E0E0;border-radius:8px;font-family:inherit;font-size:0.85rem;">${esc(fbExiste)}</textarea><div style="margin-top:6px;text-align:right;"><button class="btn-small btn-eval" onclick="salvarFeedbackLider('${a.id}')">Salvar feedback</button></div></td></tr>`:'';
+        return `<tr><td style="font-size:0.8rem;white-space:nowrap;">${dh}</td><td style="font-weight:700;">${esc(t.nome)}</td><td><span class="badge" style="background:#EEE;">${esc(t.equipe||'-')}</span></td><td style="white-space:nowrap;">Q${a.trimestre}/${a.ano}</td><td><span class="badge ${a.notaFinal>=80?'badge-success':'badge-warning'}">${a.notaFinal.toFixed(1)}</span></td><td style="font-weight:700;color:var(--mirae-teal);">${a.bonusPercent}%</td><td style="font-size:0.78rem;color:var(--text-muted);">${esc(aud)}</td><td style="display:flex;gap:0.3rem;">${pdfBtn}${fbBtn}${delBtn}</td></tr>${fbRow}`;
     }).join('');
 }
 
@@ -42,6 +45,12 @@ async function baixarPDI(avalId){
 }
 
 // ========== FORM AVALIAÇÃO ==========
+function _feedbackField(val=''){
+    return `<div class="pdi-item" style="margin-top:1.5rem;border-top:1px solid #E0E0E0;padding-top:1.2rem;">
+        <label style="font-weight:700;display:block;margin-bottom:0.5rem;color:var(--mirae-teal);">Feedback do líder para o colaborador</label>
+        <textarea id="fEvalObservacoes" rows="3" style="width:100%;padding:0.8rem;border:1.5px solid #E0E0E0;border-radius:10px;font-family:inherit;font-size:0.9rem;resize:vertical;" placeholder="Escreva um feedback construtivo e motivador para o colaborador ver no seu PDI...">${val}</textarea>
+    </div>`;
+}
 function sincronizarTipoFormulario(){
     const sel=document.getElementById('fEvalColab'),id=sel?sel.value:'',badge=document.getElementById('tipoAvaliacaoBadge');
     if(!id){document.getElementById('evalFormContainer').innerHTML='<p style="color:var(--text-muted);padding:1rem;text-align:center;">Selecione um talento para iniciar.</p>';if(badge){badge.textContent='';badge.className='';}return;}
@@ -65,12 +74,14 @@ function renderEvalForm(){
             ['Aumento de Horas (50%)','Margem Líquida (30%)','NPS Instituições (10%)','NPS Médicos (10%)'].forEach((label,i)=>{const ids=['kH','kM','kNI','kNM'][i];h+=`<div class="pdi-item"><label style="font-weight:700;">${label}</label><input type="number" class="kpi" id="${ids}" value="50" style="margin-top:0.5rem;width:100%;padding:0.8rem;border:1.5px solid #E0E0E0;border-radius:10px;" oninput="calcKPI()"></div>`;});
             h+=`<h4 style="color:var(--mirae-teal);margin:1.5rem 0 1rem 0;">PDI <small>(30%)</small></h4>`;
             let idx=0;h+=PDI_GROUPS.map(g=>`<div class="pdi-grupo"><div class="pdi-grupo-title">${g.n}</div>${g.c.map(c=>{const rid=idx++;return `<div class="pdi-item"><div style="font-size:0.88rem;font-weight:600;margin-bottom:0.5rem;">${rid+1}. ${c}</div><div class="rating-group" id="rg${rid}"><button type="button" class="rating-btn" onclick="setR(${rid},0,'Não Atende')">0</button><button type="button" class="rating-btn" onclick="setR(${rid},25,'Atende Parcialmente')">25</button><button type="button" class="rating-btn selected" onclick="setR(${rid},50,'Atende')">50</button><button type="button" class="rating-btn" onclick="setR(${rid},100,'Supera')">100</button><button type="button" class="rating-btn" onclick="setR(${rid},110,'Excepcional')">110</button></div><span class="rating-legend" id="rl${rid}">Atende</span><input type="hidden" class="pdi-val" id="rv${rid}" value="50"></div>`;}).join('')}</div>`).join('');
+            h+=_feedbackField();
             container.innerHTML=h;calcKPI();
         }else{
             let h=`<h4 style="color:var(--mirae-teal);margin-bottom:1rem;">Super Desafio - Q${tri} <small>(30%)</small></h4>`;
             h+=`<div class="pdi-item"><label style="font-weight:700;display:block;margin-bottom:0.5rem;">Descrição</label><textarea rows="2" class="d-desc" style="width:100%;padding:0.8rem;border:1.5px solid #E0E0E0;border-radius:10px;margin-bottom:0.8rem;"></textarea><label style="font-weight:700;display:block;margin-bottom:0.5rem;">Nota (0–100)</label><input type="number" class="d-nota" min="0" max="100" value="50" style="width:100%;padding:0.8rem;border:1.5px solid #E0E0E0;border-radius:10px;" oninput="calcADM()"></div>`;
             h+=`<h4 style="color:var(--mirae-teal);margin:1.5rem 0 1rem 0;">PDI <small>(70%)</small></h4>`;
             let idx=0;h+=PDI_GROUPS.map(g=>`<div class="pdi-grupo"><div class="pdi-grupo-title">${g.n}</div>${g.c.map(c=>{const rid=idx++;return `<div class="pdi-item"><div style="font-size:0.88rem;font-weight:600;margin-bottom:0.5rem;">${rid+1}. ${c}</div><div class="rating-group" id="rg${rid}"><button type="button" class="rating-btn" onclick="setR(${rid},0,'Não Atende')">0</button><button type="button" class="rating-btn" onclick="setR(${rid},25,'Atende Parcialmente')">25</button><button type="button" class="rating-btn selected" onclick="setR(${rid},50,'Atende')">50</button><button type="button" class="rating-btn" onclick="setR(${rid},100,'Supera')">100</button><button type="button" class="rating-btn" onclick="setR(${rid},110,'Excepcional')">110</button></div><span class="rating-legend" id="rl${rid}">Atende</span><input type="hidden" class="pdi-val" id="rv${rid}" value="50"></div>`;}).join('')}</div>`).join('');
+            h+=_feedbackField();
             container.innerHTML=h;calcADM();
         }
     }catch(err){console.error(err);container.innerHTML='<p style="color:red;padding:1rem;">Erro ao carregar formulário.</p>';}
@@ -95,7 +106,7 @@ async function saveAvaliacao(e){
         const batch=db.batch();
         // Remove doc antigo se o ID mudou (trimestre/ano foram alterados)
         if(existente&&existente.id!==docId)batch.delete(db.collection('avaliacoes').doc(existente.id));
-        batch.set(db.collection('avaliacoes').doc(docId),{colaboradorId:cid,equipe:t?.equipe||'',trimestre,ano,notaFinal:parseFloat(document.getElementById('resNota').textContent),bonusPercent:parseInt(document.getElementById('resBonus').textContent),scores:sc,desafioDesc:document.querySelector('.d-desc')?.value||'',desafioNota:parseFloat(document.querySelector('.d-nota')?.value||0),data:agora,avaliadorId:user.id,avaliadorNome:user.nome,avaliadorEmail:user.email,dataHoraRegistro:agora.toLocaleString('pt-BR')});
+        batch.set(db.collection('avaliacoes').doc(docId),{colaboradorId:cid,equipe:t?.equipe||'',trimestre,ano,notaFinal:parseFloat(document.getElementById('resNota').textContent),bonusPercent:parseInt(document.getElementById('resBonus').textContent),scores:sc,desafioDesc:document.querySelector('.d-desc')?.value||'',desafioNota:parseFloat(document.querySelector('.d-nota')?.value||0),observacoes:document.getElementById('fEvalObservacoes')?.value||'',data:agora,avaliadorId:user.id,avaliadorNome:user.nome,avaliadorEmail:user.email,dataHoraRegistro:agora.toLocaleString('pt-BR')});
         await batch.commit();
         closeModal('modalAvaliacao');refreshData();
         mostrarNotif('','Avaliação salva',`Q${trimestre}/${ano} de ${t?.nome||'colaborador'} registrada.`,'',3000);
@@ -124,10 +135,21 @@ function openEvalFor(id){
     },150);
 }
 
+async function salvarFeedbackLider(avalId){
+    if(!['MASTER','LIDER'].includes(user?.role)){mostrarNotif('','Sem permissão','Apenas líderes podem editar o feedback.','',3000);return;}
+    const txt=document.getElementById('feedbackLiderInput_'+avalId)?.value;
+    if(txt===undefined)return;
+    await guardado('feedback_'+avalId, async()=>{
+        await db.collection('avaliacoes').doc(avalId).update({observacoes:txt});
+        refreshData();
+        mostrarNotif('','Feedback salvo','O colaborador verá no PDI dele.','',3000);
+    });
+}
+
 // ── ES-module: expõe ao escopo global ──────────────────────────
 Object.assign(window, {
     excluirAvaliacao, baixarPDI, sincronizarTipoFormulario,
     renderEvalForm, setR, calcADM, calcKPI, showRes,
     saveAvaliacao, closeModal, openModalAvaliacao, openEvalFor,
-    renderAvaliacoes,
+    renderAvaliacoes, salvarFeedbackLider,
 });
