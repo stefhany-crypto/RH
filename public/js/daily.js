@@ -38,7 +38,8 @@ async function carregarTarefasPessoais(){
 async function renderTarefasPessoais(){
     if(!ttCarregado)await carregarTarefasPessoais();
     if(!dailyTarefas||!dailyTarefas.length){try{await carregarDaily();}catch(e){}}
-    ttRenderRail(); ttRenderLista();
+    try{ttRenderRail();}catch(e){console.error('[TT] ttRenderRail erro:',e);const r=document.getElementById('ttRail');if(r)r.innerHTML=`<div style="padding:1rem;color:red;font-size:12px;">Erro na rail: ${e?.message||e}</div>`;}
+    try{ttRenderLista();}catch(e){console.error('[TT] ttRenderLista erro:',e);}
     const qa=document.querySelector('#tabTarefas .tt-qa-ico'); if(qa)qa.innerHTML=ico('plus',{size:18});
     const bc=document.getElementById('ttBtnConcl'); if(bc){bc.innerHTML=ico('check',{size:16});bc.classList.toggle('on',ttMostrarConcluidas);}
     const bp=document.getElementById('ttBtnPdf'); if(bp)bp.innerHTML=ico('download',{size:16});
@@ -47,15 +48,16 @@ async function renderTarefasPessoais(){
 
 // Lista unificada: tarefas próprias + tarefas da daily (com "sombra" para estado pessoal)
 function ttUnificadas(){
+    const uid=user?.id||null;
     const proprias=tarefasPessoais.filter(t=>t.origem!=='daily');
     const shadows={}; tarefasPessoais.filter(t=>t.origem==='daily').forEach(t=>{shadows[t.origemTarefaId]=t;});
     // evita duplicar: tarefas da daily criadas a partir de uma tarefa pessoal (enviadas) já aparecem como a própria
     const enviadasIds=new Set(proprias.map(t=>t.dailyTarefaCriadaId).filter(Boolean));
-    const daily=(dailyTarefas||[]).filter(t=>t.responsavelId===user.id&&!enviadasIds.has(t.id)&&(['pendente','andamento'].includes(t.status)||shadows[t.id])).map(dt=>{
+    const daily=uid?(dailyTarefas||[]).filter(t=>t.responsavelId===uid&&!enviadasIds.has(t.id)&&(['pendente','andamento'].includes(t.status)||shadows[t.id])).map(dt=>{
         const s=shadows[dt.id];
         if(s)return {...s,titulo:dt.descricao,equipe:dt.equipe,_daily:true};
         return {_virtual:true,_daily:true,origem:'daily',origemTarefaId:dt.id,titulo:dt.descricao,equipe:dt.equipe,concluida:false,prioridade:null,prazo:dt.data||null,lista:'Daily',subtarefas:[],notas:''};
-    });
+    }):[];
     return [...proprias,...daily];
 }
 function ttKey(t){return t.id?t.id:'daily:'+t.origemTarefaId;}
