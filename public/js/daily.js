@@ -19,6 +19,8 @@
     }catch(e){console.error('Erro ao carregar dailys:',e);}
     renderDaily();
     verificarTarefasDelegadas();
+    // Atualiza home depois que os dados chegam
+    if(typeof renderHomeExtras==='function') renderHomeExtras();
 }
 
 // ========== MINHAS TAREFAS — gestor pessoal estilo TickTick ==========

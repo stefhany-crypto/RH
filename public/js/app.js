@@ -231,6 +231,8 @@ function updateUI(){
     if(P.isMaster()||P.isRH())carregarDenuncias();
     carregarVTVRColab(); // todos veem os próprios
     carregarDaily(); // dailys e tarefas (todos)
+    // Carrega kudos e re-renderiza mural depois
+    db.collection('kudos').orderBy('criadoEm','desc').limit(10).get().then(snap=>{kudos=snap.docs.map(d=>({id:d.id,...d.data()}));renderHomeExtras();}).catch(()=>{});
     iniciarListenerNotificacoes(); // sino de tarefas delegadas (Firestore, multi-device)
     if(P.isRH())carregarVTVR();
     verificarDevolutivasLocais();
@@ -387,11 +389,13 @@ function renderHomeExtras(){
     if(muralEl){
         const cores=['#023B48','#BE8C45','#3F8A6E','#D98E6A'];
         const feed=(kudos||[]).slice(0,4);
-        const nomes=(todosColabs.length?todosColabs:talentos).filter(cc=>cc.id!==user.id).map(cc=>cc.nome).sort();
+        const nomesColabs=(todosColabs.length?todosColabs:talentos).filter(cc=>cc.id!==user.id).map(cc=>cc.nome).sort();
         muralEl.innerHTML=`<div class="home-card-header"><div class="home-card-title">${ico('heart',{size:14,color:'#BE8C45'})} Mural de reconhecimento</div></div>
             <div class="home-mural-form">
-                <input class="home-mural-input" id="muralParaInput" list="muralPessoasList" placeholder="Para quem é o reconhecimento?" style="margin-bottom:8px;height:36px;padding:8px 12px;">
-                <datalist id="muralPessoasList">${nomes.map(n=>`<option value="${esc(n)}">`).join('')}</datalist>
+                <div style="position:relative;margin-bottom:8px;">
+                    <input class="home-mural-input" id="muralParaInput" placeholder="Para quem é o reconhecimento?" autocomplete="off" style="height:36px;padding:8px 12px;width:100%;box-sizing:border-box;" oninput="muralFiltrarPessoas(this.value)">
+                    <div id="muralSugestoes" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,0.10);z-index:99;max-height:160px;overflow-y:auto;"></div>
+                </div>
                 <textarea class="home-mural-input" id="muralTextoInput" placeholder="Escreva um reconhecimento sincero..." rows="2" style="margin-bottom:8px;"></textarea>
                 <div style="display:flex;align-items:center;justify-content:space-between;">
                     <label style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);cursor:pointer;">
@@ -443,7 +447,7 @@ function renderCalendarioAniversarios(){
     const dataRef=new Date(ano,mesBase,1);
     const mes=dataRef.getMonth();
     const anoRef=dataRef.getFullYear();
-    const MESES_FULL=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const MESES_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
     const DIAS_SEM=['D','S','T','Q','Q','S','S'];
     const primeiroDia=new Date(anoRef,mes,1).getDay();
     const ultimoDia=new Date(anoRef,mes+1,0).getDate();
@@ -666,6 +670,24 @@ if('serviceWorker' in navigator && location.hostname!=='localhost' && location.h
     });
 }
 
+function muralFiltrarPessoas(q){
+    const box=document.getElementById('muralSugestoes');
+    if(!box)return;
+    const lista=(todosColabs.length?todosColabs:talentos).filter(cc=>cc.id!==user.id);
+    if(!q||q.trim().length<1){box.style.display='none';return;}
+    const lower=q.toLowerCase();
+    const matches=lista.filter(cc=>cc.nome&&cc.nome.toLowerCase().includes(lower)).slice(0,8);
+    if(!matches.length){box.style.display='none';return;}
+    box.innerHTML=matches.map(cc=>`<div onclick="muralSelecionarPessoa('${esc(cc.nome)}')" style="padding:8px 12px;cursor:pointer;font-size:13px;border-bottom:1px solid var(--border);" onmouseover="this.style.background='var(--cream)'" onmouseout="this.style.background=''">${esc(cc.nome)}</div>`).join('');
+    box.style.display='block';
+}
+function muralSelecionarPessoa(nome){
+    const inp=document.getElementById('muralParaInput');
+    if(inp)inp.value=nome;
+    const box=document.getElementById('muralSugestoes');
+    if(box)box.style.display='none';
+}
+
 // ── ES-module: expõe ao escopo global ──────────────────────────
 Object.assign(window, {
     handleLogin, handleLogout, startApp, buildTabs, refreshData, updateUI,
@@ -674,4 +696,5 @@ Object.assign(window, {
     soltarBaloes, fecharAniversario, verificarAniversario,
     renderHomeExtras, renderHome, verificarNovasAvaliacoes, renderMeuPDI,
     anivMesAnterior, anivProximoMes, renderCalendarioAniversarios,
+    muralFiltrarPessoas, muralSelecionarPessoa,
 });

@@ -141,6 +141,7 @@ async function renderMesas(){
     }catch(e){console.warn('reservasMesas:',e.message);}
     window._reservasDia=reservasDia;
     renderMesaSVG(reservasDia);
+    if(typeof renderHomeExtras==='function') renderHomeExtras();
     // Lista
     const lista=document.getElementById('mesaListaReservas');
     if(!lista)return;
