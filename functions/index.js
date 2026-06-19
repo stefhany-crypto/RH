@@ -994,7 +994,7 @@ exports.uploadNFDrive = functions
     if (!lancDoc.exists) throw new functions.https.HttpsError('not-found', 'Lançamento não encontrado.');
     const lanc = lancDoc.data();
 
-    const configDoc = await db.collection('config').doc('drive').get();
+    const configDoc = await db.collection('configs').doc('drive').get();
     const rootFolderId = configDoc.exists ? configDoc.data().nfFolderId : null;
     if (!rootFolderId) throw new functions.https.HttpsError('failed-precondition', 'Pasta do Drive não configurada. Acesse Configurações > Drive e informe o ID da pasta raiz.');
 

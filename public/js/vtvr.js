@@ -743,7 +743,7 @@ async function salvarDriveFolderId(){
     const val=document.getElementById('driveFolderIdInput')?.value?.trim();
     if(!val){mostrarNotif('','Campo vazio','Cole o ID da pasta do Google Drive.','',3000);return;}
     await guardado('driveFolderIdSave',async()=>{
-        await db.collection('config').doc('drive').set({nfFolderId:val,atualizadoEm:new Date(),atualizadoPor:user.nome},{merge:true});
+        await db.collection('configs').doc('drive').set({nfFolderId:val,atualizadoEm:new Date(),atualizadoPor:user.nome},{merge:true});
         mostrarNotif('','Pasta configurada!','As próximas NFs serão enviadas para esta pasta.','bonus',4000);
         document.getElementById('driveFolderAtual').textContent='Pasta ativa: '+val;
     });
@@ -754,7 +754,7 @@ async function _carregarDriveConfig(){
     if(!P.isMaster()){blk.style.display='none';return;}
     blk.style.display='';
     try{
-        const snap=await db.collection('config').doc('drive').get();
+        const snap=await db.collection('configs').doc('drive').get();
         if(snap.exists&&snap.data().nfFolderId){
             const inp=document.getElementById('driveFolderIdInput');
             if(inp)inp.value=snap.data().nfFolderId;

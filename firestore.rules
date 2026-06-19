@@ -337,6 +337,17 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // ── kudos (Mural de reconhecimento) ─────────────────────────
+    match /kudos/{docId} {
+      allow read: if autenticado();
+      allow create: if autenticado()
+                    && request.resource.data.de == uid()
+                    && request.resource.data.texto is string
+                    && request.resource.data.texto.size() > 0
+                    && request.resource.data.texto.size() <= 1000;
+      allow delete: if isMaster();
+    }
+
     // ── Nega tudo que não foi mapeado explicitamente ─────────────
     match /{document=**} {
       allow read, write: if false;
