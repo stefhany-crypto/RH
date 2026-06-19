@@ -37,6 +37,7 @@ let mesaSalaAtiva = 1;
 let mesaSelecionada = null;
 window._reservasDia = {};
 let kanbanBoards=[], kbCards=[], kbBoardAtivo=null, kbCardAberto=null;
+let kudos=[];
 let kbListenerBoards=null, kbListenerCards=null, kbDragCardId=null, kbIniciado=false;
 let kbTalentos=[];
 let _kbNPrioSel=null;
@@ -181,6 +182,78 @@ const VERSICULOS_ANIVERSARIO=[
 {t:'O Senhor reina; regozije-se a terra; alegrem-se as muitas ilhas.',r:'Salmos 97:1'},
 {t:'Bendita seja a tua entrada, e bendita, a tua saída.',r:'Deuteronômio 28:6'},
 {t:'O amor é paciente, é benigno; o amor jamais acaba.',r:'1 Coríntios 13:4-8'}
+];
+
+// ===== VERSÍCULOS DO DIA (esperança · amor · força) — sorteio por data =====
+const VERSICULOS_DIA=[
+{t:'Porque eu bem sei os planos que tenho a vosso respeito: planos de paz e não de mal, para vos dar um futuro e uma esperança.',r:'Jeremias 29:11'},
+{t:'O Senhor é a minha luz e a minha salvação; a quem temerei?',r:'Salmos 27:1'},
+{t:'Tudo posso naquele que me fortalece.',r:'Filipenses 4:13'},
+{t:'Não temas, porque eu sou contigo; não te assombres, porque eu sou o teu Deus.',r:'Isaías 41:10'},
+{t:'Os que esperam no Senhor renovam as suas forças; sobem com asas como águias.',r:'Isaías 40:31'},
+{t:'A paz vos deixo, a minha paz vos dou.',r:'João 14:27'},
+{t:'O amor é paciente, é benigno; o amor nunca falha.',r:'1 Coríntios 13:4,8'},
+{t:'Deus é o nosso refúgio e fortaleza, socorro bem presente nas tribulações.',r:'Salmos 46:1'},
+{t:'Não andeis ansiosos por coisa alguma; apresentai as vossas petições a Deus com ação de graças.',r:'Filipenses 4:6'},
+{t:'Porque para Deus nada é impossível.',r:'Lucas 1:37'},
+{t:'Aquietai-vos e sabei que eu sou Deus.',r:'Salmos 46:10'},
+{t:'Confia no Senhor de todo o teu coração e não te estribes no teu próprio entendimento.',r:'Provérbios 3:5'},
+{t:'As misericórdias do Senhor são a causa de não sermos consumidos; renovam-se cada manhã.',r:'Lamentações 3:22-23'},
+{t:'Sê forte e corajoso; não temas, porque o Senhor, teu Deus, é contigo por onde quer que andares.',r:'Josué 1:9'},
+{t:'O Senhor é a minha força e o meu escudo; nele confiou o meu coração.',r:'Salmos 28:7'},
+{t:'Deleita-te no Senhor, e ele satisfará os desejos do teu coração.',r:'Salmos 37:4'},
+{t:'Entrega o teu caminho ao Senhor; confia nele, e ele tudo fará.',r:'Salmos 37:5'},
+{t:'A esperança não traz confusão, porque o amor de Deus está derramado em nossos corações.',r:'Romanos 5:5'},
+{t:'Aquele que começou a boa obra em vós há de completá-la até ao Dia de Cristo Jesus.',r:'Filipenses 1:6'},
+{t:'O Senhor guardará a tua entrada e a tua saída, desde agora e para sempre.',r:'Salmos 121:8'},
+{t:'O choro pode durar uma noite, mas a alegria vem pela manhã.',r:'Salmos 30:5'},
+{t:'Regozijai-vos na esperança, sede pacientes na tribulação.',r:'Romanos 12:12'},
+{t:'A tua palavra é lâmpada para os meus pés e luz para o meu caminho.',r:'Salmos 119:105'},
+{t:'Que o Deus da esperança vos encha de todo o gozo e paz no vosso crer.',r:'Romanos 15:13'},
+{t:'Tu és precioso aos meus olhos, e digno de honra, e eu te amo.',r:'Isaías 43:4'},
+{t:'O Senhor fará toda luz do amor brilhar sobre você.',r:'Números 6:24-25'},
+{t:'Não temas, pois eu estou contigo; não te desanimes, pois eu sou o teu Deus.',r:'Isaías 41:10'},
+{t:'A alegria do Senhor é a vossa força.',r:'Neemias 8:10'},
+{t:'Sobre tudo o que se deve guardar, guarda o teu coração, porque dele procedem as fontes da vida.',r:'Provérbios 4:23'},
+{t:'O Senhor é a minha porção; portanto, esperarei nele.',r:'Lamentações 3:24'},
+{t:'Deus enxugará de seus olhos toda lágrima; e não haverá mais morte.',r:'Apocalipse 21:4'},
+{t:'O Senhor é grande e mui digno de ser louvado.',r:'Salmos 145:3'},
+{t:'Lançando sobre ele toda a vossa ansiedade, porque ele tem cuidado de vós.',r:'1 Pedro 5:7'},
+{t:'Quão precioso é, ó Deus, o teu amor!',r:'Salmos 36:7'},
+{t:'O Senhor é bom para todos, e as suas misericórdias estão sobre todas as suas obras.',r:'Salmos 145:9'},
+{t:'Buscai primeiro o Reino de Deus, e todas as coisas vos serão acrescentadas.',r:'Mateus 6:33'},
+{t:'A vossa vida está escondida com Cristo em Deus.',r:'Colossenses 3:3'},
+{t:'O Senhor guarda a todos os que o amam.',r:'Salmos 145:20'},
+{t:'Este é o dia que o Senhor fez; regozijemo-nos e alegremo-nos nele.',r:'Salmos 118:24'},
+{t:'O Senhor dará força ao seu povo; o Senhor abençoará o seu povo com paz.',r:'Salmos 29:11'},
+{t:'Os que semeiam em lágrimas com júbilo ceifarão.',r:'Salmos 126:5'},
+{t:'O Senhor está perto de todos os que o invocam.',r:'Salmos 145:18'},
+{t:'Espera no Senhor, anima-te, e ele fortalecerá o teu coração.',r:'Salmos 27:14'},
+{t:'Pela manhã, ouve a minha voz; apresento-te a minha oração e espero.',r:'Salmos 5:3'},
+{t:'Aquele que habita no esconderijo do Altíssimo descansará à sombra do Onipotente.',r:'Salmos 91:1'},
+{t:'O Senhor é a minha rocha, a minha fortaleza e o meu libertador.',r:'Salmos 18:2'},
+{t:'O Senhor te guiará continuamente e fartará a tua alma.',r:'Isaías 58:11'},
+{t:'Ainda que eu ande pelo vale da sombra da morte, não temerei mal algum, porque tu estás comigo.',r:'Salmos 23:4'},
+{t:'Grandes coisas fez o Senhor por nós, e por isso estamos alegres.',r:'Salmos 126:3'},
+{t:'Bendize, ó minha alma, ao Senhor, e não te esqueças de nenhum dos seus benefícios.',r:'Salmos 103:2'},
+{t:'O Senhor é a força do meu coração e a minha porção para sempre.',r:'Salmos 73:26'},
+{t:'O nome do Senhor é torre forte; o justo corre para ela e está seguro.',r:'Provérbios 18:10'},
+{t:'Alegrai-vos sempre no Senhor; outra vez digo: alegrai-vos.',r:'Filipenses 4:4'},
+{t:'Deus fará novas todas as coisas.',r:'Apocalipse 21:5'},
+{t:'O Senhor é a minha herança; nele espera a minha alma.',r:'Salmos 16:5'},
+{t:'A luz do justo brilha cada vez mais até ser dia perfeito.',r:'Provérbios 4:18'},
+{t:'Provai e vede que o Senhor é bom; bem-aventurado o homem que nele confia.',r:'Salmos 34:8'},
+{t:'Como o pai se compadece dos filhos, assim o Senhor se compadece dos que o temem.',r:'Salmos 103:13'},
+{t:'O teu sol nunca mais se porá; o Senhor será a tua luz perpétua.',r:'Isaías 60:20'},
+{t:'O Senhor abençoará e fará prosperar tudo quanto empreenderes.',r:'Deuteronômio 28:8'},
+{t:'Servi ao Senhor com alegria; apresentai-vos diante dele com canto.',r:'Salmos 100:2'},
+{t:'Renova-se de força em força; cada um deles aparece diante de Deus em Sião.',r:'Salmos 84:7'},
+{t:'O coração do homem planeja o seu caminho, mas o Senhor lhe dirige os passos.',r:'Provérbios 16:9'},
+{t:'Deus é fiel; ele vos confirmará e guardará do maligno.',r:'2 Tessalonicenses 3:3'},
+{t:'Os justos clamam, e o Senhor os ouve, e os livra de todas as suas angústias.',r:'Salmos 34:17'},
+{t:'O Senhor é compassivo e misericordioso, longânimo e cheio de bondade.',r:'Salmos 103:8'},
+{t:'Bem-aventurados os que confiam no Senhor.',r:'Jeremias 17:7'},
+{t:'Na presença de Deus há fartura de alegrias.',r:'Salmos 16:11'}
 ];
 
 // ========== SALAS ==========

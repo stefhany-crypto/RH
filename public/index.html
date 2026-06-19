@@ -1276,15 +1276,29 @@
         .credo-item span { display:block; font-family:'Newsreader',serif; font-size:1.15rem; font-weight:700; color:var(--teal); margin-bottom:.15rem; }
 
         /* ===== ANIVERSÁRIOS ===== */
-        .aniv-item { display:flex; align-items:center; gap:.8rem; padding:.55rem 0; border-bottom:1px solid var(--border); }
-        .aniv-item:last-child { border-bottom:none; }
-        .aniv-data { width:44px; flex:0 0 44px; text-align:center; font-family:'Newsreader',serif; font-size:1.4rem; font-weight:700; color:var(--teal); line-height:1; }
-        .aniv-data small { display:block; font-size:.6rem; text-transform:uppercase; letter-spacing:.08em; color:var(--muted); font-family:'Hanken Grotesk',sans-serif; font-weight:500; }
-        .aniv-nome { font-weight:600; font-size:.88rem; color:var(--dark); }
-        .aniv-eq { font-size:.74rem; color:var(--muted); }
-        .aniv-hoje { background:var(--gold); color:var(--dark); font-size:.7rem; font-weight:700; padding:.2rem .6rem; border-radius:999px; }
-        .aniv-prox { background:var(--gold-dim); color:var(--gold); font-size:.72rem; font-weight:600; padding:.2rem .6rem; border-radius:999px; }
-        .aniv-dias { font-size:.74rem; color:var(--muted); white-space:nowrap; }
+        /* === CALENDÁRIO ANIVERSÁRIOS === */
+        .aniv-cal-header { display:flex; justify-content:center; font-size:13px; font-weight:600; color:var(--dark); margin-bottom:10px; letter-spacing:.02em; }
+        .aniv-cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; }
+        .aniv-cal-dow { text-align:center; font-size:10px; font-weight:700; color:var(--muted); padding:2px 0 6px; text-transform:uppercase; letter-spacing:.05em; }
+        .aniv-cal-day { position:relative; text-align:center; padding:5px 2px; border-radius:8px; font-size:12.5px; font-weight:500; color:var(--text); cursor:default; min-height:32px; }
+        .aniv-cal-day.empty { background:none; }
+        .aniv-cal-day.hoje { background:var(--dark); color:#fff; font-weight:700; }
+        .aniv-cal-day.aniv { color:#fff; background:#C0392B; font-weight:700; cursor:pointer; }
+        .aniv-cal-day.aniv:hover { background:#a93226; }
+        .aniv-cal-day .aniv-dot { position:absolute; bottom:2px; left:50%; transform:translateX(-50%); width:4px; height:4px; border-radius:50%; background:#fff; }
+        .aniv-cal-pessoas { margin-top:12px; border-top:1px solid var(--border); padding-top:10px; }
+        .aniv-cal-pessoa { display:flex; align-items:center; gap:8px; padding:5px 0; border-bottom:1px solid var(--border); }
+        .aniv-cal-pessoa:last-child { border-bottom:none; }
+        .aniv-cal-data { font-size:13px; font-weight:700; color:#C0392B; min-width:32px; }
+        .aniv-cal-nome { font-size:13.5px; font-weight:600; color:var(--dark); }
+        .aniv-cal-eq { font-size:11.5px; color:var(--muted); }
+        .aniv-nav-btn { background:transparent; border:1px solid var(--border); color:var(--muted); width:26px; height:26px; border-radius:6px; cursor:pointer; font-size:15px; line-height:1; display:flex; align-items:center; justify-content:center; }
+        .aniv-nav-btn:hover { border-color:var(--gold); color:var(--gold); }
+        /* === VERSÍCULO DO DIA === */
+        .versiculo-card { padding:2px 0; }
+        .versiculo-label { font-size:10.5px; font-weight:700; letter-spacing:.12em; text-transform:uppercase; color:var(--gold); margin-bottom:10px; }
+        .versiculo-texto { font-family:'Newsreader',serif; font-style:italic; font-size:16px; line-height:1.6; color:var(--dark); }
+        .versiculo-ref { font-size:12px; font-weight:600; color:var(--muted); margin-top:8px; }
 
         /* ===== BOTÃO MODO NOTURNO ===== */
         .theme-toggle { background:transparent; border:1.5px solid var(--border); color:var(--muted); width:38px; height:38px; border-radius:10px; cursor:pointer; font-size:1.05rem; display:flex; align-items:center; justify-content:center; transition:all .2s; }
@@ -1704,13 +1718,12 @@
                 <div id="ultimoBackupInfo" style="font-size:0.62rem;color:#aaa;text-align:center;margin-top:0.3rem;line-height:1.3;"></div>
             </div>
             <!-- User card no rodapé -->
-            <div style="padding:14px 16px;display:flex;align-items:center;gap:10px;">
-                <div style="flex:1;min-width:0;">
-                    <div class="sidebar-user-name" id="userNameDisplay" style="font-size:13px;">—</div>
-                    <div class="sidebar-user-role" id="userRoleDisplay" style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:1px;"></div>
+            <div style="padding:10px 14px;display:flex;align-items:center;justify-content:space-between;gap:8px;">
+                <div class="sidebar-user-role" id="userRoleDisplay" style="font-size:11px;color:rgba(255,255,255,0.45);text-transform:uppercase;letter-spacing:.06em;"></div>
+                <div style="display:flex;gap:6px;flex-shrink:0;">
+                    <button class="btn-sidebar-action" style="padding:5px 10px;font-size:11.5px;" onclick="openModalSenha()">Senha</button>
+                    <button class="btn-sidebar-action" style="padding:5px 10px;font-size:11.5px;" onclick="handleLogout()">Sair</button>
                 </div>
-                <button class="btn-sidebar-action" style="padding:5px 10px;font-size:11.5px;flex-shrink:0;" onclick="openModalSenha()">Senha</button>
-                <button class="btn-sidebar-action" style="padding:5px 10px;font-size:11.5px;flex-shrink:0;" onclick="handleLogout()">Sair</button>
             </div>
         </div>
     </aside>
@@ -1764,6 +1777,8 @@
                 <div class="home-col">
                     <!-- DNA Mirae: NOSSA ESSÊNCIA (Propósito + Missão/Visão + PAVAP) -->
                     <div id="homeDNA" class="home-dna-section"></div>
+                    <!-- Versículo do dia -->
+                    <div class="home-card" id="homeVersiculo"></div>
                     <!-- Tarefas de hoje -->
                     <div class="home-card">
                         <div class="home-card-header">
@@ -1786,10 +1801,14 @@
                     <div class="home-card" id="homeMinhaMesa" style="display:none;"></div>
                     <!-- Mural de reconhecimento -->
                     <div class="home-card" id="homeMural"></div>
-                    <!-- Aniversários -->
-                    <div class="home-card">
+                    <!-- Calendário de aniversários -->
+                    <div class="home-card" id="homeAniversariosCard">
                         <div class="home-card-header">
                             <div class="home-card-title">Aniversários</div>
+                            <div style="display:flex;gap:4px;">
+                                <button class="aniv-nav-btn" onclick="anivMesAnterior()" title="Mês anterior">&#8249;</button>
+                                <button class="aniv-nav-btn" onclick="anivProximoMes()" title="Próximo mês">&#8250;</button>
+                            </div>
                         </div>
                         <div id="homeAniversarios"></div>
                     </div>

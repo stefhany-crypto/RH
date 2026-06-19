@@ -406,28 +406,77 @@ function renderHomeExtras(){
     const th=document.getElementById('homeTarefasHoje');
     if(th)th.innerHTML=minhas.length?minhas.map(t=>linhaTarefaHTML(t,true)).join(''):
         '<div style="color:var(--muted);font-size:0.88rem;padding:0.5rem 0;">Nenhuma tarefa registrada para você hoje. <br><span style="font-size:0.8rem;">Aparecerão aqui quando seu líder registrar a daily.</span></div>';
-    // Aniversários (próximos 45 dias)
-    const av=document.getElementById('homeAniversarios');
-    if(av){
-        const hoje=new Date();const ano=hoje.getFullYear();
-        const lista=(todosColabs.length?todosColabs:talentos).filter(c=>c.dataNascimento).map(c=>{
-            const[,m,d]=c.dataNascimento.split('-');
-            let prox=new Date(ano,parseInt(m)-1,parseInt(d));
-            prox.setHours(0,0,0,0);const h0=new Date();h0.setHours(0,0,0,0);
-            if(prox<h0)prox=new Date(ano+1,parseInt(m)-1,parseInt(d));
-            const dias=Math.round((prox-h0)/86400000);
-            return{nome:c.nome,equipe:c.equipe,dia:parseInt(d),mes:parseInt(m),dias};
-        }).filter(x=>x.dias<=45).sort((a,b)=>a.dias-b.dias);
-        const MES3=['','jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
-        av.innerHTML=lista.length?lista.map(x=>{
-            const tag=x.dias===0?'<span class="aniv-hoje">HOJE!</span>':x.dias===1?'<span class="aniv-prox">amanhã</span>':`<span class="aniv-dias">em ${x.dias} dias</span>`;
-            return`<div class="aniv-item">
-                <div class="aniv-data">${String(x.dia).padStart(2,'0')}<small>${MES3[x.mes]}</small></div>
-                <div style="flex:1;"><div class="aniv-nome">${esc(x.nome)}</div><div class="aniv-eq">${esc(x.equipe||'')}</div></div>
-                ${tag}
-            </div>`;}).join(''):'<div style="color:var(--muted);font-size:0.88rem;">Nenhum aniversário cadastrado nos próximos dias.<br><span style="font-size:0.8rem;">Cadastre as datas de nascimento em Talentos.</span></div>';
+    // Versículo do dia (sorteado pelo número do dia do ano — mesmo verso o dia inteiro)
+    const vEl=document.getElementById('homeVersiculo');
+    if(vEl&&typeof VERSICULOS_DIA!=='undefined'&&VERSICULOS_DIA.length){
+        const agora=new Date();
+        const inicio=new Date(agora.getFullYear(),0,0);
+        const diaDoAno=Math.floor((agora-inicio)/86400000);
+        const v=VERSICULOS_DIA[diaDoAno%VERSICULOS_DIA.length];
+        vEl.innerHTML=`<div class="versiculo-card">
+            <div class="versiculo-label">${ico('book-open',{size:12,color:'#DAB47E'})} Versículo do dia</div>
+            <div class="versiculo-texto">"${esc(v.t)}"</div>
+            <div class="versiculo-ref">${esc(v.r)}</div>
+        </div>`;
     }
+    // Calendário de aniversários
+    renderCalendarioAniversarios();
     verificarAniversario();
+}
+// Mês exibido no calendário (0=janeiro, offset relativo ao mês atual)
+let _anivMesOffset=0;
+function anivMesAnterior(){ _anivMesOffset--; renderCalendarioAniversarios(); }
+function anivProximoMes(){ _anivMesOffset++; renderCalendarioAniversarios(); }
+function renderCalendarioAniversarios(){
+    const av=document.getElementById('homeAniversarios');
+    if(!av) return;
+    const agora=new Date();
+    const ano=agora.getFullYear();
+    const mesBase=agora.getMonth()+_anivMesOffset;
+    const dataRef=new Date(ano,mesBase,1);
+    const mes=dataRef.getMonth();
+    const anoRef=dataRef.getFullYear();
+    const MESES_FULL=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+    const DIAS_SEM=['D','S','T','Q','Q','S','S'];
+    const primeiroDia=new Date(anoRef,mes,1).getDay();
+    const ultimoDia=new Date(anoRef,mes+1,0).getDate();
+    // Monta mapa de aniversários do mês: dia -> [{nome, equipe}]
+    const anivMap={};
+    const colabs=(todosColabs.length?todosColabs:talentos).filter(c=>c.dataNascimento);
+    colabs.forEach(c=>{
+        const[,m,d]=c.dataNascimento.split('-');
+        if(parseInt(m)-1===mes){
+            const dia=parseInt(d);
+            if(!anivMap[dia]) anivMap[dia]=[];
+            anivMap[dia].push({nome:c.nome,equipe:c.equipe||''});
+        }
+    });
+    const hoje=agora.getDate();
+    const mesAtual=agora.getMonth()===mes&&agora.getFullYear()===anoRef;
+    // Grid do calendário
+    let cells='';
+    DIAS_SEM.forEach(d=>{ cells+=`<div class="aniv-cal-dow">${d}</div>`; });
+    for(let i=0;i<primeiroDia;i++) cells+=`<div class="aniv-cal-day empty"></div>`;
+    for(let d=1;d<=ultimoDia;d++){
+        const temAniv=!!anivMap[d];
+        const ehHoje=mesAtual&&d===hoje;
+        let cls='aniv-cal-day';
+        if(ehHoje) cls+=' hoje';
+        if(temAniv) cls+=' aniv';
+        const nomes=temAniv?anivMap[d].map(p=>p.nome).join(', '):'';
+        cells+=`<div class="${cls}" title="${nomes}">${d}${temAniv?'<span class="aniv-dot"></span>':''}</div>`;
+    }
+    // Lista de aniversários do mês
+    const anivLista=Object.keys(anivMap).map(d=>({dia:parseInt(d),pessoas:anivMap[d]})).sort((a,b)=>a.dia-b.dia);
+    const listaHTML=anivLista.length?anivLista.map(x=>
+        x.pessoas.map(p=>`<div class="aniv-cal-pessoa">
+            <div class="aniv-cal-data">${String(x.dia).padStart(2,'0')}</div>
+            <div><div class="aniv-cal-nome">${esc(p.nome)}</div><div class="aniv-cal-eq">${esc(p.equipe)}</div></div>
+        </div>`).join('')
+    ).join(''):'<div style="color:var(--muted);font-size:13px;padding:4px 0;">Nenhum aniversário neste mês.</div>';
+    av.innerHTML=`<div class="aniv-cal-header">${MESES_FULL[mes]} ${anoRef}</div>
+        <div class="aniv-cal-grid">${cells}</div>
+        <div class="aniv-cal-pessoas">${listaHTML}</div>`;
 }
 function renderHome(){
     renderHomeExtras();
@@ -618,4 +667,5 @@ Object.assign(window, {
     switchTab, openModalSenha, alterarSenha, aplicarTema, toggleTheme,
     soltarBaloes, fecharAniversario, verificarAniversario,
     renderHomeExtras, renderHome, verificarNovasAvaliacoes, renderMeuPDI,
+    anivMesAnterior, anivProximoMes, renderCalendarioAniversarios,
 });
