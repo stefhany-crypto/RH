@@ -341,7 +341,6 @@ service cloud.firestore {
     match /kudos/{docId} {
       allow read: if autenticado();
       allow create: if autenticado()
-                    && request.resource.data.de == uid()
                     && request.resource.data.texto is string
                     && request.resource.data.texto.size() > 0
                     && request.resource.data.texto.size() <= 1000;

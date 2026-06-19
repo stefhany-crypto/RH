@@ -1157,7 +1157,7 @@ async function enviarKudo(){
         const snap=await db.collection('kudos').orderBy('criadoEm','desc').limit(10).get();
         kudos=snap.docs.map(d=>({id:d.id,...d.data()}));
         if(typeof renderHomeExtras==='function')renderHomeExtras();
-    }catch(e){mostrarNotif('','Erro ao enviar reconhecimento',e?.message||'Tente novamente.','',6000);}
+    }catch(e){console.error('[KUDO]',e);mostrarNotif('','Erro ao enviar reconhecimento',e?.message||e?.code||'Tente novamente.','',8000);}
 }
 
 // ── ES-module: expõe ao escopo global ──────────────────────────
