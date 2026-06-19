@@ -51,7 +51,12 @@
       "Bash(curl -s \"https://pdimirae.web.app/index.html\")",
       "PowerShell(cd C:\\\\mirae-app; $c = Get-Content public\\\\index.html -Raw -Encoding UTF8; $idx = $c.IndexOf\\('</style>'\\); Write-Host \"Index: $idx\"; $c.Substring\\([Math]::Max\\(0,$idx-100\\), 120\\))",
       "Bash(grep -v \"topbar\\\\|//\\\\|style=\\\\\"\")",
-      "Bash(grep -v \"//\\\\|atualizarAvatar\\\\|topbar\")"
+      "Bash(grep -v \"//\\\\|atualizarAvatar\\\\|topbar\")",
+      "Bash(git -C C:/mirae-app status)",
+      "Bash(git -C C:/mirae-app diff --stat)",
+      "Bash(git -C C:/mirae-app add functions/index.js functions/package.json functions/package-lock.json public/index.html public/js/app.js public/js/avaliacoes.js public/js/vtvr.js)",
+      "Bash(git -C C:/mirae-app commit -m ' *)",
+      "Bash(git -C C:/mirae-app add .claude/settings.local.json)"
     ]
   }
 }
