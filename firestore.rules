@@ -132,10 +132,10 @@ service cloud.firestore {
 
     // ── denuncias ────────────────────────────────────────────────
     match /denuncias/{docId} {
-      allow create: if request.resource.data.keys().hasAll(['tema', 'descricao'])
-                    && request.resource.data.descricao is string
-                    && request.resource.data.descricao.size() > 0
-                    && request.resource.data.descricao.size() <= 5000;
+      allow create: if request.resource.data.keys().hasAll(['tema', 'texto'])
+                    && request.resource.data.texto is string
+                    && request.resource.data.texto.size() > 0
+                    && request.resource.data.texto.size() <= 5000;
       allow read, update: if isRHouMaster();
       allow delete: if isMaster();
     }

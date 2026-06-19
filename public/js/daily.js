@@ -1144,19 +1144,19 @@ async function enviarKudo(){
     if(!texto){textoEl?.focus();return;}
     const publico=pubEl?pubEl.checked:true;
     try{
-        await db.collection('kudos').add({
+        const agora=new Date();
+        const ref=await db.collection('kudos').add({
             de:user.id,deNome:user.nome,para,paraNome:para,
             texto,publico,
-            quando:new Date().toLocaleDateString('pt-BR'),
+            quando:agora.toLocaleDateString('pt-BR'),
             criadoEm:firebase.firestore.FieldValue.serverTimestamp()
         });
         if(paraEl)paraEl.value='';
         if(textoEl)textoEl.value='';
-        mostrarNotif('','Reconhecimento enviado!',`"${para}" foi reconhecido(a).`,'bonus',4000);
-        // Recarrega feed
-        const snap=await db.collection('kudos').orderBy('criadoEm','desc').limit(10).get();
-        kudos=snap.docs.map(d=>({id:d.id,...d.data()}));
+        // Atualiza feed localmente sem refazer query (evita dependência de índice)
+        kudos=[{id:ref.id,de:user.id,deNome:user.nome,para,paraNome:para,texto,publico,quando:agora.toLocaleDateString('pt-BR'),criadoEm:{toDate:()=>agora}},...kudos];
         if(typeof renderHomeExtras==='function')renderHomeExtras();
+        mostrarNotif('','Reconhecimento enviado!',`${para} foi reconhecido(a).`,'bonus',4000);
     }catch(e){console.error('[KUDO]',e);mostrarNotif('','Erro ao enviar reconhecimento',e?.message||e?.code||'Tente novamente.','',8000);}
 }
 
