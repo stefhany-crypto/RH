@@ -61,7 +61,9 @@
       "Bash(git -C C:/mirae-app add firestore.rules public/js/daily.js)",
       "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\app.js\")",
       "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\vtvr.js\")",
-      "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\relatorios.js\")"
+      "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\relatorios.js\")",
+      "Bash(grep -v \"^+.*//\\\\|^-.*\\\\.\\\\.\")",
+      "Bash(awk -F'[\\( ]' '{print $2}')"
     ]
   }
 }
