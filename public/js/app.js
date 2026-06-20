@@ -421,12 +421,14 @@ function renderHomeExtras(){
                     <div><div class="home-mural-text">${esc(k.texto||k.mensagem||'')}</div>
                     <div class="home-mural-meta"><b>${esc(k.deNome||k.de||'')}</b> reconheceu <b>${esc(k.paraNome||k.para||'')}</b> · ${esc(k.quando||k.data||'')}</div></div>
                 </div>`).join('')}</div>`:'<div style="color:var(--muted);font-size:13.5px;padding:4px 0;">Seja o primeiro a reconhecer alguém hoje!</div>'}`    }
-    // Tarefas de hoje (minhas)
+    // Tarefas de hoje + atrasadas (pendente/andamento de dias anteriores)
     const hojeStr=hojeISO();
-    const minhas=dailyTarefas.filter(t=>t.responsavelId===user.id&&t.data===hojeStr);
+    const tfHoje=dailyTarefas.filter(t=>t.responsavelId===user.id&&t.data===hojeStr);
+    const tfAtrasadas=dailyTarefas.filter(t=>t.responsavelId===user.id&&t.data<hojeStr&&['pendente','andamento'].includes(t.status));
     const th=document.getElementById('homeTarefasHoje');
-    if(th)th.innerHTML=minhas.length?minhas.map(t=>linhaTarefaHTML(t,true)).join(''):
-        '<div style="color:var(--muted);font-size:0.88rem;padding:0.5rem 0;">Nenhuma tarefa registrada para você hoje. <br><span style="font-size:0.8rem;">Aparecerão aqui quando seu líder registrar a daily.</span></div>';
+    if(th)th.innerHTML=(tfAtrasadas.length||tfHoje.length)
+        ?(tfAtrasadas.map(t=>linhaTarefaHTML(t,true,true)).join('')+tfHoje.map(t=>linhaTarefaHTML(t,true)).join(''))
+        :'<div style="color:var(--muted);font-size:0.88rem;padding:0.5rem 0;">Nenhuma tarefa registrada para você hoje. <br><span style="font-size:0.8rem;">Aparecerão aqui quando seu líder registrar a daily.</span></div>';
     // Versículo do dia (sorteado pelo número do dia do ano — mesmo verso o dia inteiro)
     const vEl=document.getElementById('homeVersiculo');
     if(vEl&&typeof VERSICULOS_DIA!=='undefined'&&VERSICULOS_DIA.length){

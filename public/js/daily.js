@@ -650,7 +650,7 @@ function renderDaily(){
     setTimeout(reemplazarEmojisEnDOM,100); // Reemplaza emojis após renderizar
 }
 
-function linhaTarefaHTML(t,podeAtualizar){
+function linhaTarefaHTML(t,podeAtualizar,atrasada=false){
     const s=STATUS_TAREFA[t.status]||STATUS_TAREFA.pendente;
     const podeReatribuir=podeAtualizar&&(P.isLider()||P.isRH()||P.isMaster());
     const colabs=(dailyColabs.length?dailyColabs:talentos).filter(c=>c.ativo!==false);
@@ -661,6 +661,7 @@ function linhaTarefaHTML(t,podeAtualizar){
             ${t.justificativa?`<div style="font-size:0.75rem;color:#C62828;margin-top:0.2rem;">${esc(t.justificativa)}</div>`:''}
         </div>
         <div style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+            ${atrasada?`<span class="badge" style="background:#C6282820;color:#C62828;font-size:0.70rem;font-weight:700;white-space:nowrap;">Atrasada</span>`:''}
             ${podeReatribuir?`<select title="Reatribuir responsável" onchange="reatribuirTarefa('${t.id}',this)" style="padding:0.25rem 0.4rem;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:0.75rem;max-width:140px;">${optsResp}</select>`
             :`<span style="font-size:0.78rem;color:var(--muted);">${esc(t.responsavelNome||'')}</span>`}
             <span class="badge" style="background:${s.cor}22;color:${s.cor};font-size:0.72rem;white-space:nowrap;">${s.label}</span>
