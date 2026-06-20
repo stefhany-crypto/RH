@@ -63,7 +63,9 @@
       "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\vtvr.js\")",
       "Bash(node --check \"C:\\\\mirae-app\\\\public\\\\js\\\\relatorios.js\")",
       "Bash(grep -v \"^+.*//\\\\|^-.*\\\\.\\\\.\")",
-      "Bash(awk -F'[\\( ]' '{print $2}')"
+      "Bash(awk -F'[\\( ]' '{print $2}')",
+      "Bash(grep -n \"</main>\\\\|<\\\\/body>\" public/index.html)",
+      "Bash(grep -n \"\\\\.tt-wrap\\\\|\\\\.vtvr-\\\\|\\\\/\\\\* ── Kanban\" public/index.html)"
     ]
   }
 }
