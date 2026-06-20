@@ -3,7 +3,7 @@
 // ================================================================
 
 // Cole aqui a URL gerada ao implantar o Apps Script
-const TC_SCRIPT_URL  = 'COLE_AQUI_A_URL_DO_APPS_SCRIPT';
+const TC_SCRIPT_URL  = 'https://script.google.com/macros/s/AKfycbwNkLh4tRUu-dYcVJcdiFoESqtzXBqQnzWAO85vbgz4CQM5M2UzCIl2mps21yNwWGAC/exec';
 const TC_TOKEN       = 'MIRAE_VAGAS_2026';
 
 let _tcVagas     = [];

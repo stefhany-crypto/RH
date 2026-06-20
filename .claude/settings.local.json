@@ -77,7 +77,10 @@
       "Bash(clasp login *)",
       "Bash(npm list *)",
       "Bash(mkdir -p C:/mirae-app/scripts/apps-script-deploy)",
-      "Bash(clasp create *)"
+      "Bash(clasp create *)",
+      "Bash(clasp push *)",
+      "Bash(clasp deploy *)",
+      "Bash(curl -sL \"https://script.google.com/macros/s/AKfycbzK__oldUa7bN5uI0y7ELEOt8UXO61jcnpDjlqbEou5Ov79LrJ7f12DaPY786L9ZrM/exec?action=setup\")"
     ]
   }
 }
