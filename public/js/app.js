@@ -177,7 +177,9 @@ async function refreshData(){
             avaliacoes=aSnap.docs.map(d=>({id:d.id,...d.data()}));
             // Colaborador carrega apenas os próprios dados financeiros
             const myFin=await db.collection('colaboradores').doc(user.id).collection('financeiro').doc('dados').get();
-            if(myFin.exists)Object.assign(talentos[0],myFin.data());
+            if(myFin.exists){Object.assign(talentos[0],myFin.data());Object.assign(user,myFin.data());}
+            // Reconstrói tabs para refletir tipoContrato (ex: aba Minha Remuneração para PJs)
+            buildTabs();
         }
         // Manutenção única do Master: preenche 'equipe' nas avaliações antigas e remove campo legado 'senha'
         if(P.isMaster()){
