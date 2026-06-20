@@ -82,7 +82,8 @@
       "Bash(clasp deploy *)",
       "Bash(curl -sL \"https://script.google.com/macros/s/AKfycbzK__oldUa7bN5uI0y7ELEOt8UXO61jcnpDjlqbEou5Ov79LrJ7f12DaPY786L9ZrM/exec?action=setup\")",
       "Bash(clasp deployments *)",
-      "Bash(curl -v \"https://script.google.com/macros/s/AKfycbzqPAUz6zGuWFy-kT5u7Y-7uNf6hVxZ1EXkVgXGKbXUVUtHXSALvgVMGPN_19GBSq8C/exec?action=vagas\")"
+      "Bash(curl -v \"https://script.google.com/macros/s/AKfycbzqPAUz6zGuWFy-kT5u7Y-7uNf6hVxZ1EXkVgXGKbXUVUtHXSALvgVMGPN_19GBSq8C/exec?action=vagas\")",
+      "Bash(git show *)"
     ]
   }
 }
