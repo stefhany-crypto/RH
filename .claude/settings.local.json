@@ -71,7 +71,8 @@
       "Bash(firebase login:ci --no-localhost)",
       "Bash(gcloud auth *)",
       "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
-      "Bash(node -e \"const fs=require\\('fs'\\);const d=JSON.parse\\(fs.readFileSync\\(require\\('os'\\).homedir\\(\\)+'/.config/configstore/firebase-tools.json','utf8'\\)\\);console.log\\(Object.keys\\(d\\)\\)\")"
+      "Bash(node -e \"const fs=require\\('fs'\\);const d=JSON.parse\\(fs.readFileSync\\(require\\('os'\\).homedir\\(\\)+'/.config/configstore/firebase-tools.json','utf8'\\)\\);console.log\\(Object.keys\\(d\\)\\)\")",
+      "Bash(node --input-type=module)"
     ]
   }
 }
