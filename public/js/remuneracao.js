@@ -20,10 +20,11 @@ function _remuCalc(colab,mes,ano){
 async function carregarRemuneracao(){
     remuLancs=[];
     try{
-        let q=db.collection('lancamentosRemuneracao').orderBy('ano','desc').orderBy('mes','desc').limit(600);
-        if(!P.isRH()&&!P.isMaster())q=db.collection('lancamentosRemuneracao').where('colabId','==',user.id).limit(200);
+        let q=(P.isRH()||P.isMaster())
+            ?db.collection('lancamentosRemuneracao').limit(600)
+            :db.collection('lancamentosRemuneracao').where('colabId','==',user.id).limit(200);
         const snap=await q.get();
-        remuLancs=snap.docs.map(d=>({id:d.id,...d.data()}));
+        remuLancs=snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>b.ano!==a.ano?b.ano-a.ano:b.mes-a.mes);
         remuCarregado=true;
     }catch(e){console.error('[REMU] carregarRemuneracao:',e);}
 }
