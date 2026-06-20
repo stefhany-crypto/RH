@@ -125,6 +125,7 @@ function buildTabs(){
         {id:'tabRemuneracao',icon:'money',    label:(user?.tipoContrato==='PJ'&&!P.isRH()&&!P.isMaster()?'Minha Remuneração':'Remuneração PJ'), show:user?.tipoContrato==='PJ'||P.isRH()||P.isMaster(), group:'gestao'},
         {id:'tabAnalytics',  icon:'chart',    label:'Análises',          show:true,                              group:'analytics'},
         {id:'tabDenuncias',  icon:'lock',     label:'Denúncias',         show:P.isMaster()||P.isRH(),            group:'analytics'},
+        {id:'tabTrabalheConosco',icon:'users', label:'Trabalhe Conosco',  show:P.isMaster()||P.isRH(),            group:'gestao'},
     ];
     let html='';
     defs.filter(d=>d.show).forEach(d=>{
@@ -268,6 +269,7 @@ function switchTab(id,event){
     }
     if(id==='tabKanban')kbInit();
     if(id==='tabRemuneracao'&&window.renderRemuneracaoTab)window.renderRemuneracaoTab();
+    if(id==='tabTrabalheConosco'&&window.renderTrabalheConosco)window.renderTrabalheConosco();
     if(id==='tabMesas'){renderMesaSVG(window._reservasDia||{});renderMesas();}
     // dash de dailys vive dentro do Analytics — esconde ao trocar de aba
     const _dd=document.getElementById('tabDailyDash');
