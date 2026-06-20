@@ -446,70 +446,144 @@ function exportarPDFRemuneracao(){
     mostrarNotif('','PDF gerado!',`${lista.length} registro(s).`,'bonus',4000);
 }
 
-// ── Dashboards ────────────────────────────────────────────────
+// ── Dashboards com filtros por gráfico ───────────────────────
+let _dashF={folha:{eq:'',colab:''},equipe:{mes:'',ano:''},status:{mes:'',ano:''},colabs:{mes:'',ano:'',eq:''},ticket:{eq:'',colab:''},qtd:{eq:'',ano:''}};
+let _dashCharts={};
+
+function remuDashFiltrar(chartId,key,val){
+    if(!_dashF[chartId])return;
+    _dashF[chartId][key]=val;
+    _dashDraw(chartId);
+}
+
+function _dashDraw(chartId){
+    const C=window.Chart; if(!C)return;
+    if(_dashCharts[chartId]){_dashCharts[chartId].destroy();delete _dashCharts[chartId];}
+    C.defaults.font.family="'Hanken Grotesk','Segoe UI',sans-serif";
+    C.defaults.font.size=11;
+    const teal='#1E7D90',gold='#DAB47E',dark='#023B48',green='#3F8A6E',red='#D98E6A';
+    const fmtR=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0});
+    const agora=new Date();
+    const m12=[];for(let i=11;i>=0;i--){const d=new Date(agora.getFullYear(),agora.getMonth()-i,1);m12.push({mes:d.getMonth()+1,ano:d.getFullYear(),label:MESES_REMU[d.getMonth()+1].slice(0,3)+'/'+String(d.getFullYear()).slice(2)});}
+
+    const _applyF=(data,f)=>{
+        let d=[...data];
+        if(f.eq)d=d.filter(l=>(l.equipe||'')===(f.eq));
+        if(f.colab)d=d.filter(l=>l.colabId===f.colab);
+        if(f.mes)d=d.filter(l=>l.mes===parseInt(f.mes));
+        if(f.ano)d=d.filter(l=>l.ano===parseInt(f.ano));
+        return d;
+    };
+    const _emptyMsg=(canvasId,msg)=>{const cv=document.getElementById(canvasId);if(cv){const p=document.createElement('p');p.style.cssText='color:var(--muted);font-size:0.84rem;text-align:center;margin:1rem 0;';p.textContent=msg;cv.replaceWith(p);}};
+
+    if(chartId==='folha'){
+        const data=_applyF(remuLancs,_dashF.folha);
+        const vals=m12.map(m=>data.filter(l=>l.mes===m.mes&&l.ano===m.ano).reduce((a,b)=>a+(b.valorFinal||0),0));
+        const cv=document.getElementById('remuChartFolha');if(!cv)return;
+        _dashCharts.folha=new C(cv,{type:'bar',data:{labels:m12.map(m=>m.label),datasets:[{label:'Total (R$)',data:vals,backgroundColor:teal+'55',borderColor:teal,borderWidth:2,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:fmtR}}}}});
+    }
+    if(chartId==='equipe'){
+        const data=_applyF(remuLancs,_dashF.equipe);
+        const eqMap={};data.forEach(l=>{const eq=l.equipe||'Sem equipe';eqMap[eq]=(eqMap[eq]||0)+(l.valorFinal||0);});
+        const eqN=Object.keys(eqMap).sort(),eqV=eqN.map(e=>eqMap[e]);
+        const cv=document.getElementById('remuChartEq');if(!cv)return;
+        if(eqN.length)_dashCharts.equipe=new C(cv,{type:'bar',data:{labels:eqN,datasets:[{data:eqV,backgroundColor:[teal+'88',gold+'88',dark+'66',green+'88',red+'88'],borderRadius:5}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:fmtR}}}}});
+        else _emptyMsg('remuChartEq','Nenhum dado no período.');
+    }
+    if(chartId==='status'){
+        const data=_applyF(remuLancs,_dashF.status);
+        const stC={pendente:0,confirmado:0,aguardando_nf:0,nf_recebida:0,cancelado:0};
+        data.forEach(l=>{if(stC[l.status]!==undefined)stC[l.status]++;});
+        const cv=document.getElementById('remuChartStatus');if(!cv)return;
+        _dashCharts.status=new C(cv,{type:'doughnut',data:{labels:['Pendente','Confirmado','Aguard. NF','NF Recebida','Cancelado'],datasets:[{data:[stC.pendente,stC.confirmado,stC.aguardando_nf,stC.nf_recebida,stC.cancelado],backgroundColor:['#9E9E9E44','#1565C044','#E6510044','#2E7D3244','#B71C1C44'],borderColor:['#9E9E9E','#1565C0','#E65100','#2E7D32','#B71C1C'],borderWidth:2}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:10}}}}}});
+    }
+    if(chartId==='colabs'){
+        const data=_applyF(remuLancs,_dashF.colabs).sort((a,b)=>(b.valorFinal||0)-(a.valorFinal||0)).slice(0,8);
+        const cv=document.getElementById('remuChartColabs');if(!cv)return;
+        if(data.length)_dashCharts.colabs=new C(cv,{type:'bar',data:{labels:data.map(l=>{const p=l.nome.split(' ');return p[0]+(p.length>1?' '+p[p.length-1]:'');}),datasets:[{data:data.map(l=>l.valorFinal||0),backgroundColor:gold+'88',borderColor:gold,borderWidth:2,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:fmtR}}}}});
+        else _emptyMsg('remuChartColabs','Nenhum dado no período.');
+    }
+    if(chartId==='ticket'){
+        const f=_dashF.ticket;
+        const ticks=m12.map(m=>{let d=remuLancs.filter(l=>l.mes===m.mes&&l.ano===m.ano);if(f.eq)d=d.filter(l=>(l.equipe||'')===f.eq);if(f.colab)d=d.filter(l=>l.colabId===f.colab);return d.length?Math.round(d.reduce((a,b)=>a+(b.valorFinal||0),0)/d.length*100)/100:0;});
+        const cv=document.getElementById('remuChartTicket');if(!cv)return;
+        _dashCharts.ticket=new C(cv,{type:'line',data:{labels:m12.map(m=>m.label),datasets:[{data:ticks,borderColor:gold,backgroundColor:gold+'22',fill:true,tension:0.4,pointRadius:3}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:fmtR}}}}});
+    }
+    if(chartId==='qtd'){
+        const f=_dashF.qtd;
+        const qtds=m12.map(m=>{let d=remuLancs.filter(l=>l.mes===m.mes&&l.ano===m.ano);if(f.eq)d=d.filter(l=>(l.equipe||'')===f.eq);if(f.ano)d=d.filter(l=>l.ano===parseInt(f.ano));return d.length;});
+        const cv=document.getElementById('remuChartQtd');if(!cv)return;
+        _dashCharts.qtd=new C(cv,{type:'line',data:{labels:m12.map(m=>m.label),datasets:[{data:qtds,borderColor:teal,backgroundColor:teal+'22',fill:true,tension:0.4,pointRadius:3}]},options:{plugins:{legend:{display:false}}}});
+    }
+}
+
 function renderDashRemuneracao(){
     const cont=document.getElementById('remuDashConteudo'); if(!cont||!remuLancs.length)return;
     const agora=new Date();
     const mesAtual=agora.getMonth()+1, anoAtual=agora.getFullYear();
-    // Últimos 12 meses
-    const meses12=[];
-    for(let i=11;i>=0;i--){const d=new Date(anoAtual,agora.getMonth()-i,1);meses12.push({mes:d.getMonth()+1,ano:d.getFullYear(),label:MESES_REMU[d.getMonth()+1].slice(0,3)+'/'+String(d.getFullYear()).slice(2)});}
-    const totalPorMes=meses12.map(m=>remuLancs.filter(l=>l.mes===m.mes&&l.ano===m.ano).reduce((a,b)=>a+(b.valorFinal||0),0));
-    const qtdPorMes=meses12.map(m=>remuLancs.filter(l=>l.mes===m.mes&&l.ano===m.ano).length);
-    const ticketMedio=meses12.map((_,i)=>qtdPorMes[i]?Math.round(totalPorMes[i]/qtdPorMes[i]*100)/100:0);
-    // Por equipe no mês atual
+    // Reseta estado dos filtros
+    _dashF={folha:{eq:'',colab:''},equipe:{mes:String(mesAtual),ano:String(anoAtual)},status:{mes:String(mesAtual),ano:String(anoAtual)},colabs:{mes:String(mesAtual),ano:String(anoAtual),eq:''},ticket:{eq:'',colab:''},qtd:{eq:'',ano:''}};
+    _dashCharts={};
+    // Opções derivadas dos dados existentes
+    const anos=[...new Set(remuLancs.map(l=>l.ano))].sort((a,b)=>b-a);
+    const eqs=[...new Set(remuLancs.map(l=>l.equipe||'').filter(Boolean))].sort();
+    const colabs=[...new Map(remuLancs.map(l=>[l.colabId,l.nome])).entries()].sort((a,b)=>a[1].localeCompare(b[1]));
+    const mesesDisp=[...new Set(remuLancs.map(l=>l.mes))].sort((a,b)=>a-b);
+    const _anoOpts=anos.map(a=>`<option value="${a}"${String(a)===String(anoAtual)?' selected':''}>${a}</option>`).join('');
+    const _eqOpts=eqs.map(e=>`<option value="${esc(e)}">${esc(e)}</option>`).join('');
+    const _colabOpts=colabs.map(([id,nome])=>`<option value="${id}">${esc(nome)}</option>`).join('');
+    const _mesOpts=mesesDisp.map(m=>`<option value="${m}"${m===mesAtual?' selected':''}>${MESES_REMU[m]||m}</option>`).join('');
+    const sel=(cid,key,opts,ph,extra='')=>`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('${cid}','${key}',this.value)">${extra?`<option value="">${ph}</option>`:`<option value="">${ph}</option>`}${opts}</select>`;
+    const filtBar=(...items)=>`<div style="display:flex;gap:0.35rem;flex-wrap:wrap;margin:0.3rem 0 0.5rem;">${items.join('')}</div>`;
+    // Cards de topo (mês atual, sem filtro)
     const doMes=remuLancs.filter(l=>l.mes===mesAtual&&l.ano===anoAtual);
-    const equipeMap={};doMes.forEach(l=>{const eq=l.equipe||'Sem equipe';equipeMap[eq]=(equipeMap[eq]||0)+(l.valorFinal||0);});
-    const eqNomes=Object.keys(equipeMap).sort();const eqVals=eqNomes.map(e=>equipeMap[e]);
-    // Status NF no mês atual
-    const stC={pendente:0,confirmado:0,aguardando_nf:0,nf_recebida:0,cancelado:0};
-    doMes.forEach(l=>{if(stC[l.status]!==undefined)stC[l.status]++;});
-    // Top colaboradores no mês atual
-    const colabRank=doMes.slice().sort((a,b)=>(b.valorFinal||0)-(a.valorFinal||0)).slice(0,8);
-    // Comparativo mês anterior
-    const mesAnt=mesAtual===1?12:mesAtual-1, anoAnt=mesAtual===1?anoAtual-1:anoAtual;
+    const totalMesAtual=doMes.reduce((a,b)=>a+(b.valorFinal||0),0);
+    const mesAnt=mesAtual===1?12:mesAtual-1,anoAnt=mesAtual===1?anoAtual-1:anoAtual;
     const totalAnt=remuLancs.filter(l=>l.mes===mesAnt&&l.ano===anoAnt).reduce((a,b)=>a+(b.valorFinal||0),0);
-    const totalMesAtual=totalPorMes[totalPorMes.length-1]||0;
     const varPct=totalAnt?Math.round((totalMesAtual-totalAnt)/totalAnt*100):null;
+    const ticketAtual=doMes.length?Math.round(totalMesAtual/doMes.length*100)/100:0;
 
     cont.innerHTML=`
     <div style="margin:1.2rem 0 0.5rem;"><h3 style="font-family:'Newsreader',serif;font-weight:400;font-size:1.2rem;color:var(--dark);margin:0;">Análises de Remuneração</h3></div>
     <div style="display:flex;gap:0.8rem;flex-wrap:wrap;margin-bottom:1rem;">
         <div class="remu-card" style="flex:1;min-width:160px;"><div class="remu-card-val">R$ ${totalMesAtual.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="remu-card-lbl">Folha ${MESES_REMU[mesAtual]}</div></div>
         <div class="remu-card" style="flex:1;min-width:160px;"><div class="remu-card-val" style="color:${varPct===null?'var(--muted)':varPct>=0?'#2E7D32':'#C62828'};">${varPct===null?'—':(varPct>=0?'+':'')+varPct+'%'}</div><div class="remu-card-lbl">vs. mês anterior</div></div>
-        <div class="remu-card" style="flex:1;min-width:160px;"><div class="remu-card-val">R$ ${(ticketMedio[ticketMedio.length-1]||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="remu-card-lbl">Ticket médio ${MESES_REMU[mesAtual]}</div></div>
+        <div class="remu-card" style="flex:1;min-width:160px;"><div class="remu-card-val">R$ ${ticketAtual.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="remu-card-lbl">Ticket médio ${MESES_REMU[mesAtual]}</div></div>
         <div class="remu-card" style="flex:1;min-width:160px;"><div class="remu-card-val">${doMes.length}</div><div class="remu-card-lbl">PJs em ${MESES_REMU[mesAtual]}</div></div>
     </div>
     <div class="remu-dash-grid">
-        <div class="card remu-dash-card" style="grid-column:span 2;"><div class="remu-dash-title">${ico('chart',{size:14})} Evolução da folha — últimos 12 meses</div><canvas id="remuChartFolha" height="80"></canvas></div>
-        <div class="card remu-dash-card"><div class="remu-dash-title">${ico('building',{size:14})} Por departamento — ${MESES_REMU[mesAtual]}/${anoAtual}</div><canvas id="remuChartEq" height="160"></canvas></div>
-        <div class="card remu-dash-card"><div class="remu-dash-title">${ico('target',{size:14})} Status NFs — ${MESES_REMU[mesAtual]}/${anoAtual}</div><canvas id="remuChartStatus" height="160"></canvas></div>
-        <div class="card remu-dash-card" style="grid-column:span 2;"><div class="remu-dash-title">${ico('users',{size:14})} Maiores remunerações — ${MESES_REMU[mesAtual]}/${anoAtual}</div><canvas id="remuChartColabs" height="75"></canvas></div>
-        <div class="card remu-dash-card"><div class="remu-dash-title">${ico('money',{size:14})} Ticket médio por mês</div><canvas id="remuChartTicket" height="130"></canvas></div>
-        <div class="card remu-dash-card"><div class="remu-dash-title">${ico('users',{size:14})} Qtd. de PJs por mês</div><canvas id="remuChartQtd" height="130"></canvas></div>
+        <div class="card remu-dash-card" style="grid-column:span 2;">
+            <div class="remu-dash-title">${ico('chart',{size:14})} Evolução da folha — últimos 12 meses</div>
+            ${filtBar(sel('folha','eq',_eqOpts,'Todas as equipes'),sel('folha','colab',_colabOpts,'Todos os colaboradores'))}
+            <canvas id="remuChartFolha" height="80"></canvas>
+        </div>
+        <div class="card remu-dash-card">
+            <div class="remu-dash-title">${ico('building',{size:14})} Por departamento</div>
+            ${filtBar(`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('equipe','mes',this.value)"><option value="">Todos os meses</option>${_mesOpts}</select>`,`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('equipe','ano',this.value)"><option value="">Todos os anos</option>${_anoOpts}</select>`)}
+            <canvas id="remuChartEq" height="160"></canvas>
+        </div>
+        <div class="card remu-dash-card">
+            <div class="remu-dash-title">${ico('target',{size:14})} Status NFs</div>
+            ${filtBar(`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('status','mes',this.value)"><option value="">Todos os meses</option>${_mesOpts}</select>`,`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('status','ano',this.value)"><option value="">Todos os anos</option>${_anoOpts}</select>`)}
+            <canvas id="remuChartStatus" height="160"></canvas>
+        </div>
+        <div class="card remu-dash-card" style="grid-column:span 2;">
+            <div class="remu-dash-title">${ico('users',{size:14})} Maiores remunerações</div>
+            ${filtBar(`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('colabs','mes',this.value)"><option value="">Todos os meses</option>${_mesOpts}</select>`,`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('colabs','ano',this.value)"><option value="">Todos os anos</option>${_anoOpts}</select>`,sel('colabs','eq',_eqOpts,'Todas as equipes'))}
+            <canvas id="remuChartColabs" height="75"></canvas>
+        </div>
+        <div class="card remu-dash-card">
+            <div class="remu-dash-title">${ico('money',{size:14})} Ticket médio por mês</div>
+            ${filtBar(sel('ticket','eq',_eqOpts,'Todas as equipes'),sel('ticket','colab',_colabOpts,'Todos os colaboradores'))}
+            <canvas id="remuChartTicket" height="130"></canvas>
+        </div>
+        <div class="card remu-dash-card">
+            <div class="remu-dash-title">${ico('users',{size:14})} Qtd. de PJs por mês</div>
+            ${filtBar(sel('qtd','eq',_eqOpts,'Todas as equipes'),`<select style="border:1px solid var(--border);border-radius:6px;padding:0.22rem 0.5rem;font-size:0.71rem;font-family:inherit;background:var(--surface);color:var(--text);" onchange="remuDashFiltrar('qtd','ano',this.value)"><option value="">Todos os anos</option>${_anoOpts}</select>`)}
+            <canvas id="remuChartQtd" height="130"></canvas>
+        </div>
     </div>`;
-
-    setTimeout(()=>{
-        const C=window.Chart; if(!C)return;
-        C.defaults.font.family="'Hanken Grotesk','Segoe UI',sans-serif";
-        C.defaults.font.size=11;
-        const teal='#1E7D90',gold='#DAB47E',dark='#023B48',green='#3F8A6E',red='#D98E6A';
-        const fmtR=v=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:0});
-        // Folha mensal
-        new C(document.getElementById('remuChartFolha'),{type:'bar',data:{labels:meses12.map(m=>m.label),datasets:[{label:'Total (R$)',data:totalPorMes,backgroundColor:teal+'55',borderColor:teal,borderWidth:2,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:fmtR}}}}});
-        // Por equipe
-        if(eqNomes.length){new C(document.getElementById('remuChartEq'),{type:'bar',data:{labels:eqNomes,datasets:[{data:eqVals,backgroundColor:[teal+'88',gold+'88',dark+'66',green+'88',red+'88'],borderRadius:5}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{callback:fmtR}}}}});}
-        else{document.getElementById('remuChartEq').replaceWith(Object.assign(document.createElement('p'),{style:'color:var(--muted);font-size:0.84rem;',textContent:'Nenhum dado no mês atual.'}));}
-        // Status NF
-        new C(document.getElementById('remuChartStatus'),{type:'doughnut',data:{labels:['Pendente','Confirmado','Aguard. NF','NF Recebida','Cancelado'],datasets:[{data:[stC.pendente,stC.confirmado,stC.aguardando_nf,stC.nf_recebida,stC.cancelado],backgroundColor:['#9E9E9E44','#1565C044','#E6510044','#2E7D3244','#B71C1C44'],borderColor:['#9E9E9E','#1565C0','#E65100','#2E7D32','#B71C1C'],borderWidth:2}]},options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:10}}}}}});
-        // Top colaboradores
-        if(colabRank.length){new C(document.getElementById('remuChartColabs'),{type:'bar',data:{labels:colabRank.map(l=>{const p=l.nome.split(' ');return p[0]+(p.length>1?' '+p[p.length-1]:'');}),datasets:[{data:colabRank.map(l=>l.valorFinal||0),backgroundColor:gold+'88',borderColor:gold,borderWidth:2,borderRadius:5}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:fmtR}}}}});}
-        else{document.getElementById('remuChartColabs').replaceWith(Object.assign(document.createElement('p'),{style:'color:var(--muted);font-size:0.84rem;',textContent:'Nenhum dado no mês atual.'}));}
-        // Ticket médio
-        new C(document.getElementById('remuChartTicket'),{type:'line',data:{labels:meses12.map(m=>m.label),datasets:[{data:ticketMedio,borderColor:gold,backgroundColor:gold+'22',fill:true,tension:0.4,pointRadius:3}]},options:{plugins:{legend:{display:false}},scales:{y:{ticks:{callback:fmtR}}}}});
-        // Qtd PJs
-        new C(document.getElementById('remuChartQtd'),{type:'line',data:{labels:meses12.map(m=>m.label),datasets:[{data:qtdPorMes,borderColor:teal,backgroundColor:teal+'22',fill:true,tension:0.4,pointRadius:3}]},options:{plugins:{legend:{display:false}}}});
-    },80);
+    setTimeout(()=>['folha','equipe','status','colabs','ticket','qtd'].forEach(id=>_dashDraw(id)),80);
 }
 
 // ── Notificações ──────────────────────────────────────────────
@@ -529,7 +603,7 @@ Object.assign(window,{
     renderRemuneracaoTab, renderPainelRemuneracao, renderMinhasRemuneracoes, renderMinhaRemuAdmin,
     gerarPreviewRemuneracao, confirmarGeracaoRemuneracao,
     remuConfirmar, remuCancelar, remuDesconto, remuAtualizarDesconto, remuSalvarDesconto,
-    uploadNFRem, renderDashRemuneracao, remuInitFiltros, carregarRemuneracao,
+    uploadNFRem, renderDashRemuneracao, remuDashFiltrar, remuInitFiltros, carregarRemuneracao,
     exportarExcelRemuneracao, exportarOmieRemuneracao, exportarPDFRemuneracao,
     verificarNotifRemuneracao,
 });
