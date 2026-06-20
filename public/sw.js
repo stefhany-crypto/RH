@@ -1,10 +1,11 @@
-﻿const CACHE = 'mirae-pdi-v67';
+﻿const CACHE = 'mirae-pdi-v68';
 const ASSETS = [
     '/', '/index.html', '/manifest.json',
     '/js/globals.js', '/js/utils.js', '/js/permissoes.js', '/js/app.js',
     '/js/colaboradores.js', '/js/avaliacoes.js', '/js/relatorios.js',
     '/js/daily.js', '/js/tarefas.js', '/js/vtvr.js', '/js/kanban.js',
     '/js/backup.js', '/js/reservas.js', '/js/bonus.js',
+    '/js/remuneracao.js',
     '/js/vendor/chart.min.js', '/js/vendor/jspdf.umd.min.js',
     '/js/vendor/xlsx.full.min.js', '/js/vendor/jszip.min.js'
 ];

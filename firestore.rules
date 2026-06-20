@@ -179,6 +179,34 @@ service cloud.firestore {
       allow delete: if isMaster();
     }
 
+    // ── lancamentosRemuneracao ───────────────────────────────────
+    match /lancamentosRemuneracao/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colabId == uid());
+      allow create: if isRHouMaster()
+                    && request.resource.data.keys().hasAll(['colabId','nome','mes','ano','valorFinal'])
+                    && request.resource.data.valorFinal is number
+                    && request.resource.data.valorFinal >= 0
+                    && request.resource.data.mes is int
+                    && request.resource.data.mes >= 1
+                    && request.resource.data.mes <= 12;
+      allow update: if isRHouMaster()
+                    || (autenticado()
+                        && resource.data.colabId == uid()
+                        && somenteAlterou(['nfNome','nfUrl','nfDriveId','nfUploadEm','nfUploadPor','statusNF','nfHistorico']));
+      allow delete: if isMaster();
+    }
+
+    // ── notificacoesRemuneracao ──────────────────────────────────
+    match /notificacoesRemuneracao/{docId} {
+      allow read: if isRHouMaster()
+                  || (autenticado() && resource.data.colabId == uid());
+      allow create: if isRHouMaster();
+      allow update: if autenticado() && resource.data.colabId == uid()
+                    && somenteAlterou(['lida']);
+      allow delete: if isMaster();
+    }
+
     // ── premioConfigs ────────────────────────────────────────────
     match /premioConfigs/{docId} {
       allow read: if isRHouMaster();

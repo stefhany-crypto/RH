@@ -1049,3 +1049,68 @@ exports.uploadNFDrive = functions
 
     return { driveUrl, fileName };
   });
+
+// 25. uploadNFRemuneracao — NF de remuneração PJ para o Drive
+// ════════════════════════════════════════════════════════════════
+exports.uploadNFRemuneracao = functions
+  .region(REGION)
+  .runWith({ timeoutSeconds: 120, memory: '256MB' })
+  .https.onCall(async (data, context) => {
+    if (!context.auth) throw new functions.https.HttpsError('unauthenticated', 'Login obrigatório.');
+
+    const { lancId, fileBase64, mimeType } = data;
+    if (!lancId || !fileBase64) throw new functions.https.HttpsError('invalid-argument', 'Campos obrigatórios ausentes.');
+
+    const lancDoc = await db.collection('lancamentosRemuneracao').doc(lancId).get();
+    if (!lancDoc.exists) throw new functions.https.HttpsError('not-found', 'Lançamento não encontrado.');
+    const lanc = lancDoc.data();
+
+    // Usa a mesma pasta raiz de NFs, com subpasta "Remuneração"
+    const configDoc = await db.collection('configs').doc('drive').get();
+    const rootFolderId = configDoc.exists ? configDoc.data().nfFolderId : null;
+    if (!rootFolderId) throw new functions.https.HttpsError('failed-precondition', 'Pasta do Drive não configurada. Acesse VT/VR > Configurações > Drive.');
+
+    const mes = lanc.mes || new Date().getMonth() + 1;
+    const ano = lanc.ano || new Date().getFullYear();
+    const mesNome = MESES_PT[mes - 1] || String(mes);
+    const valorFmt = (lanc.valorFinal || 0).toFixed(2).replace('.', ',');
+    const fileName = `${lanc.nome} - R$ ${valorFmt} - ${mesNome}.${ano}.pdf`;
+
+    const { google } = require('googleapis');
+    const auth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/drive'] });
+    const client = await auth.getClient();
+    const token = (await client.getAccessToken()).token;
+
+    // Estrutura: raiz / Remuneração / Ano / Mês
+    const remuFolderId  = await driveFindOrCreateFolder(token, 'Remuneração', rootFolderId);
+    const yearFolderId  = await driveFindOrCreateFolder(token, String(ano), remuFolderId);
+    const monthFolderId = await driveFindOrCreateFolder(token, mesNome, yearFolderId);
+
+    const fileBuffer = Buffer.from(fileBase64, 'base64');
+    const boundary = 'MiraeRemuUpload';
+    const metaJson = JSON.stringify({ name: fileName, parents: [monthFolderId] });
+    const pre  = Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metaJson}\r\n--${boundary}\r\nContent-Type: ${mimeType || 'application/pdf'}\r\n\r\n`, 'utf-8');
+    const post = Buffer.from(`\r\n--${boundary}--`, 'utf-8');
+    const body = Buffer.concat([pre, fileBuffer, post]);
+
+    const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}`, 'Content-Length': String(body.length) },
+      body,
+    });
+    const uploadData = await uploadRes.json();
+    if (!uploadData.id) throw new functions.https.HttpsError('internal', 'Falha no upload: ' + JSON.stringify(uploadData));
+
+    const driveUrl = uploadData.webViewLink || `https://drive.google.com/file/d/${uploadData.id}/view`;
+    const hist = (lanc.nfHistorico || []);
+    if (lanc.nfNome) hist.push({ nfNome: lanc.nfNome, nfUrl: lanc.nfUrl || '', enviadoEm: lanc.nfUploadEm || '' });
+
+    await db.collection('lancamentosRemuneracao').doc(lancId).update({
+      nfNome: fileName, nfUrl: driveUrl, nfDriveId: uploadData.id,
+      nfUploadEm: new Date().toLocaleString('pt-BR'),
+      nfUploadPor: context.auth.token.name || context.auth.uid,
+      statusNF: 'emitida', status: 'nf_recebida', nfHistorico: hist,
+    });
+
+    return { driveUrl, fileName };
+  });
