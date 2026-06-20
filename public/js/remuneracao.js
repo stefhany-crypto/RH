@@ -8,13 +8,15 @@ function _remuCalc(colab,mes,ano){
     const salario=parseFloat(colab.salario)||0;
     const diasMes=_remuDiasNoMes(mes,ano);
     const adm=colab.dataAdmissao?new Date(colab.dataAdmissao+'T12:00:00'):null;
-    const ehPrimeiro=adm&&adm.getFullYear()===ano&&(adm.getMonth()+1)===mes;
+    // Parcial apenas se entrou depois do dia 1 do mês de admissão
+    const admMesAno=adm&&adm.getFullYear()===ano&&(adm.getMonth()+1)===mes;
+    const ehPrimeiro=admMesAno&&adm.getDate()>1;
     let diasTrab=diasMes, valorBruto=salario;
-    if(ehPrimeiro&&adm){
-        diasTrab=diasMes-adm.getDate()+1;
+    if(ehPrimeiro){
+        diasTrab=diasMes-adm.getDate()+1; // do dia de entrada até o último dia do mês
         valorBruto=(diasTrab/diasMes)*salario;
     }
-    return{diasMes,diasTrab,ehPrimeiro:!!ehPrimeiro,valorBruto};
+    return{diasMes,diasTrab,ehPrimeiro,valorBruto};
 }
 
 async function carregarRemuneracao(){
