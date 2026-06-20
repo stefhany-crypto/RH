@@ -53,13 +53,21 @@ function remuInitFiltros(){
     if(gmSel&&!gmSel.options.length)gmSel.innerHTML=MESES_REMU.map((n,i)=>i?`<option value="${i}"${i===mes?' selected':''}>${n}</option>`:'').join('');
     const gaSel=document.getElementById('remuGerarAno');
     if(gaSel&&!gaSel.options.length)gaSel.innerHTML=[ano,ano-1].map(a=>`<option value="${a}"${a===ano?' selected':''}>${a}</option>`).join('');
+    // Filtros da seção pessoal de admin-PJ (IDs distintos para não conflitar com filtrosPJ)
+    const isAdminPJ=(P.isRH()||P.isMaster())&&user?.tipoContrato==='PJ';
+    const mMeu=document.getElementById('remuFiltroMesMeu');
+    if(mMeu&&!mMeu.options.length)mMeu.innerHTML='<option value="">Todos</option>'+MESES_REMU.map((n,i)=>i?`<option value="${i}"${i===mes?' selected':''}>${n}</option>`:'').join('');
+    const aMeu=document.getElementById('remuFiltroAnoMeu');
+    if(aMeu&&!aMeu.options.length){const anos=[ano,ano-1,ano-2];aMeu.innerHTML='<option value="">Todos</option>'+anos.map(a=>`<option value="${a}"${a===ano?' selected':''}>${a}</option>`).join('');}
     // Mostrar blocos corretos
     const gerarBlock=document.getElementById('remuGerarBlock');
     const filtrosRH=document.getElementById('remuFiltrosRH');
     const filtrosPJ=document.getElementById('remuFiltrosPJ');
+    const minhaSecao=document.getElementById('remuMinhaSecao');
     if(gerarBlock)gerarBlock.style.display=(P.isRH()||P.isMaster())?'':'none';
     if(filtrosRH)filtrosRH.style.display=(P.isRH()||P.isMaster())?'':'none';
     if(filtrosPJ)filtrosPJ.style.display=isPJ&&!P.isRH()&&!P.isMaster()?'':'none';
+    if(minhaSecao)minhaSecao.style.display=isAdminPJ?'':'none';
 }
 
 // ── Render principal da aba ───────────────────────────────────
@@ -67,8 +75,49 @@ async function renderRemuneracaoTab(){
     remuInitFiltros();
     if(!remuCarregado)await carregarRemuneracao();
     const isPJ=user?.tipoContrato==='PJ'&&!P.isRH()&&!P.isMaster();
-    if(isPJ)renderMinhasRemuneracoes();
-    else{renderPainelRemuneracao();renderDashRemuneracao();}
+    if(isPJ){
+        renderMinhasRemuneracoes();
+    }else{
+        renderPainelRemuneracao();
+        renderDashRemuneracao();
+        // Admin que também é PJ: mostra seção pessoal acima do painel
+        if((P.isRH()||P.isMaster())&&user?.tipoContrato==='PJ')renderMinhaRemuAdmin();
+    }
+}
+
+// ── Seção pessoal para admin que também é PJ ─────────────────
+function renderMinhaRemuAdmin(){
+    const cont=document.getElementById('remuMinhaConteudo'); if(!cont)return;
+    const fMes=parseInt(document.getElementById('remuFiltroMesMeu')?.value||0);
+    const fAno=parseInt(document.getElementById('remuFiltroAnoMeu')?.value||0);
+    let lista=remuLancs.filter(l=>l.colabId===user.id);
+    if(fMes)lista=lista.filter(l=>l.mes===fMes);
+    if(fAno)lista=lista.filter(l=>l.ano===fAno);
+    const totalPago=remuLancs.filter(l=>l.colabId===user.id&&l.nfNome).reduce((a,b)=>a+(b.valorFinal||0),0);
+    cont.innerHTML=lista.length?`
+    <div class="remu-cards" style="margin-bottom:0.8rem;">
+        <div class="remu-card"><div class="remu-card-val">${remuLancs.filter(l=>l.colabId===user.id).length}</div><div class="remu-card-lbl">Competências</div></div>
+        <div class="remu-card"><div class="remu-card-val">R$ ${totalPago.toLocaleString('pt-BR',{minimumFractionDigits:2})}</div><div class="remu-card-lbl">Total recebido (NF emitida)</div></div>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="remu-table">
+        <thead><tr><th>Período</th><th>Tipo</th><th>Salário Base</th><th>Desconto</th><th>Valor Final</th><th>Status</th><th>NF</th></tr></thead>
+        <tbody>${lista.map(l=>{
+            const st=_stMap[l.status]||_stMap.pendente;
+            return`<tr>
+                <td><b>${MESES_REMU[l.mes]||l.mes}/${l.ano}</b></td>
+                <td>${l.ehPrimeiro?`<span style="font-size:0.78rem;color:#E65100;">Proporcional (${l.diasTrabalhados}/${l.diasNoMes} dias)</span>`:'<span style="font-size:0.78rem;color:#2E7D32;">Integral</span>'}</td>
+                <td>R$ ${(l.salarioBase||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</td>
+                <td style="color:${l.valorDesconto?'#C62828':'var(--muted)'};">${l.valorDesconto?`- R$ ${l.valorDesconto.toLocaleString('pt-BR',{minimumFractionDigits:2})}`:'—'}</td>
+                <td><b>R$ ${(l.valorFinal||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</b></td>
+                <td><span class="badge" style="background:${st.cor}22;color:${st.cor};font-size:0.72rem;">${st.lbl}</span></td>
+                <td>${l.nfNome
+                    ?`<a href="${l.nfUrl||'#'}" target="_blank" style="font-size:0.78rem;color:var(--teal);">${ico('external-link',{size:12})} Ver NF</a>`
+                    :(l.status==='aguardando_nf'?`<button class="btn-small btn-eval" onclick="uploadNFRem('${l.id}','${MESES_REMU[l.mes]}/${l.ano}',${l.valorFinal||0})">Enviar NF</button>`:'—')}</td>
+            </tr>`;
+        }).join('')}</tbody>
+    </table></div>`
+    :`<div style="color:var(--muted);font-size:0.85rem;">Nenhuma remuneração encontrada para o período selecionado.</div>`;
 }
 
 // ── Painel RH/Master ─────────────────────────────────────────
@@ -475,7 +524,7 @@ async function verificarNotifRemuneracao(){
 }
 
 Object.assign(window,{
-    renderRemuneracaoTab, renderPainelRemuneracao, renderMinhasRemuneracoes,
+    renderRemuneracaoTab, renderPainelRemuneracao, renderMinhasRemuneracoes, renderMinhaRemuAdmin,
     gerarPreviewRemuneracao, confirmarGeracaoRemuneracao,
     remuConfirmar, remuCancelar, remuDesconto, remuAtualizarDesconto, remuSalvarDesconto,
     uploadNFRem, renderDashRemuneracao, remuInitFiltros, carregarRemuneracao,

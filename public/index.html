@@ -2432,6 +2432,17 @@
 
         <!-- ========== REMUNERAÇÃO PJ ========== -->
         <div id="tabRemuneracao" class="tab-content">
+            <!-- Seção pessoal: visível apenas para admin que também é PJ -->
+            <div id="remuMinhaSecao" style="display:none;margin-bottom:1.2rem;">
+                <div class="card">
+                    <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.8rem;">Minha Remuneração</div>
+                    <div style="display:flex;gap:0.7rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:0.8rem;">
+                        <div><label style="font-size:0.75rem;display:block;margin-bottom:3px;color:var(--muted);">Mês</label><select id="remuFiltroMesMeu" onchange="renderMinhaRemuAdmin()" style="padding:0.45rem 0.7rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;min-width:110px;"></select></div>
+                        <div><label style="font-size:0.75rem;display:block;margin-bottom:3px;color:var(--muted);">Ano</label><select id="remuFiltroAnoMeu" onchange="renderMinhaRemuAdmin()" style="padding:0.45rem 0.7rem;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;"></select></div>
+                    </div>
+                    <div id="remuMinhaConteudo"></div>
+                </div>
+            </div>
             <div id="remuGerarBlock" style="display:none;">
                 <div class="card" style="margin-bottom:1rem;">
                     <div style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:0.9rem;">Gerar Remunerações do Mês</div>
