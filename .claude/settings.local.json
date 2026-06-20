@@ -65,7 +65,13 @@
       "Bash(grep -v \"^+.*//\\\\|^-.*\\\\.\\\\.\")",
       "Bash(awk -F'[\\( ]' '{print $2}')",
       "Bash(grep -n \"</main>\\\\|<\\\\/body>\" public/index.html)",
-      "Bash(grep -n \"\\\\.tt-wrap\\\\|\\\\.vtvr-\\\\|\\\\/\\\\* ── Kanban\" public/index.html)"
+      "Bash(grep -n \"\\\\.tt-wrap\\\\|\\\\.vtvr-\\\\|\\\\/\\\\* ── Kanban\" public/index.html)",
+      "PowerShell(cd C:\\\\mirae-app; $env:GOOGLE_APPLICATION_CREDENTIALS=\"\"; node scripts/criar-pj-teste.js 2>&1)",
+      "Bash(firebase apps:list)",
+      "Bash(firebase login:ci --no-localhost)",
+      "Bash(gcloud auth *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(list\\(d.keys\\(\\)\\)\\)\")",
+      "Bash(node -e \"const fs=require\\('fs'\\);const d=JSON.parse\\(fs.readFileSync\\(require\\('os'\\).homedir\\(\\)+'/.config/configstore/firebase-tools.json','utf8'\\)\\);console.log\\(Object.keys\\(d\\)\\)\")"
     ]
   }
 }
