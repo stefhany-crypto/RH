@@ -1013,13 +1013,65 @@
         .devolutiva-box-title { font-weight:600; font-size:0.82rem; color:var(--teal); margin-bottom:0.5rem; }
 
         /* ===== MOBILE ===== */
+        .mob-hamburger { display:none; width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:#fff;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0; }
+        .sidebar-overlay { display:none;position:fixed;inset:0;background:rgba(2,30,38,.45);z-index:199;backdrop-filter:blur(2px); }
+        .sidebar-overlay.open { display:block; }
         @media (max-width: 640px) {
-            .sidebar { transform: translateX(-100%); }
+            .sidebar { transform: translateX(-100%); transition: transform .25s cubic-bezier(.4,0,.2,1); }
             .sidebar.open { transform: translateX(0); }
             .main-content { margin-left: 0; }
             .chart-grid { grid-template-columns: 1fr; }
             .container { padding: 1rem; }
+            .mob-hamburger { display:flex; }
+            .topbar-search { width:100%; flex:1; }
+            .topbar-left { display:none; }
+            .topbar { gap:10px; padding:0 1rem; }
+            .topbar-user .topbar-user-name, .topbar-user .topbar-user-role { display:none; }
         }
+
+        /* ===== BUSCA GLOBAL ===== */
+        .gs-wrap { position:relative; }
+        .gs-results { position:absolute;top:calc(100% + 8px);left:0;right:0;min-width:320px;background:#fff;border:1px solid var(--border);border-radius:14px;box-shadow:0 8px 32px rgba(2,59,72,.13);z-index:500;overflow:hidden;display:none; }
+        .gs-results.open { display:block; }
+        .gs-section { padding:6px 0; }
+        .gs-section-label { font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:6px 14px 2px; }
+        .gs-item { display:flex;align-items:center;gap:10px;padding:8px 14px;cursor:pointer;transition:background .12s; }
+        .gs-item:hover { background:var(--cream); }
+        .gs-item-icon { width:28px;height:28px;border-radius:8px;background:var(--cream);display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+        .gs-item-text { font-size:13.5px;color:var(--text);font-weight:500;line-height:1.3; }
+        .gs-item-sub { font-size:11.5px;color:var(--muted); }
+        .gs-empty { padding:14px;text-align:center;color:var(--muted);font-size:13px; }
+
+        /* ===== PAINEL DE NOTIFICAÇÕES ===== */
+        .notif-bell-btn { width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;color:var(--text); }
+        .notif-bell-badge { position:absolute;top:6px;right:7px;min-width:16px;height:16px;border-radius:8px;background:#E74C3C;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;border:2px solid #fff;display:none; }
+        .notif-panel { position:absolute;top:calc(100% + 8px);right:0;width:340px;background:#fff;border:1px solid var(--border);border-radius:16px;box-shadow:0 8px 32px rgba(2,59,72,.14);z-index:500;display:none;overflow:hidden; }
+        .notif-panel.open { display:block; }
+        .notif-panel-header { display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border); }
+        .notif-panel-title { font-size:13px;font-weight:700;color:var(--dark); }
+        .notif-panel-marcar { font-size:11.5px;color:var(--teal);cursor:pointer;font-weight:600; }
+        .notif-panel-list { max-height:340px;overflow-y:auto; }
+        .notif-item { display:flex;gap:10px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s; }
+        .notif-item:hover { background:var(--cream); }
+        .notif-item:last-child { border-bottom:none; }
+        .notif-item.unread { background:#F5F8FF; }
+        .notif-item-icon { width:32px;height:32px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+        .notif-item-body { flex:1;min-width:0; }
+        .notif-item-title { font-size:12.5px;font-weight:600;color:var(--dark);line-height:1.3; }
+        .notif-item-msg { font-size:11.5px;color:var(--muted);margin-top:2px;line-height:1.4; }
+        .notif-empty { padding:24px;text-align:center;color:var(--muted);font-size:13px; }
+
+        /* ===== HOME — melhorias ===== */
+        .home-quickactions { display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem; }
+        .home-qa-btn { display:flex;align-items:center;gap:6px;padding:.45rem .9rem;border-radius:10px;border:1.5px solid var(--border);background:#fff;font-family:inherit;font-size:.82rem;font-weight:600;color:var(--dark);cursor:pointer;transition:border-color .15s,background .15s; }
+        .home-qa-btn:hover { border-color:var(--gold);background:var(--cream); }
+        .home-stat-card { cursor:pointer;transition:box-shadow .15s,transform .15s; }
+        .home-stat-card:hover { box-shadow:0 4px 18px rgba(2,59,72,.10);transform:translateY(-2px); }
+        .home-briefing { display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:.6rem;margin-bottom:1.2rem; }
+        .home-briefing-card { background:#fff;border:1px solid var(--border);border-radius:12px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.3rem; }
+        .home-briefing-label { font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted); }
+        .home-briefing-val { font-size:1.4rem;font-weight:800;color:var(--dark);line-height:1; }
+        .home-briefing-sub { font-size:.75rem;color:var(--muted); }
 
         /* ===== SIDEBAR — letras claras ===== */
         .sidebar, .sidebar * { color: rgba(255,255,255,0.75); }
@@ -1744,24 +1796,47 @@
     </aside>
     <!-- MAIN -->
     <div class="main-content">
+        <!-- overlay mobile -->
+        <div class="sidebar-overlay" id="sidebarOverlay" onclick="fecharSidebar()"></div>
+
         <div class="topbar">
+            <button class="mob-hamburger" onclick="abrirSidebar()" aria-label="Menu">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
             <div class="topbar-left">
                 <div class="topbar-crumb" id="topbarCrumb">Início</div>
                 <div class="topbar-title" id="topbarTitle">Início</div>
             </div>
-            <div class="topbar-search">
+            <div class="gs-wrap topbar-search">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#9aa9ad" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <input placeholder="Buscar pessoas, tarefas…" id="topbarSearchInput">
+                <input placeholder="Buscar pessoas, tarefas…" id="topbarSearchInput" autocomplete="off"
+                    oninput="globalSearch(this.value)"
+                    onkeydown="globalSearchKey(event)"
+                    onfocus="if(this.value.length>1)document.getElementById('gsResults').classList.add('open')">
+                <div class="gs-results" id="gsResults"></div>
             </div>
             <div class="topbar-actions" id="topbarActions">
                 <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Modo noturno" style="width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:#fff;display:flex;align-items:center;justify-content:center;color:var(--muted);cursor:pointer;"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 13A9 9 0 1 1 11 3a7 7 0 0 0 10 10z"/></svg></button>
-                <div id="dailyNotifBell" style="display:none;width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:#fff;position:relative;cursor:pointer;display:none;align-items:center;justify-content:center;" onclick="switchTab('tabDaily');setDailyView('minhas');marcarNotifLidas()">
-                    <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text)"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    <span id="dailyNotifBadge" style="position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:#E74C3C;border:2px solid #fff;"></span>
+                <!-- Sino unificado de notificações -->
+                <div style="position:relative;">
+                    <button class="notif-bell-btn" id="notifBellBtn" onclick="toggleNotifPanel()" title="Notificações">
+                        <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="notif-bell-badge" id="notifBellBadge"></span>
+                    </button>
+                    <div class="notif-panel" id="notifPanel">
+                        <div class="notif-panel-header">
+                            <span class="notif-panel-title">Notificações</span>
+                            <span class="notif-panel-marcar" onclick="marcarTodasNotifLidas()">Marcar todas como lidas</span>
+                        </div>
+                        <div class="notif-panel-list" id="notifPanelList">
+                            <div class="notif-empty">Nenhuma notificação.</div>
+                        </div>
+                    </div>
                 </div>
-                <div id="pjNotifBell" style="display:none;position:relative;cursor:pointer;padding:0.4rem;" onclick="switchTab('tabMeuVTVR')">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:#DAB47E"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-                    <span id="pjNotifBadge" style="position:absolute;top:0;right:0;background:#E74C3C;color:white;font-size:0.6rem;font-weight:700;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center;"></span>
+                <!-- bells legados (mantidos para compatibilidade com daily.js) -->
+                <div id="dailyNotifBell" style="display:none;"></div>
+                <div id="pjNotifBell" style="display:none;">
+                    <span id="pjNotifBadge"></span>
                 </div>
             </div>
             <div class="topbar-user" id="topbarUser">
@@ -1784,6 +1859,10 @@
                 </div>
                 <button class="btn-primary" onclick="switchTab('tabMeuPDI')">Ver meu PDI</button>
             </div>
+            <!-- Ações rápidas -->
+            <div class="home-quickactions" id="homeQuickActions"></div>
+            <!-- Briefing do dia -->
+            <div class="home-briefing" id="homeBriefing"></div>
             <!-- Stats row -->
             <div class="home-stats-row" id="homeStats"></div>
             <!-- Grid 2 colunas -->
