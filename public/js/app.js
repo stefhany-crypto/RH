@@ -237,6 +237,7 @@ function updateUI(){
     // Carrega kudos e re-renderiza mural depois
     db.collection('kudos').orderBy('criadoEm','desc').limit(10).get().then(snap=>{kudos=snap.docs.map(d=>({id:d.id,...d.data()}));renderHomeExtras();}).catch(()=>{});
     iniciarListenerNotificacoes(); // sino de tarefas delegadas (Firestore, multi-device)
+    iniciarNotifUnificada();       // painel unificado de notificações
     if(P.isRH())carregarVTVR();
     verificarDevolutivasLocais();
     // Mostrar botão de backup para Master/RH
@@ -507,6 +508,7 @@ function renderCalendarioAniversarios(){
 }
 function renderHome(){
     renderHomeExtras();
+    renderHomeBriefing();
     // Saudação e data
     const hora=new Date().getHours();
     const greet=hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
@@ -733,6 +735,332 @@ async function enviarKudo(){
     }
 }
 
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 4 — Menu mobile (hambúrguer)
+// ════════════════════════════════════════════════════════════════
+function abrirSidebar(){
+    document.querySelector('.sidebar')?.classList.add('open');
+    document.getElementById('sidebarOverlay')?.classList.add('open');
+}
+function fecharSidebar(){
+    document.querySelector('.sidebar')?.classList.remove('open');
+    document.getElementById('sidebarOverlay')?.classList.remove('open');
+}
+// Fecha sidebar ao navegar em mobile
+const _origSwitchTab = switchTab;
+function switchTab(id, event){
+    _origSwitchTab(id, event);
+    if(window.innerWidth <= 640) fecharSidebar();
+}
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 1 — Busca global
+// ════════════════════════════════════════════════════════════════
+let _gsTimer = null;
+function globalSearch(q){
+    clearTimeout(_gsTimer);
+    const panel = document.getElementById('gsResults');
+    if(!panel) return;
+    if(!q || q.trim().length < 2){ panel.classList.remove('open'); return; }
+    _gsTimer = setTimeout(() => _gsExec(q.trim()), 180);
+}
+
+function _gsExec(q){
+    const panel = document.getElementById('gsResults');
+    if(!panel) return;
+    const low = q.toLowerCase();
+    const sections = [];
+
+    // Pessoas
+    const pessoas = (todosColabs.length ? todosColabs : talentos)
+        .filter(c => (c.nome||'').toLowerCase().includes(low) || (c.email||'').toLowerCase().includes(low))
+        .slice(0, 5);
+    if(pessoas.length) sections.push({
+        label: 'Pessoas',
+        items: pessoas.map(c => ({
+            icon: ico('user', {size:14, color:'#3F8A6E'}),
+            bg: '#EAF3EE',
+            text: c.nome,
+            sub: c.equipe || c.email || '',
+            action: () => switchTab('tabColaboradores'),
+        }))
+    });
+
+    // Tarefas de daily
+    const tfiltro = (dailyTarefas||[])
+        .filter(t => t.responsavelId===user.id && (t.descricao||'').toLowerCase().includes(low))
+        .slice(0, 4);
+    if(tfiltro.length) sections.push({
+        label: 'Tarefas',
+        items: tfiltro.map(t => ({
+            icon: ico('tasks', {size:14, color:'#5272C0'}),
+            bg: '#EEF2FB',
+            text: t.descricao,
+            sub: t.data || '',
+            action: () => { switchTab('tabDaily'); },
+        }))
+    });
+
+    // Tarefas pessoais
+    const tpFiltro = (tarefasPessoais||[])
+        .filter(t => (t.titulo||'').toLowerCase().includes(low))
+        .slice(0, 3);
+    if(tpFiltro.length) sections.push({
+        label: 'Minhas tarefas',
+        items: tpFiltro.map(t => ({
+            icon: ico('check', {size:14, color:'#BE8C45'}),
+            bg: 'rgba(218,180,126,.15)',
+            text: t.titulo,
+            sub: t.lista || '',
+            action: () => switchTab('tabTarefas'),
+        }))
+    });
+
+    // Avaliações (por nome de colaborador)
+    const avFiltro = (avaliacoes||[])
+        .filter(a => {
+            const c = (todosColabs.length?todosColabs:talentos).find(x=>x.id===a.colaboradorId);
+            return (c?.nome||'').toLowerCase().includes(low);
+        })
+        .slice(0, 3);
+    if(avFiltro.length) sections.push({
+        label: 'Avaliações',
+        items: avFiltro.map(a => {
+            const c = (todosColabs.length?todosColabs:talentos).find(x=>x.id===a.colaboradorId);
+            return {
+                icon: ico('clipboard', {size:14, color:'#D98E6A'}),
+                bg: 'rgba(217,142,106,.12)',
+                text: c?.nome || 'Avaliação',
+                sub: `Q${a.trimestre}/${a.ano} · ${a.notaFinal?.toFixed(1)} pts`,
+                action: () => switchTab('tabAvaliacoes'),
+            };
+        })
+    });
+
+    // Armazena ações indexadas para os onclicks
+    window._gsAcoes = [];
+    if(!sections.length){
+        panel.innerHTML = `<div class="gs-empty">Nenhum resultado para "<strong>${esc(q)}</strong>"</div>`;
+    } else {
+        let idx = 0;
+        panel.innerHTML = sections.map(s => `
+            <div class="gs-section">
+                <div class="gs-section-label">${s.label}</div>
+                ${s.items.map(it => {
+                    const n = idx++;
+                    window._gsAcoes[n] = it.action;
+                    return `<div class="gs-item" onclick="if(window._gsAcoes[${n}])window._gsAcoes[${n}]();document.getElementById('gsResults').classList.remove('open')">
+                        <div class="gs-item-icon" style="background:${it.bg}">${it.icon}</div>
+                        <div><div class="gs-item-text">${esc(it.text)}</div>${it.sub?`<div class="gs-item-sub">${esc(it.sub)}</div>`:''}</div>
+                    </div>`;
+                }).join('')}
+            </div>`).join('');
+    }
+    panel.classList.add('open');
+}
+
+function globalSearchKey(e){
+    if(e.key === 'Escape'){
+        document.getElementById('gsResults')?.classList.remove('open');
+        e.target.blur();
+    }
+}
+
+// Fecha busca ao clicar fora
+document.addEventListener('click', e => {
+    const wrap = document.querySelector('.gs-wrap');
+    if(wrap && !wrap.contains(e.target))
+        document.getElementById('gsResults')?.classList.remove('open');
+});
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 3 — Painel de notificações unificado
+// ════════════════════════════════════════════════════════════════
+let _notifItems = [];
+
+function iniciarNotifUnificada(){
+    if(!user?.id) return;
+    registrarListener('notif_unificada',
+        db.collection('notificacoes').doc(user.id).collection('items')
+            .orderBy('criadoEm', 'desc').limit(30)
+            .onSnapshot(snap => {
+                _notifItems = snap.docs.map(d => ({id:d.id, ...d.data()}));
+                _atualizarBadge();
+                if(document.getElementById('notifPanel')?.classList.contains('open'))
+                    _renderNotifPanel();
+            }, () => {})
+    );
+}
+
+function _atualizarBadge(){
+    const badge = document.getElementById('notifBellBadge');
+    if(!badge) return;
+    const nao_lidas = _notifItems.filter(n => !n.lida).length;
+    if(nao_lidas > 0){
+        badge.textContent = nao_lidas > 9 ? '9+' : String(nao_lidas);
+        badge.style.display = 'flex';
+    } else {
+        badge.style.display = 'none';
+    }
+}
+
+function _renderNotifPanel(){
+    const list = document.getElementById('notifPanelList');
+    if(!list) return;
+    if(!_notifItems.length){
+        list.innerHTML = '<div class="notif-empty">Tudo em dia.</div>';
+        return;
+    }
+    const _iconeNotif = tipo => {
+        if(tipo==='tarefa'||tipo==='dependencia') return {icon:ico('tasks',{size:15,color:'#5272C0'}), bg:'#EEF2FB'};
+        if(tipo==='avaliacao_criada') return {icon:ico('clipboard',{size:15,color:'#3F8A6E'}), bg:'#EAF3EE'};
+        if(tipo==='orfao_detectado') return {icon:ico('user',{size:15,color:'#D98E6A'}), bg:'rgba(217,142,106,.12)'};
+        return {icon:ico('bell',{size:15,color:'#BE8C45'}), bg:'rgba(218,180,126,.15)'};
+    };
+    list.innerHTML = _notifItems.map(n => {
+        const {icon, bg} = _iconeNotif(n.tipo);
+        const titulo = n.tipo==='tarefa'?'Nova tarefa delegada'
+            : n.tipo==='dependencia'?'Dependência registrada'
+            : n.tipo==='avaliacao_criada'?'Nova avaliação'
+            : n.tipo==='orfao_detectado'?'Usuário sem perfil'
+            : 'Notificação';
+        const msg = n.descricao || n.texto || '';
+        return `<div class="notif-item ${n.lida?'':'unread'}" onclick="_clicarNotif('${n.id}','${n.tipo||''}')">
+            <div class="notif-item-icon" style="background:${bg}">${icon}</div>
+            <div class="notif-item-body">
+                <div class="notif-item-title">${titulo}</div>
+                ${msg?`<div class="notif-item-msg">${esc(msg)}</div>`:''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function _clicarNotif(id, tipo){
+    // Marca como lida
+    db.collection('notificacoes').doc(user.id).collection('items').doc(id)
+        .update({lida:true}).catch(()=>{});
+    // Navega para a aba certa
+    if(tipo==='tarefa'||tipo==='dependencia') switchTab('tabDaily');
+    else if(tipo==='avaliacao_criada') switchTab('tabAvaliacoes');
+    else if(tipo==='orfao_detectado') switchTab('tabColaboradores');
+    fecharNotifPanel();
+}
+
+function toggleNotifPanel(){
+    const panel = document.getElementById('notifPanel');
+    if(!panel) return;
+    const aberto = panel.classList.toggle('open');
+    if(aberto) _renderNotifPanel();
+}
+function fecharNotifPanel(){
+    document.getElementById('notifPanel')?.classList.remove('open');
+}
+
+async function marcarTodasNotifLidas(){
+    if(!user?.id) return;
+    try{
+        const snap = await db.collection('notificacoes').doc(user.id).collection('items')
+            .where('lida','==',false).get();
+        if(snap.empty) return;
+        const batch = db.batch();
+        snap.docs.forEach(d => batch.update(d.ref, {lida:true}));
+        await batch.commit();
+    }catch(e){}
+    fecharNotifPanel();
+}
+
+// Fecha painel ao clicar fora
+document.addEventListener('click', e => {
+    const wrap = document.getElementById('notifBellBtn')?.parentElement;
+    if(wrap && !wrap.contains(e.target)) fecharNotifPanel();
+});
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 2 — Home mais viva: briefing + ações rápidas
+// ════════════════════════════════════════════════════════════════
+function renderHomeBriefing(){
+    const qa = document.getElementById('homeQuickActions');
+    const bf = document.getElementById('homeBriefing');
+    if(!qa || !bf) return;
+
+    // Ações rápidas contextuais
+    const acoes = [
+        { label:'Registrar daily', icon:'calendar', tab:'tabDaily' },
+        { label:'Nova tarefa',     icon:'plus',     tab:'tabTarefas' },
+        { label:'Reservar mesa',   icon:'chair',    tab:'tabMesas' },
+        ...(P.cadastrarColab()||P.editarColab() ? [{ label:'Talentos', icon:'users', tab:'tabColaboradores' }] : []),
+        ...(P.isMaster()||P.isRH() ? [{ label:'Avaliações', icon:'clipboard', tab:'tabAvaliacoes' }] : []),
+    ];
+    qa.innerHTML = acoes.map(a =>
+        `<button class="home-qa-btn" onclick="switchTab('${a.tab}')">
+            ${ico(a.icon,{size:14,color:'var(--teal)'})} ${a.label}
+        </button>`
+    ).join('');
+
+    // Briefing: tarefas pendentes, próximo aniversário, daily status
+    const hojeStr = hojeISO();
+    const pendentes = (dailyTarefas||[]).filter(t =>
+        t.responsavelId===user.id && ['pendente','andamento'].includes(t.status) && t.data <= hojeStr
+    ).length;
+    const tpPendentes = (tarefasPessoais||[]).filter(t => !t.concluida).length;
+    const totalPend = pendentes + tpPendentes;
+
+    const myAvals = (avaliacoes||[]).filter(a=>a.colaboradorId===user.id).sort((a,b)=>b.ano-a.ano||b.trimestre-a.trimestre);
+    const ultimaNota = myAvals[0]?.notaFinal;
+
+    // Próximo aniversário
+    const hoje = new Date();
+    const colabs = (todosColabs.length?todosColabs:talentos).filter(c=>c.dataNascimento&&c.id!==user.id);
+    const proxAniv = colabs.map(c => {
+        const [,m,d] = c.dataNascimento.split('-');
+        let prox = new Date(hoje.getFullYear(), parseInt(m)-1, parseInt(d));
+        if(prox < hoje) prox = new Date(hoje.getFullYear()+1, parseInt(m)-1, parseInt(d));
+        return { nome:c.nome, diff: Math.ceil((prox-hoje)/86400000), data: prox };
+    }).sort((a,b)=>a.diff-b.diff)[0];
+
+    // Daily de hoje registrada?
+    const dailyHoje = (dailys||[]).find(d=>d.data===hojeStr&&d.equipe===user.equipe);
+
+    const cards = [
+        {
+            label:'Tarefas pendentes',
+            val: totalPend,
+            sub: totalPend===0 ? 'Tudo em dia!' : totalPend===1 ? '1 tarefa aberta' : `${totalPend} tarefas abertas`,
+            cor: totalPend===0 ? '#3F8A6E' : totalPend>3 ? '#E74C3C' : '#E67E22',
+            onclick: `switchTab('tabTarefas')`,
+        },
+        {
+            label:'Última nota PDI',
+            val: ultimaNota != null ? ultimaNota.toFixed(1) : '—',
+            sub: myAvals[0] ? `Q${myAvals[0].trimestre}/${myAvals[0].ano}` : 'Sem avaliações ainda',
+            cor: '#3F8A6E',
+            onclick: `switchTab('tabMeuPDI')`,
+        },
+        {
+            label:'Daily de hoje',
+            val: dailyHoje ? 'Feita' : 'Pendente',
+            sub: dailyHoje ? `Registrada por ${dailyHoje.criadoPorNome||'líder'}` : 'Ainda não registrada',
+            cor: dailyHoje ? '#3F8A6E' : '#E67E22',
+            onclick: `switchTab('tabDaily')`,
+        },
+        ...(proxAniv ? [{
+            label:'Próximo aniversário',
+            val: proxAniv.diff===0 ? 'Hoje!' : `${proxAniv.diff}d`,
+            sub: proxAniv.nome,
+            cor: proxAniv.diff <= 3 ? '#BE8C45' : '#5272C0',
+            onclick: `switchTab('tabHome')`,
+        }] : []),
+    ];
+
+    bf.innerHTML = cards.map(c =>
+        `<div class="home-briefing-card" style="cursor:pointer;border-left:3px solid ${c.cor}" onclick="${c.onclick}">
+            <div class="home-briefing-label">${c.label}</div>
+            <div class="home-briefing-val" style="color:${c.cor}">${c.val}</div>
+            <div class="home-briefing-sub">${c.sub}</div>
+        </div>`
+    ).join('');
+}
+
 // ── ES-module: expõe ao escopo global ──────────────────────────
 Object.assign(window, {
     handleLogin, handleLogout, startApp, buildTabs, refreshData, updateUI,
@@ -743,4 +1071,9 @@ Object.assign(window, {
     anivMesAnterior, anivProximoMes, renderCalendarioAniversarios,
     muralFiltrarPessoas, muralSelecionarPessoa,
     enviarKudo,
+    // melhorias
+    abrirSidebar, fecharSidebar,
+    globalSearch, globalSearchKey,
+    toggleNotifPanel, fecharNotifPanel, marcarTodasNotifLidas,
+    iniciarNotifUnificada, renderHomeBriefing,
 });
