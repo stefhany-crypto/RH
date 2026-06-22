@@ -255,6 +255,8 @@ function switchTab(id,event){
     if(event?.currentTarget)event.currentTarget.classList.add('active');
     // Reseta scroll para o topo ao trocar de aba
     window.scrollTo(0,0);
+    // Fecha sidebar mobile ao navegar
+    if(window.innerWidth <= 640){ document.querySelector('.sidebar')?.classList.remove('open'); document.getElementById('sidebarOverlay')?.classList.remove('open'); }
     if(id==='tabAnalytics'){renderAnalytics();}
         if(id==='tabMeuVTVR'){renderMeuVTVRTab();}
     if(id==='tabBonusConfig'){renderPainelPremiacoes();renderPainelPremio();}
@@ -745,12 +747,6 @@ function abrirSidebar(){
 function fecharSidebar(){
     document.querySelector('.sidebar')?.classList.remove('open');
     document.getElementById('sidebarOverlay')?.classList.remove('open');
-}
-// Fecha sidebar ao navegar em mobile
-const _origSwitchTab = switchTab;
-function switchTab(id, event){
-    _origSwitchTab(id, event);
-    if(window.innerWidth <= 640) fecharSidebar();
 }
 
 // ════════════════════════════════════════════════════════════════
