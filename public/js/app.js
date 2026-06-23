@@ -239,6 +239,9 @@ function updateUI(){
     db.collection('kudos').orderBy('criadoEm','desc').limit(10).get().then(snap=>{kudos=snap.docs.map(d=>({id:d.id,...d.data()}));renderHomeExtras();}).catch(()=>{});
     iniciarListenerNotificacoes(); // sino de tarefas delegadas (Firestore, multi-device)
     iniciarNotifUnificada();       // painel unificado de notificações
+    iniciarDeteccaoOffline();      // banner offline
+    iniciarAtalhosApp();           // atalhos g+tecla
+    iniciarOnboarding();           // tour para novos colaboradores
     if(P.isRH())carregarVTVR();
     verificarDevolutivasLocais();
     // Mostrar botão de backup para Master/RH
@@ -788,8 +791,8 @@ function renderAuditoriaTabela(){
 }
 
 function exportarAuditoriaExcel(){
-    if(typeof XLSX==='undefined'){alert('Biblioteca XLSX não carregada.');return;}
-    if(!_auditLogs.length){alert('Nenhum log carregado.');return;}
+    if(typeof XLSX==='undefined'){toastErro('Biblioteca XLSX não carregada.');return;}
+    if(!_auditLogs.length){toastErro('Nenhum log carregado.');return;}
     const rows=_auditLogs.map(l=>{
         const ts=l.timestamp?.toDate?.()||l.timestamp;
         const det=l.detalhes||l.descricao||l.dados||'';
@@ -799,6 +802,119 @@ function exportarAuditoriaExcel(){
     const wb=XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb,ws,'Auditoria');
     XLSX.writeFile(wb,'mirae_auditoria.xlsx');
+}
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 10 — Banner offline
+// ════════════════════════════════════════════════════════════════
+function iniciarDeteccaoOffline(){
+    const banner = document.getElementById('offlineBanner');
+    if(!banner) return;
+    const atualizar = () => {
+        if(navigator.onLine){
+            banner.style.display = 'none';
+        } else {
+            banner.style.display = 'flex';
+        }
+    };
+    window.addEventListener('online', atualizar);
+    window.addEventListener('offline', atualizar);
+    atualizar();
+}
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 11 — Atalhos de teclado (padrão g+tecla)
+// ════════════════════════════════════════════════════════════════
+let _gPressed = false, _gTimer = null;
+function iniciarAtalhosApp(){
+    const MAPA = {
+        h: 'tabHome',   d: 'tabDaily',  t: 'tabTarefas',
+        k: 'tabKanban', p: 'tabMeuPDI', a: 'tabAvaliacoes',
+        r: 'tabAnalytics',
+    };
+    document.addEventListener('keydown', e => {
+        const tag = document.activeElement?.tagName?.toLowerCase();
+        if(['input','textarea','select'].includes(tag)) return;
+        if(e.metaKey || e.ctrlKey || e.altKey) return;
+        if(_gPressed){
+            clearTimeout(_gTimer);
+            _gPressed = false;
+            const tabId = MAPA[e.key.toLowerCase()];
+            if(tabId){
+                e.preventDefault();
+                const btn = [...document.querySelectorAll('.tab-btn')]
+                    .find(b => b.getAttribute('onclick')?.includes(tabId));
+                if(btn) btn.click();
+            }
+        } else if(e.key === 'g'){
+            _gPressed = true;
+            _gTimer = setTimeout(() => { _gPressed = false; }, 1000);
+        }
+    });
+}
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 12 — Toasts (wrapper sobre mostrarNotif)
+// ════════════════════════════════════════════════════════════════
+function toastOk(msg, titulo='Pronto'){
+    mostrarNotif(ico('check',{size:16,color:'#3F8A6E'}), titulo, msg, 'success', 3500);
+}
+function toastErro(msg, titulo='Atenção'){
+    mostrarNotif(ico('alert',{size:16,color:'#C62828'}), titulo, msg, 'error', 5000);
+}
+function toastInfo(msg, titulo=''){
+    mostrarNotif(ico('info',{size:16,color:'#1E7D90'}), titulo, msg, '', 4000);
+}
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 9 — Onboarding guiado (tour de 3 passos)
+// ════════════════════════════════════════════════════════════════
+let _tourPasso = 0;
+const TOUR_PASSOS = [
+    {tab:'tabMeuPDI',    titulo:'Seu PDI',          desc:'Aqui você acompanha suas avaliações por competência e vê seu plano de ação de crescimento.', icon:'award'},
+    {tab:'tabDaily',     titulo:'Daily',             desc:'Aqui você registra sua daily, gerencia tarefas do dia e acompanha as da equipe.', icon:'calendar'},
+    {tab:'tabMeuVTVR',   titulo:'Seu VT/VR',        desc:'Aqui você lança e acompanha seus vales-transporte e refeição ou solicita reembolsos.', icon:'bus'},
+];
+
+function iniciarOnboarding(){
+    if(!user) return;
+    db.collection('colaboradores').doc(user.uid).get().then(snap => {
+        if(snap.data()?.onboardingConcluido) return;
+        setTimeout(() => mostrarTourPasso(0), 800);
+    }).catch(() => {});
+}
+
+function mostrarTourPasso(n){
+    const overlay = document.getElementById('tourOverlay');
+    const box = document.getElementById('tourBox');
+    if(!overlay || !box) return;
+    _tourPasso = n;
+    if(n >= TOUR_PASSOS.length){ fecharTour(true); return; }
+    const p = TOUR_PASSOS[n];
+    const total = TOUR_PASSOS.length;
+    // Navega para a aba do passo
+    const btn = [...document.querySelectorAll('.tab-btn')]
+        .find(b => b.getAttribute('onclick')?.includes(p.tab));
+    if(btn) btn.click();
+    box.innerHTML = `
+        <div class="tour-passo-num">${n+1} de ${total}</div>
+        <div class="tour-icone">${ico(p.icon,{size:28,color:'var(--teal)'})}</div>
+        <div class="tour-titulo">${esc(p.titulo)}</div>
+        <div class="tour-desc">${esc(p.desc)}</div>
+        <div class="tour-dots">${Array.from({length:total},(_,i)=>`<div class="tour-dot${i===n?' active':''}"></div>`).join('')}</div>
+        <div class="tour-acoes">
+            <button class="btn-ghost" onclick="fecharTour(false)">Pular tour</button>
+            <button class="btn-primary" onclick="mostrarTourPasso(${n+1})">${n===total-1?'Concluir':'Próximo'}</button>
+        </div>`;
+    overlay.classList.add('open');
+}
+
+function fecharTour(concluido){
+    document.getElementById('tourOverlay')?.classList.remove('open');
+    if(concluido && user){
+        db.collection('colaboradores').doc(user.uid)
+            .update({onboardingConcluido:true}).catch(()=>{});
+    }
 }
 
 if('serviceWorker' in navigator && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
@@ -1211,4 +1327,7 @@ Object.assign(window, {
     toggleNotifPanel, fecharNotifPanel, marcarTodasNotifLidas,
     iniciarNotifUnificada, renderHomeBriefing,
     renderAuditoria, carregarMaisAuditoria, filtrarAuditoria, exportarAuditoriaExcel,
+    toastOk, toastErro, toastInfo,
+    mostrarTourPasso, fecharTour,
+    iniciarDeteccaoOffline, iniciarAtalhosApp, iniciarOnboarding,
 });

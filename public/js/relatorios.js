@@ -24,9 +24,9 @@ function aplicarPresetPeriodo(preset){
 
 // ── Exportar Excel ──────────────────────────────────────────────────────
 function exportarExcelRelatorios(){
-    if(typeof XLSX==='undefined'){alert('Biblioteca XLSX não carregada.');return;}
+    if(typeof XLSX==='undefined'){toastErro('Biblioteca XLSX não carregada.');return;}
     const avals=getAvalsRelFiltradas();
-    if(!avals.length){alert('Nenhuma avaliação no filtro atual para exportar.');return;}
+    if(!avals.length){toastErro('Nenhuma avaliação no filtro atual para exportar.');return;}
     const rows=avals.map(a=>{
         const t=talentos.find(ta=>ta.id===a.colaboradorId)||{nome:'Excluído',equipe:'-',cargo:'-'};
         const bonus=P.verBonus()?calcularValorBonus(getMultiplicadorVigente(t.equipe,a.trimestre,a.ano),t.salario||0,a.bonusPercent):undefined;
@@ -738,12 +738,12 @@ function renderDailyDash(){
 // Gestor aceita (true) / recusa (false) / limpa (null) a justificativa.
 // Recusada conta como SEM justificativa nas métricas.
 async function avaliarJustificativa(id,aceita){
-    if(!(P.isMaster()||P.isRH()||user?.role==='LIDER')){alert('Sem permissão para avaliar justificativas.');return;}
+    if(!(P.isMaster()||P.isRH()||user?.role==='LIDER')){toastErro('Sem permissão para avaliar justificativas.');return;}
     try{
         await db.collection('dailyTarefas').doc(id).update({justificativaAceita:aceita,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
         const t=dailyTarefas.find(x=>x.id===id);if(t)t.justificativaAceita=aceita;
         renderDailyDash();
-    }catch(e){alert('Erro ao avaliar: '+e.message);}
+    }catch(e){toastErro('Erro ao avaliar: '+e.message);}
     setTimeout(reemplazarEmojisEnDOM,100); // Reemplaza emojis após renderizar
 }
 

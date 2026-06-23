@@ -56,7 +56,7 @@ function sincronizarTipoFormulario(){
     if(!id){document.getElementById('evalFormContainer').innerHTML='<p style="color:var(--text-muted);padding:1rem;text-align:center;">Selecione um talento para iniciar.</p>';if(badge){badge.textContent='';badge.className='';}return;}
     const t=talentos.find(ta=>ta.id===id);
     // Verifica permissão
-    if(!P.criarAvaliacao(t?.equipe)){alert('Você não tem permissão para avaliar este colaborador.');sel.value='';return;}
+    if(!P.criarAvaliacao(t?.equipe)){toastErro('Sem permissão para avaliar este colaborador.');sel.value='';return;}
     let tipo='ADM';if(t&&t.tipoAvaliacao&&t.tipoAvaliacao.trim())tipo=t.tipoAvaliacao.trim();
     else{const opt=sel.options[sel.selectedIndex];if(opt?.dataset?.tipo&&opt.dataset.tipo!=='undefined')tipo=opt.dataset.tipo;}
     document.getElementById('fEvalForcarLogica').value=tipo;
@@ -92,11 +92,11 @@ function calcKPI(){const h=parseFloat(document.getElementById('kH')?.value||0),m
 function showRes(n){const rn=document.getElementById('resNota'),rb=document.getElementById('resBonus');if(rn)rn.textContent=n.toFixed(1);let b=0;if(n>=80)b=100;else if(n>=70)b=75;else if(n>=60)b=50;if(rb)rb.textContent=b+'%';}
 
 async function saveAvaliacao(e){
-    e.preventDefault();const cid=document.getElementById('fEvalColab').value;if(!cid){alert("Selecione um talento.");return;}
+    e.preventDefault();const cid=document.getElementById('fEvalColab').value;if(!cid){toastErro('Selecione um talento.');return;}
     const t=talentos.find(x=>x.id===cid);
-    if(!P.criarAvaliacao(t?.equipe)){alert('Você não tem permissão para avaliar este colaborador.');return;}
+    if(!P.criarAvaliacao(t?.equipe)){toastErro('Sem permissão para avaliar este colaborador.');return;}
     const trimestre=parseInt(document.getElementById('fEvalTri').value),ano=parseInt(document.getElementById('fEvalAno').value);
-    if(isNaN(ano)||ano<2020||ano>2030){alert('Ano inválido. Use um ano entre 2020 e 2030.');return;}
+    if(isNaN(ano)||ano<2020||ano>2030){toastErro('Ano inválido. Use entre 2020 e 2030.');return;}
     const docId=`${cid}_${ano}_Q${trimestre}`;
     const existente=avaliacoes.find(a=>a.colaboradorId===cid&&parseInt(a.trimestre)===trimestre&&a.ano===ano);
     if(existente){if(!confirm(`Já existe avaliação de ${t?.nome} para Q${trimestre}/${ano}.\nSubstituir?`))return;}
@@ -115,7 +115,7 @@ async function saveAvaliacao(e){
 
 function closeModal(id){document.getElementById(id).style.display='none';}
 function openModalAvaliacao(){
-    if(!['MASTER','LIDER'].includes(user?.role)){alert('Sem permissão.');return;}
+    if(!['MASTER','LIDER'].includes(user?.role)){toastErro('Sem permissão.');return;}
     document.getElementById('modalAvaliacao').style.display='block';
     document.getElementById('evalFormContainer').innerHTML='<p style="color:var(--text-muted);padding:1rem;text-align:center;">Selecione um talento acima.</p>';
     const badge=document.getElementById('tipoAvaliacaoBadge');if(badge){badge.textContent='';badge.className='';}

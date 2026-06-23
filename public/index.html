@@ -1085,6 +1085,19 @@
         .kb-prazo-atrasado { background:#FEE2E2;color:#C62828; }
         .kb-prazo-hoje { background:#FEF3C7;color:#92400E; }
 
+        /* Tour onboarding */
+        .tour-overlay { display:none;position:fixed;inset:0;background:rgba(2,30,38,.6);z-index:8000;align-items:center;justify-content:center;backdrop-filter:blur(3px); }
+        .tour-overlay.open { display:flex; }
+        .tour-box { background:#fff;border-radius:20px;padding:2rem 2rem 1.5rem;max-width:360px;width:90%;text-align:center;box-shadow:0 24px 60px rgba(2,30,38,.25); }
+        .tour-passo-num { font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:.8rem; }
+        .tour-icone { width:56px;height:56px;border-radius:16px;background:var(--cream);display:flex;align-items:center;justify-content:center;margin:0 auto .9rem; }
+        .tour-titulo { font-family:'Newsreader',serif;font-size:1.3rem;font-weight:600;color:var(--dark);margin-bottom:.5rem; }
+        .tour-desc { font-size:.87rem;color:var(--muted);line-height:1.6;margin-bottom:1.2rem; }
+        .tour-dots { display:flex;justify-content:center;gap:.4rem;margin-bottom:1.2rem; }
+        .tour-dot { width:8px;height:8px;border-radius:50%;background:var(--border); }
+        .tour-dot.active { background:var(--teal);width:20px;border-radius:4px; }
+        .tour-acoes { display:flex;gap:.6rem;justify-content:center; }
+
         /* Meu PDI — timeline histórico */
         .pdi-historico-timeline { display:flex;align-items:center;gap:0;margin-top:1rem;overflow-x:auto;padding-bottom:.3rem; }
         .pdi-ht-item { display:flex;flex-direction:column;align-items:center;gap:3px;min-width:64px; }
@@ -2687,6 +2700,17 @@
 
 <!-- BANNER DE NOTIFICAÇÕES -->
 <div class="notif-banner" id="notifBanner"></div>
+
+<!-- BANNER OFFLINE -->
+<div id="offlineBanner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#1a1a1a;color:#fff;font-size:.82rem;font-weight:600;padding:.55rem 1.2rem;align-items:center;gap:.6rem;justify-content:center;">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></svg>
+    Você está offline — algumas funções estão indisponíveis
+</div>
+
+<!-- TOUR ONBOARDING -->
+<div id="tourOverlay" class="tour-overlay">
+    <div id="tourBox" class="tour-box"></div>
+</div>
 
 <!-- CONFETE -->
 <div class="confete-wrapper hidden" id="confeteWrapper"></div>

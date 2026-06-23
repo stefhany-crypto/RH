@@ -211,7 +211,7 @@ async function confirmarReservaMesa(){
 async function cancelarReservaMesa(docId){
     if(!confirm('Cancelar esta reserva?'))return;
     try{await db.collection('reservasMesas').doc(docId).delete();renderMesas();}
-    catch(e){alert('Erro: '+e.message);}
+    catch(e){toastErro('Erro: '+e.message);}
 }
 
 // ── ES-module: expõe ao escopo global ──────────────────────────

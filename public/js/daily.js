@@ -272,12 +272,12 @@ function ttToggleSelecao(key){
 function ttEnviarSelecionadas(){ if(ttSelecionadas.size)ttEnviarParaDaily([...ttSelecionadas]); }
 
 async function ttEnviarParaDaily(keys){
-    if(!user.equipe){alert('Você não está vinculada a uma equipe — não é possível enviar para a Daily.');return;}
+    if(!user.equipe){toastErro('Você não está vinculada a uma equipe.');return;}
     const hoje=hojeISO();
     const dailyId=`${user.equipe.replace(/[\/\s]+/g,'_')}_${hoje}`;
     const uni=ttUnificadas();
     const alvos=keys.map(k=>ttFindByKey(k)||uni.find(x=>ttKey(x)===k)).filter(Boolean).filter(t=>!t._daily&&!t.concluida&&t.enviadaDaily!==hoje&&t.id);
-    if(!alvos.length){alert('Selecione tarefas pessoais ainda não enviadas (as da Daily já estão lá).');return;}
+    if(!alvos.length){toastErro('Selecione tarefas pessoais ainda não enviadas.');return;}
     try{
         const batch=db.batch();
         alvos.forEach(t=>{
@@ -298,7 +298,7 @@ async function ttEnviarParaDaily(keys){
 
 // ── Exportar PDF de tarefas ──
 function ttExportarPDF(periodo){
-    if(!window.jspdf){alert('Biblioteca de PDF não carregada. Recarregue a página.');return;}
+    if(!window.jspdf){toastErro('Biblioteca de PDF não carregada. Recarregue a página.');return;}
     const {jsPDF}=window.jspdf;
     const doc=new jsPDF();
     const teal=[30,125,144],dark=[33,73,87],gold=[201,160,90],muted=[100,116,139];
@@ -331,7 +331,7 @@ function ttExportarPDF(periodo){
             return p>=de&&p<=ate;
         });
     }
-    if(!tarefas.length){alert('Nenhuma tarefa encontrada para o período selecionado.');return;}
+    if(!tarefas.length){toastErro('Nenhuma tarefa encontrada para o período selecionado.');return;}
     // cabeçalho
     doc.setFillColor(...dark);doc.rect(0,0,210,26,'F');
     doc.setTextColor(255,255,255);doc.setFontSize(18);doc.setFont('helvetica','bold');doc.text('Mirae',14,17);
@@ -722,7 +722,7 @@ async function excluirDaily(id){
 async function confirmarJustificativa(){
     const id=document.getElementById('mjTarefaId').value;
     const just=document.getElementById('mjTexto').value.trim();
-    if(!just){alert('A justificativa é obrigatória para cancelar/não realizar a tarefa.');return;}
+    if(!just){toastErro('A justificativa é obrigatória.');return;}
     await guardado('confirmarJust_'+id, async () => {
         await db.collection('dailyTarefas').doc(id).update({status:'nao_realizada',justificativa:just,justificativaAceita:null,atualizadoEm:firebase.firestore.FieldValue.serverTimestamp()});
         const t=dailyTarefas.find(x=>x.id===id);if(t){t.status='nao_realizada';t.justificativa=just;t.justificativaAceita=null;}
@@ -735,7 +735,7 @@ async function confirmarJustificativa(){
 function openModalDaily(){
     if(!(user?.role==='LIDER'||P.isRH()))return;
     const eq=user?.role==='LIDER'?user.equipe:(document.getElementById('dailyEquipeFiltro')?.value||user.equipe);
-    if(!eq){alert('Selecione uma equipe no filtro antes de registrar a daily.');return;}
+    if(!eq){toastErro('Selecione uma equipe antes de registrar a daily.');return;}
     document.getElementById('mdEquipeNome').textContent=eq;
     document.getElementById('modalDaily').dataset.equipe=eq;
     document.getElementById('mdData').value=hojeISO();
@@ -816,7 +816,7 @@ function marcarOntem(id,status){
     const row=document.querySelector(`#mdOntem [data-revisao="${id}"]`);if(!row)return;
     if(status==='nao_realizada'){
         const just=prompt('Por que a tarefa não foi realizada? (justificativa OBRIGATÓRIA — fica registrada no dashboard)','');
-        if(!just||!just.trim()){alert('A justificativa é obrigatória. A tarefa não foi marcada como não realizada.');return;}
+        if(!just||!just.trim()){toastErro('A justificativa é obrigatória.');return;}
         row.dataset.just=just.trim();
     }
     row.dataset.status=status;
@@ -900,7 +900,7 @@ function importarPendenciasOntem(silencioso){
     const eq=document.getElementById('modalDaily').dataset.equipe;
     const ultima=ultimaDataDaily(eq,document.getElementById('mdData').value||hojeISO());
     const pend=ultima?dailyTarefas.filter(t=>t.equipe===eq&&t.data===ultima&&['pendente','andamento'].includes(t.status)):[];
-    if(!pend.length){if(!silencioso)alert('Nenhuma pendência da última daily para importar.');return;}
+    if(!pend.length){if(!silencioso)toastInfo('Nenhuma pendência da última daily para importar.');return;}
     // remove linhas vazias e evita duplicar descrições já importadas
     document.querySelectorAll('#mdTarefas .md-desc').forEach(i=>{if(!i.value.trim())i.closest('div').remove();});
     const jaTem=[...document.querySelectorAll('#mdTarefas .md-desc')].map(i=>i.value.trim());

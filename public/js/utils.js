@@ -168,7 +168,9 @@ const IC={
     arrowRight:'<path d="M5 12h14M13 6l6 6-6 6"/>',
     download:'<path d="M12 3v13M7 11l5 5 5-5"/><path d="M5 21h14"/>',
     kanban:'<rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="12" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/>',
-    share:'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>'
+    share:'<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>',
+    info:'<circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>',
+    shield:'<path d="M12 3 4 7v5c0 5 8 9 8 9s8-4 8-9V7l-8-4Z"/>',
 };
 function ico(name,opts){opts=opts||{};const s=opts.size||16,c=opts.color||'currentColor',w=opts.stroke||1.8;
     return '<svg viewBox="0 0 24 24" width="'+s+'" height="'+s+'" fill="none" stroke="'+c+'" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;flex-shrink:0;display:inline-block;">'+(IC[name]||'')+'</svg>';}
