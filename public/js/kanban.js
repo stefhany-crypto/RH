@@ -180,9 +180,17 @@ function kbHtmlCard(card){
     const delegadoHtml=delegado?`<div class="kb-mirror-badge" style="font-size:11px;color:var(--muted);margin-bottom:6px;">${ico('share',{size:11})} De: ${esc(card.criadoPorNome||'')}</div>`:'';
     let prazoHtml='';
     if(card.prazo){
-        const vencido=card.prazo<hojeISO()&&card.coluna!=='concluido';
-        const prazoLabel=card.prazo===hojeISO()?'Hoje':card.prazo.split('-').reverse().slice(0,2).join(' ');
-        prazoHtml=`<span class="kb-card-date" style="${vencido?'color:#C62828;':''}">${ico('calendar',{size:12,color:vencido?'#C62828':'#8a979b'})} ${prazoLabel}</span>`;
+        const hoje=hojeISO();
+        const vencido=card.prazo<hoje&&card.coluna!=='concluido';
+        const venceHoje=card.prazo===hoje&&card.coluna!=='concluido';
+        const prazoLabel=card.prazo.split('-').reverse().slice(0,2).join('/');
+        if(vencido){
+            prazoHtml=`<span class="kb-card-date kb-prazo-badge kb-prazo-atrasado">${ico('alert',{size:11,color:'#C62828'})} Atrasado · ${prazoLabel}</span>`;
+        } else if(venceHoje){
+            prazoHtml=`<span class="kb-card-date kb-prazo-badge kb-prazo-hoje">${ico('clock',{size:11,color:'#92400E'})} Hoje</span>`;
+        } else {
+            prazoHtml=`<span class="kb-card-date">${ico('calendar',{size:12,color:'#8a979b'})} ${prazoLabel}</span>`;
+        }
     }
     const av=(card.responsavelNome||'?')[0].toUpperCase();
     const avColor=card.criadoPorId===user.id?'#023B48':'#BE8C45';

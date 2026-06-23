@@ -1,4 +1,52 @@
 ﻿function resetarFiltrosRel(){['relAno','relAno2','relTri','relEquipe','relPessoa'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});renderRelatorios();}
+
+// ── Presets de período ──────────────────────────────────────────────────
+function aplicarPresetPeriodo(preset){
+    const anoEl=document.getElementById('relAno'), triEl=document.getElementById('relTri');
+    if(!anoEl||!triEl)return;
+    const agora=new Date(), anoAtual=agora.getFullYear(), mesAtual=agora.getMonth()+1;
+    const triAtual=Math.ceil(mesAtual/3);
+    const presets={
+        'q1':{ano:anoAtual,tri:'1'},'q2':{ano:anoAtual,tri:'2'},
+        'q3':{ano:anoAtual,tri:'3'},'q4':{ano:anoAtual,tri:'4'},
+        'ultimos6':(()=>{
+            const m6=new Date(agora);m6.setMonth(m6.getMonth()-6);
+            return{ano:m6.getFullYear(),tri:''};
+        })(),
+        'anoAtual':{ano:anoAtual,tri:''},
+        'triAtual':{ano:anoAtual,tri:String(triAtual)},
+    };
+    const p=presets[preset];if(!p)return;
+    anoEl.value=p.ano;triEl.value=p.tri;
+    renderRelatorios();
+    document.querySelectorAll('.rel-preset-btn').forEach(b=>b.classList.toggle('active',b.dataset.preset===preset));
+}
+
+// ── Exportar Excel ──────────────────────────────────────────────────────
+function exportarExcelRelatorios(){
+    if(typeof XLSX==='undefined'){alert('Biblioteca XLSX não carregada.');return;}
+    const avals=getAvalsRelFiltradas();
+    if(!avals.length){alert('Nenhuma avaliação no filtro atual para exportar.');return;}
+    const rows=avals.map(a=>{
+        const t=talentos.find(ta=>ta.id===a.colaboradorId)||{nome:'Excluído',equipe:'-',cargo:'-'};
+        const bonus=P.verBonus()?calcularValorBonus(getMultiplicadorVigente(t.equipe,a.trimestre,a.ano),t.salario||0,a.bonusPercent):undefined;
+        const row={
+            'Colaborador':t.nome,'Equipe':t.equipe,'Cargo':t.cargo||'-',
+            'Ano':a.ano,'Trimestre':`Q${a.trimestre}`,
+            'Nota Final':+(a.notaFinal||0).toFixed(1),
+            'Nota (0-5)':+((a.notaFinal||0)/110*5).toFixed(2),
+            'Bônus %':a.bonusPercent||0,
+        };
+        if(P.verBonus())row['Bônus R$']=bonus?+bonus.toFixed(2):0;
+        return row;
+    });
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Avaliações');
+    const anoFiltro=document.getElementById('relAno')?.value||'todos';
+    const triFiltro=document.getElementById('relTri')?.value?`Q${document.getElementById('relTri').value}`:'';
+    XLSX.writeFile(wb,`mirae_avaliacoes_${anoFiltro}${triFiltro}.xlsx`);
+}
 function getAvalsRelFiltradas(){
     const ano=document.getElementById('relAno')?.value||'',tri=document.getElementById('relTri')?.value||'',equipe=document.getElementById('relEquipe')?.value||'',pessoa=document.getElementById('relPessoa')?.value||'';
     // Começa pelas avaliações visíveis para o usuário
@@ -860,6 +908,7 @@ Object.assign(window, {
     renderRelatorios, renderChart1, renderChart2, renderChart3, renderChart4, renderChart5,
     renderRanking, setAnalyticsMenu, renderAnalytics, renderAnalyticsVTVR,
     filtrarLancVTVR, renderChartsVTVR, resetarFiltrosRel,
+    aplicarPresetPeriodo, exportarExcelRelatorios,
     toggleAnonimoForm, gerarProtocolo, enviarDenuncia, resetarFormDenuncia,
     consultarProtocolo, carregarDenuncias, iniciarListenerDenuncias,
     renderDailyDash, avaliarJustificativa, mostrarPopupDenuncia,

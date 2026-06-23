@@ -125,6 +125,7 @@ function buildTabs(){
         {id:'tabRemuneracao',icon:'money',    label:(user?.tipoContrato==='PJ'&&!P.isRH()&&!P.isMaster()?'Minha Remuneração':'Remuneração PJ'), show:user?.tipoContrato==='PJ'||P.isRH()||P.isMaster(), group:'gestao'},
         {id:'tabAnalytics',  icon:'chart',    label:'Análises',          show:true,                              group:'analytics'},
         {id:'tabDenuncias',  icon:'lock',     label:'Denúncias',         show:P.isMaster()||P.isRH(),            group:'analytics'},
+        {id:'tabAuditoria',  icon:'shield',   label:'Auditoria',         show:P.isMaster(),                      group:'analytics'},
     ];
     let html='';
     defs.filter(d=>d.show).forEach(d=>{
@@ -261,6 +262,7 @@ function switchTab(id,event){
         if(id==='tabMeuVTVR'){renderMeuVTVRTab();}
     if(id==='tabBonusConfig'){renderPainelPremiacoes();renderPainelPremio();}
     if(id==='tabDenuncias'){renderDenuncias();renderDenunciasStats();}
+    if(id==='tabAuditoria'){renderAuditoria();}
     if(id==='tabVTVR'){renderPainelVTVR();if(typeof _carregarDriveConfig==='function')_carregarDriveConfig();}
     if(id==='tabDenuncia'){verificarDevolutivasLocais();}
     if(id==='tabMeuPDI')renderMeuPDI();
@@ -650,17 +652,153 @@ function renderMeuPDI(){
                 <div class="pdi-plano-list">${planoHTML}</div>
             </div>
             <div class="pdi-info-card">
-                <div class="pdi-info-head"><span class="pdi-info-head-icon">${ico('chart',{size:17,color:'#023B48'})}</span><span class="pdi-info-head-title">Minha evolução</span></div>
-                <div style="height:180px;"><canvas id="meuPdiChart"></canvas></div>
+                <div class="pdi-info-head"><span class="pdi-info-head-icon">${ico('chart',{size:17,color:'#023B48'})}</span><span class="pdi-info-head-title">Histórico de evolução</span></div>
+                ${minhasAvals.length<2?`<p style="color:var(--muted);font-size:13px;margin:0;">Você terá um gráfico de evolução a partir da segunda avaliação.</p>`:`<div style="height:200px;"><canvas id="meuPdiChart"></canvas></div>
+                <div class="pdi-historico-timeline" id="meuPdiTimeline"></div>`}
             </div>
         </div>
     </div>`;
     const sorted=[...minhasAvals].sort((a,b)=>a.ano!==b.ano?a.ano-b.ano:a.trimestre-b.trimestre);
-    setTimeout(()=>{
+    if(minhasAvals.length>=2) setTimeout(()=>{
         const cv=document.getElementById('meuPdiChart');if(!cv)return;
         if(charts.meuPdi)charts.meuPdi.destroy();
-        charts.meuPdi=new Chart(cv.getContext('2d'),{type:'line',data:{labels:sorted.map(a=>`Q${a.trimestre}/${a.ano}`),datasets:[{label:'Nota',data:sorted.map(a=>(a.notaFinal/110*5)),borderColor:'#023B48',backgroundColor:'rgba(2,59,72,0.08)',tension:0.4,fill:true,pointBackgroundColor:sorted.map(a=>a.notaFinal>=88?'#3F8A6E':a.notaFinal>=66?'#DAB47E':'#D98E6A'),pointRadius:6}]},options:{maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'#F1ECE2'},ticks:{callback:v=>v.toFixed(1)}}},plugins:{tooltip:{callbacks:{afterLabel:ctx=>`Bônus: ${sorted[ctx.dataIndex]?.bonusPercent||0}%`}}}}});
+        const notas=sorted.map(a=>(a.notaFinal/110*5));
+        charts.meuPdi=new Chart(cv.getContext('2d'),{type:'line',data:{
+            labels:sorted.map(a=>`Q${a.trimestre}/${a.ano}`),
+            datasets:[{label:'Nota (0-5)',data:notas,borderColor:'#023B48',backgroundColor:'rgba(2,59,72,0.07)',tension:0.4,fill:true,
+                pointBackgroundColor:notas.map(n=>n>=4?'#3F8A6E':n>=3?'#DAB47E':'#D98E6A'),
+                pointRadius:7,pointHoverRadius:9}]
+        },options:{maintainAspectRatio:false,scales:{y:{min:0,max:5,grid:{color:'#F1ECE2'},ticks:{callback:v=>v.toFixed(1)}}},
+            plugins:{legend:{display:false},tooltip:{callbacks:{
+                label:ctx=>`Nota: ${ctx.parsed.y.toFixed(2)} / 5.0`,
+                afterLabel:ctx=>`Bônus: ${sorted[ctx.dataIndex]?.bonusPercent||0}%`
+            }}}}});
+        // Mini timeline abaixo do gráfico
+        const tl=document.getElementById('meuPdiTimeline');
+        if(tl) tl.innerHTML=sorted.map((a,i)=>{
+            const n=(a.notaFinal/110*5).toFixed(1);
+            const cor=n>=4?'#3F8A6E':n>=3?'#DAB47E':'#D98E6A';
+            const delta=i>0?(n-sorted[i-1].notaFinal/110*5).toFixed(1):null;
+            const seta=delta===null?'':(+delta>0?`<span style="color:#3F8A6E;font-size:11px;">+${delta}</span>`:(+delta<0?`<span style="color:#D98E6A;font-size:11px;">${delta}</span>`:''));
+            return`<div class="pdi-ht-item">
+                <div class="pdi-ht-dot" style="background:${cor};"></div>
+                <div class="pdi-ht-label">Q${a.trimestre}/${a.ano}</div>
+                <div class="pdi-ht-nota" style="color:${cor};">${n} ${seta}</div>
+            </div>`;
+        }).join('<div class="pdi-ht-line"></div>');
     },100);
+}
+
+// ════════════════════════════════════════════════════════════════
+// MELHORIA 8 — Log de auditoria (MASTER)
+// ════════════════════════════════════════════════════════════════
+let _auditCursor = null, _auditCarregando = false;
+
+function renderAuditoria(){
+    if(!P.isMaster()) return;
+    const container = document.getElementById('tabAuditoria');
+    if(!container) return;
+    if(container.dataset.iniciado) return carregarMaisAuditoria();
+    container.dataset.iniciado = '1';
+    container.innerHTML = `
+    <div class="page-header" style="margin-bottom:1.5rem;">
+        <h2>${ico('shield',{size:22,color:'var(--teal)'})} Log de Auditoria</h2>
+    </div>
+    <div class="config-block" style="margin-bottom:1.5rem;">
+        <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;">
+            <select id="auditFiltroAcao" style="padding:.5rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.82rem;" onchange="filtrarAuditoria()">
+                <option value="">Todas as ações</option>
+                <option value="avaliacao">Avaliações</option>
+                <option value="colaborador">Colaboradores</option>
+                <option value="bonus">Bônus</option>
+                <option value="vtvr">VT/VR</option>
+                <option value="denuncia">Denúncias</option>
+            </select>
+            <input id="auditFiltroUser" type="text" placeholder="Buscar por usuário..." style="padding:.5rem .8rem;border:1.5px solid var(--border);border-radius:9px;font-family:inherit;font-size:.82rem;min-width:180px;" oninput="filtrarAuditoria()">
+            <button class="btn-ghost" onclick="exportarAuditoriaExcel()" style="margin-left:auto;">${ico('download',{size:14})} Excel</button>
+        </div>
+    </div>
+    <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+            <thead><tr style="background:var(--cream);border-bottom:1.5px solid var(--border);">
+                <th style="padding:.7rem 1rem;text-align:left;font-weight:700;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;">Data/Hora</th>
+                <th style="padding:.7rem 1rem;text-align:left;font-weight:700;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;">Usuário</th>
+                <th style="padding:.7rem 1rem;text-align:left;font-weight:700;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;">Ação</th>
+                <th style="padding:.7rem 1rem;text-align:left;font-weight:700;color:var(--muted);font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;">Detalhes</th>
+            </tr></thead>
+            <tbody id="auditTbody"><tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--muted);">Carregando...</td></tr></tbody>
+        </table>
+        <div id="auditLoadMore" style="display:none;padding:1rem;text-align:center;">
+            <button class="btn-ghost" onclick="carregarMaisAuditoria()">Carregar mais</button>
+        </div>
+    </div>`;
+    _auditCursor = null;
+    carregarMaisAuditoria();
+}
+
+let _auditLogs = [];
+function carregarMaisAuditoria(){
+    if(_auditCarregando) return;
+    _auditCarregando = true;
+    let q = db.collection('logsAuditoria').orderBy('timestamp','desc').limit(50);
+    if(_auditCursor) q = q.startAfter(_auditCursor);
+    q.get().then(snap => {
+        _auditCarregando = false;
+        if(snap.empty){ document.getElementById('auditLoadMore')?.style && (document.getElementById('auditLoadMore').style.display='none'); return; }
+        _auditCursor = snap.docs[snap.docs.length-1];
+        const novos = snap.docs.map(d=>({id:d.id,...d.data()}));
+        _auditLogs.push(...novos);
+        renderAuditoriaTabela();
+        const btn = document.getElementById('auditLoadMore');
+        if(btn) btn.style.display = snap.docs.length===50?'block':'none';
+    }).catch(()=>{ _auditCarregando=false; });
+}
+
+function filtrarAuditoria(){
+    renderAuditoriaTabela();
+}
+
+function renderAuditoriaTabela(){
+    const tbody = document.getElementById('auditTbody'); if(!tbody) return;
+    const filtroAcao = (document.getElementById('auditFiltroAcao')?.value||'').toLowerCase();
+    const filtroUser = (document.getElementById('auditFiltroUser')?.value||'').toLowerCase();
+    const CORES_ACAO = {avaliacao:'#1E7D90',colaborador:'#3F8A6E',bonus:'#92400E',vtvr:'#214957',denuncia:'#C62828',login:'#666'};
+    const logs = _auditLogs.filter(l=>{
+        const acao=(l.acao||l.tipo||'').toLowerCase();
+        const nomeUser=(l.usuarioNome||l.email||'').toLowerCase();
+        if(filtroAcao && !acao.includes(filtroAcao)) return false;
+        if(filtroUser && !nomeUser.includes(filtroUser)) return false;
+        return true;
+    });
+    if(!logs.length){ tbody.innerHTML='<tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--muted);">Nenhum registro encontrado.</td></tr>'; return; }
+    tbody.innerHTML = logs.map(l=>{
+        const ts = l.timestamp?.toDate?.()||l.timestamp;
+        const dtStr = ts ? new Date(ts).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
+        const acao = l.acao||l.tipo||'ação';
+        const cor = CORES_ACAO[Object.keys(CORES_ACAO).find(k=>acao.toLowerCase().includes(k))||'login']||'#666';
+        const detalhes = l.detalhes||l.descricao||l.dados||'';
+        const detStr = typeof detalhes==='object'?JSON.stringify(detalhes).slice(0,120):String(detalhes).slice(0,120);
+        return`<tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:.6rem 1rem;color:var(--muted);white-space:nowrap;">${dtStr}</td>
+            <td style="padding:.6rem 1rem;font-weight:600;">${esc(l.usuarioNome||l.email||'sistema')}</td>
+            <td style="padding:.6rem 1rem;"><span style="background:${cor}22;color:${cor};padding:2px 8px;border-radius:6px;font-size:.75rem;font-weight:700;">${esc(acao)}</span></td>
+            <td style="padding:.6rem 1rem;color:var(--muted);font-size:.8rem;">${esc(detStr)}</td>
+        </tr>`;
+    }).join('');
+}
+
+function exportarAuditoriaExcel(){
+    if(typeof XLSX==='undefined'){alert('Biblioteca XLSX não carregada.');return;}
+    if(!_auditLogs.length){alert('Nenhum log carregado.');return;}
+    const rows=_auditLogs.map(l=>{
+        const ts=l.timestamp?.toDate?.()||l.timestamp;
+        const det=l.detalhes||l.descricao||l.dados||'';
+        return{'Data/Hora':ts?new Date(ts).toLocaleString('pt-BR'):'-','Usuário':l.usuarioNome||l.email||'sistema','Ação':l.acao||l.tipo||'-','Detalhes':typeof det==='object'?JSON.stringify(det):String(det)};
+    });
+    const ws=XLSX.utils.json_to_sheet(rows);
+    const wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Auditoria');
+    XLSX.writeFile(wb,'mirae_auditoria.xlsx');
 }
 
 if('serviceWorker' in navigator && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
@@ -1072,4 +1210,5 @@ Object.assign(window, {
     globalSearch, globalSearchKey,
     toggleNotifPanel, fecharNotifPanel, marcarTodasNotifLidas,
     iniciarNotifUnificada, renderHomeBriefing,
+    renderAuditoria, carregarMaisAuditoria, filtrarAuditoria, exportarAuditoriaExcel,
 });
