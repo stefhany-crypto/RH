@@ -84,7 +84,8 @@
       "Bash(clasp deployments *)",
       "Bash(curl -v \"https://script.google.com/macros/s/AKfycbzqPAUz6zGuWFy-kT5u7Y-7uNf6hVxZ1EXkVgXGKbXUVUtHXSALvgVMGPN_19GBSq8C/exec?action=vagas\")",
       "Bash(git show *)",
-      "Bash(grep -v \"//.*alert\")"
+      "Bash(grep -v \"//.*alert\")",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
