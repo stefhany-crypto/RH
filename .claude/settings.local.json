@@ -86,7 +86,9 @@
       "Bash(git show *)",
       "Bash(grep -v \"//.*alert\")",
       "Bash(git commit -m ' *)",
-      "Bash(firebase logout *)"
+      "Bash(firebase logout *)",
+      "mcp__visualize__read_me",
+      "mcp__visualize__show_widget"
     ]
   }
 }
