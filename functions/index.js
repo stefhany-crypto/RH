@@ -57,8 +57,14 @@ exports.colaboradorCriado = functions
     // Verifica se o usuário Auth já existe (frontend cria Auth antes do Firestore doc)
     try {
       const existing = await auth.getUserByEmail(data.email);
+      // CRÍTICO: aplica os claims mesmo quando a conta já existe. Sem isto, o
+      // usuário criado pelo frontend loga sem role/equipe no token e todas as
+      // regras do Firestore que dependem de role() o negam (LIDER/RH sem acesso).
+      await auth.setCustomUserClaims(existing.uid, {
+        role: data.role || "COLABORADOR", equipe: data.equipe || "",
+      });
       await snap.ref.update({ authUid: existing.uid });
-      logger.info("Conta Auth já existia, vinculada", { colabId });
+      logger.info("Conta Auth já existia, claims aplicados e vinculada", { colabId });
       return;
     } catch (notFoundErr) {
       // auth/user-not-found — prossegue para criar
