@@ -917,6 +917,112 @@ function fecharTour(concluido){
     }
 }
 
+// ════════════════════════════════════════════════════════════════
+// Tutoriais em vídeo (in-app) — narração pt-BR + legendas
+// ════════════════════════════════════════════════════════════════
+const _tutScr = inner => `<div class="tut-scr">${inner}</div>`;
+const _tutField = (label, val) => `<div style="font-size:11px;color:#8a979b;margin-bottom:3px;">${label}</div><div style="border:1px solid #e0e4e6;border-radius:8px;padding:8px 10px;font-size:12px;color:#023B48;margin-bottom:10px;">${val}</div>`;
+
+const TUTORIAIS = {
+    vtvr: {
+        titulo: 'Como usar — VT / VR',
+        passos: [
+            { step:'Passo 1 de 6',
+              narr:'Bem-vindo ao módulo de VT e VR. Aqui você processa os vales de transporte e refeição de toda a empresa. Vou te mostrar o passo a passo completo.',
+              v:_tutScr('<div style="text-align:center;padding:14px 0;"><div style="width:48px;height:48px;border-radius:12px;background:#023B48;color:#DAB47E;display:flex;align-items:center;justify-content:center;font-size:22px;margin:0 auto 10px;">VT</div><div style="font-size:15px;font-weight:500;color:#023B48;">Módulo VT / VR</div><div style="font-size:11px;color:#8a979b;margin-top:4px;">Transporte e Refeição</div></div>') },
+            { step:'Passo 2 de 6',
+              narr:'Primeiro, configure o valor do VR do mês. Escolha o mês, o ano e informe o valor por dia. Clique em Salvar VR. Sem isso, o sistema não consegue calcular o benefício.',
+              v:_tutScr('<div style="font-size:12px;font-weight:500;color:#023B48;margin-bottom:10px;">Configurar VR Global do Mês</div>'+_tutField('Mês','Janeiro')+_tutField('Valor VR (R$)','45,00')+'<div style="background:#023B48;color:#fff;text-align:center;border-radius:8px;padding:8px;font-size:12px;font-weight:500;">Salvar VR</div>') },
+            { step:'Passo 3 de 6',
+              narr:'Agora gere os lançamentos. Escolha o mês, o ano, o tipo de contrato e o benefício. O sistema calcula os dias sozinho: PJs recebem pelas quintas do mês anterior, e CLTs pelas segundas e quintas do mês seguinte.',
+              v:_tutScr('<div style="font-size:12px;font-weight:500;color:#023B48;margin-bottom:10px;">Gerar Lançamentos do Mês</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">'+
+                '<div><div style="font-size:10px;color:#8a979b;margin-bottom:3px;">Tipo</div><div style="border:1px solid #e0e4e6;border-radius:7px;padding:7px;font-size:11px;color:#023B48;">PJ + CLT</div></div>'+
+                '<div><div style="font-size:10px;color:#8a979b;margin-bottom:3px;">Benefício</div><div style="border:1px solid #e0e4e6;border-radius:7px;padding:7px;font-size:11px;color:#023B48;">VT + VR</div></div></div>'+
+                '<div style="background:#DAB47E;color:#023B48;text-align:center;border-radius:8px;padding:8px;font-size:12px;font-weight:600;">Gerar prévia</div>') },
+            { step:'Passo 4 de 6',
+              narr:'O sistema monta uma prévia com todos os colaboradores. Confira os dias de cada um: se alguém faltou ou entrou no meio do mês, ajuste o número de dias direto na tabela. Os totais recalculam na hora.',
+              v:_tutScr('<div style="font-size:12px;font-weight:500;color:#023B48;margin-bottom:10px;">Prévia dos lançamentos</div>'+
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0ece2;font-size:11px;"><span style="color:#023B48;">Ana Souza</span><span style="background:#F1ECE2;border-radius:6px;padding:2px 8px;color:#023B48;">22 dias</span><span style="font-weight:700;color:#023B48;">R$ 990</span></div>'+
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0ece2;font-size:11px;"><span style="color:#023B48;">Bruno Lima</span><span style="background:#F1ECE2;border-radius:6px;padding:2px 8px;color:#023B48;">20 dias</span><span style="font-weight:700;color:#023B48;">R$ 900</span></div>'+
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:11px;"><span style="color:#023B48;">Carla Dias</span><span style="background:#F1ECE2;border-radius:6px;padding:2px 8px;color:#023B48;">22 dias</span><span style="font-weight:700;color:#023B48;">R$ 990</span></div>') },
+            { step:'Passo 5 de 6',
+              narr:'Quando estiver tudo certo, clique em Confirmar. O sistema grava os lançamentos, notifica automaticamente cada PJ e já cria uma tarefa de emissão de nota fiscal para eles. Atenção: essa ação não pode ser desfeita.',
+              v:_tutScr('<div style="text-align:center;padding:10px 0;"><div style="font-size:12px;color:#8a979b;margin-bottom:12px;">32 colaboradores · Total R$ 28.400</div><div style="background:#3F8A6E;color:#fff;border-radius:8px;padding:10px;font-size:13px;font-weight:600;">Confirmar lançamentos</div><div style="font-size:10px;color:#C62828;margin-top:8px;">Esta ação não pode ser desfeita</div></div>') },
+            { step:'Passo 6 de 6',
+              narr:'Pronto! No painel abaixo você acompanha tudo por mês e tipo, vê quais PJs já emitiram a nota fiscal e quais estão pendentes, e pode exportar para Excel, PDF ou para o OMIE. Qualquer dúvida, é só abrir este tutorial de novo.',
+              v:_tutScr('<div style="font-size:12px;font-weight:500;color:#023B48;margin-bottom:10px;">Painel de acompanhamento</div>'+
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid #f0ece2;font-size:11px;"><span style="color:#023B48;">João (PJ)</span><span style="background:#E8F5E9;color:#2E7D32;border-radius:6px;padding:2px 8px;font-weight:600;">Emitida</span></div>'+
+                '<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;font-size:11px;"><span style="color:#023B48;">Maria (PJ)</span><span style="background:#FFF8E1;color:#E65100;border-radius:6px;padding:2px 8px;font-weight:600;">Pendente</span></div>'+
+                '<div style="display:flex;gap:6px;margin-top:12px;"><div style="flex:1;border:1px solid #e0e4e6;border-radius:7px;padding:6px;text-align:center;font-size:11px;color:#023B48;">Excel</div><div style="flex:1;border:1px solid #e0e4e6;border-radius:7px;padding:6px;text-align:center;font-size:11px;color:#023B48;">PDF</div><div style="flex:1;border:1px solid #e0e4e6;border-radius:7px;padding:6px;text-align:center;font-size:11px;color:#023B48;">OMIE</div></div>') },
+        ],
+    },
+};
+
+let _tutAtual = null, _tutIdx = 0, _tutPlaying = false, _tutVoice = null;
+function _tutPickVoice(){
+    const vs = window.speechSynthesis ? speechSynthesis.getVoices() : [];
+    _tutVoice = vs.find(v=>/pt-BR/i.test(v.lang)) || vs.find(v=>/^pt/i.test(v.lang)) || null;
+}
+if(window.speechSynthesis){ _tutPickVoice(); speechSynthesis.onvoiceschanged = _tutPickVoice; }
+
+function abrirTutorial(chave){
+    const tut = TUTORIAIS[chave];
+    if(!tut) return;
+    _tutAtual = tut; _tutIdx = 0; _tutPlaying = false;
+    document.getElementById('tutTitle').textContent = tut.titulo;
+    const dots = document.getElementById('tutDots');
+    dots.innerHTML = tut.passos.map((_,k)=>`<div class="tut-dot" data-k="${k}" onclick="tutIrPara(${k})"></div>`).join('');
+    _tutRender();
+    document.getElementById('tutorialOverlay').classList.add('open');
+}
+function fecharTutorial(){
+    _tutPlaying = false;
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    document.getElementById('tutorialOverlay').classList.remove('open');
+}
+function _tutRender(){
+    if(!_tutAtual) return;
+    const p = _tutAtual.passos[_tutIdx];
+    document.getElementById('tutVisual').innerHTML = p.v;
+    document.getElementById('tutCaption').textContent = p.narr;
+    document.getElementById('tutStep').textContent = p.step;
+    document.querySelectorAll('#tutDots .tut-dot').forEach((d,k)=>d.classList.toggle('active', k===_tutIdx));
+}
+function _tutSetPlayUI(playing){
+    document.getElementById('tutPlayLbl').textContent = playing ? 'Pausar' : 'Reproduzir';
+    document.getElementById('tutPlayIcon').innerHTML = playing
+        ? '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>'
+        : '<path d="M8 5v14l11-7z"/>';
+}
+function _tutSpeak(cb){
+    if(!window.speechSynthesis){ if(cb) setTimeout(cb, 3500); return; }
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(_tutAtual.passos[_tutIdx].narr);
+    u.lang = 'pt-BR'; if(_tutVoice) u.voice = _tutVoice; u.rate = 1;
+    u.onend = () => { if(cb) cb(); };
+    speechSynthesis.speak(u);
+}
+function _tutAvancarAuto(){
+    if(!_tutPlaying) return;
+    if(_tutIdx < _tutAtual.passos.length - 1){ _tutIdx++; _tutRender(); _tutSpeak(_tutAvancarAuto); }
+    else { _tutPlaying = false; _tutSetPlayUI(false); }
+}
+function tutTogglePlay(){
+    if(_tutPlaying){ _tutPlaying = false; if(window.speechSynthesis) speechSynthesis.cancel(); _tutSetPlayUI(false); }
+    else { _tutPlaying = true; _tutSetPlayUI(true); _tutRender(); _tutSpeak(_tutAvancarAuto); }
+}
+function tutIr(dir){
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    _tutPlaying = false; _tutSetPlayUI(false);
+    _tutIdx = Math.max(0, Math.min(_tutIdx + dir, _tutAtual.passos.length - 1));
+    _tutRender();
+}
+function tutIrPara(k){
+    if(window.speechSynthesis) speechSynthesis.cancel();
+    _tutPlaying = false; _tutSetPlayUI(false);
+    _tutIdx = k; _tutRender();
+}
+
 if('serviceWorker' in navigator && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
     window.addEventListener('load', ()=>{
         // Havia um SW controlando esta página ao carregar? Se SIM, um
@@ -1330,4 +1436,5 @@ Object.assign(window, {
     toastOk, toastErro, toastInfo,
     mostrarTourPasso, fecharTour,
     iniciarDeteccaoOffline, iniciarAtalhosApp, iniciarOnboarding,
+    abrirTutorial, fecharTutorial, tutTogglePlay, tutIr, tutIrPara,
 });
