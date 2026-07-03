@@ -106,10 +106,10 @@
       "PowerShell($gh = \"$env:ProgramFiles\\\\GitHub CLI\\\\gh.exe\"; if \\(Test-Path $gh\\) { & $gh --version | Select-Object -First 1; Write-Output \"--- auth status ---\"; & $gh auth status 2>&1 | Select-Object -First 5 } else { Write-Output \"gh nao encontrado no caminho padrao\"; \\(Get-Command gh -ErrorAction SilentlyContinue\\).Source })",
       "Bash(git credential *)",
       "Bash(git checkout *)",
-      "mcp__claude-in-chrome__list_connected_browsers",
       "mcp__claude-in-chrome__tabs_context_mcp",
-      "mcp__claude-in-chrome__navigate",
-      "mcp__claude-in-chrome__computer"
+      "mcp__claude-in-chrome__computer",
+      "PowerShell(winget install --id Google.CloudSDK --accept-source-agreements --accept-package-agreements --disable-interactivity 2>&1)",
+      "PowerShell($paths = @\\(\"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\", \"${env:ProgramFiles\\(x86\\)}\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\", \"$env:ProgramFiles\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"\\); $found = $paths | Where-Object { Test-Path $_ } | Select-Object -First 1; if \\($found\\) { Write-Output \"GCLOUD: $found\"; & $found --version 2>&1 | Select-Object -First 2 } else { Write-Output \"gcloud.cmd nao encontrado nos caminhos padrao\"; Get-ChildItem -Path \"$env:LOCALAPPDATA\\\\Google\",\"$env:ProgramFiles\\\\Google\",\"${env:ProgramFiles\\(x86\\)}\\\\Google\" -Recurse -Filter gcloud.cmd -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName })"
     ]
   }
 }
