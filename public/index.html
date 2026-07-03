@@ -2656,6 +2656,16 @@
 </div>
 
 <!-- MODAL DAILY -->
+<!-- Modal: gerenciar quem pode fazer a daily (delegados) -->
+<div id="modalDelegados" class="modal"><div class="modal-content" style="max-width:460px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
+        <h3 style="margin:0;">Quem pode fazer a daily</h3>
+        <button class="btn btn-ghost" onclick="closeModal('modalDelegados')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;display:inline-block;"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <p style="font-size:0.82rem;color:var(--muted);margin:0 0 1rem;">Autorize membros da equipe <strong id="delegadosEquipe"></strong> a registrar e editar a daily no seu lugar. Você e o Master mantêm o acesso sempre.</p>
+    <div id="delegadosLista"></div>
+</div></div>
+
 <div id="modalDaily" class="modal"><div class="modal-content" style="max-width:760px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
         <h3 style="margin:0;">Registrar Daily — <span id="mdEquipeNome"></span></h3>
@@ -2821,6 +2831,13 @@
             <div class="form-group" id="grpCNPJ" style="display:none;"><label>CNPJ da Empresa PJ</label><input type="text" id="fColCNPJ" placeholder="00.000.000/0001-00" maxlength="18"></div>
             <div class="form-group" id="grpRazao" style="display:none;"><label>Razão Social (Empresa PJ)</label><input type="text" id="fColRazaoSocial" placeholder="Nome da empresa PJ"></div>
             <div class="form-group"><label>Nível de Acesso</label><select id="fColRole"></select></div>
+            <div class="form-group" style="grid-column:1/-1;">
+                <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-weight:500;">
+                    <input type="checkbox" id="fColDailyDelegado" style="width:18px;height:18px;cursor:pointer;">
+                    Autorizar a fazer a daily da equipe
+                </label>
+                <div style="font-size:0.75rem;color:var(--muted);margin-top:4px;">A pessoa poderá registrar e editar a daily da equipe dela, no lugar do líder.</div>
+            </div>
             <div class="form-group"><label>Senha</label><input type="password" id="fColSenha" placeholder="Mínimo 6 caracteres"></div>
         </div>
         <div style="display:flex;gap:0.8rem;margin-top:1.5rem;"><button type="submit" class="btn-primary">Confirmar Cadastro</button><button type="button" class="btn-small" style="padding:0.65rem 1.3rem;font-size:0.82rem;background:rgba(23,46,56,0.06);color:var(--dark);border:none;border-radius:var(--radius-sm);cursor:pointer;" onclick="closeModal('modalColab')">Cancelar</button></div>

@@ -36,6 +36,13 @@ service cloud.firestore {
     function somenteAlterou(campos) {
       return request.resource.data.diff(resource.data).affectedKeys().hasOnly(campos);
     }
+    // Delegado da daily: colaborador autorizado (dailyDelegado==true) a fazer
+    // a daily da sua propria equipe. Le o proprio doc para validar.
+    function ehDelegadoDaily(equipe) {
+      return autenticado()
+        && get(/databases/$(database)/documents/colaboradores/$(uid())).data.get('dailyDelegado', false) == true
+        && get(/databases/$(database)/documents/colaboradores/$(uid())).data.equipe == equipe;
+    }
 
     // ── colaboradores ────────────────────────────────────────────
     // CAMPOS PÚBLICOS (para todos da empresa): nome, email, equipe, cargo,
@@ -68,6 +75,12 @@ service cloud.firestore {
       allow update: if isProprioDoc(docUid)
                     && !isRHouMaster()
                     && somenteAlterou(['displayName', 'avatarUrl', 'updatedAt', 'atualizadoEm']);
+      // Líder autoriza/revoga delegado da daily de um membro da SUA equipe
+      // (só o campo dailyDelegado, e só na mesma equipe).
+      allow update: if isLider()
+                    && get(/databases/$(database)/documents/colaboradores/$(docUid)).data.equipe == equipeToken()
+                    && somenteAlterou(['dailyDelegado'])
+                    && request.resource.data.dailyDelegado is bool;
       allow delete: if false;
 
       // ── colaboradores/{uid}/financeiro/dados ─────────────────────
@@ -246,7 +259,8 @@ service cloud.firestore {
     match /dailys/{docId} {
       allow read: if autenticado();
       allow create, update: if isRHouMaster()
-                  || (isLider() && request.resource.data.equipe == equipeToken());
+                  || (isLider() && request.resource.data.equipe == equipeToken())
+                  || ehDelegadoDaily(request.resource.data.equipe);
       allow delete: if isMaster();
     }
 
@@ -256,6 +270,8 @@ service cloud.firestore {
       allow create: if isRHouMaster()
                   // Líder só pode criar tarefas da própria equipe
                   || (isLider() && request.resource.data.equipe == equipeToken())
+                  // Delegado autorizado pode criar tarefas da daily da sua equipe
+                  || ehDelegadoDaily(request.resource.data.equipe)
                   // Colaborador pode criar tarefa de si mesmo (Kanban → Daily)
                   || (autenticado()
                       && request.resource.data.responsavelId == uid()
@@ -266,6 +282,7 @@ service cloud.firestore {
                       && request.resource.data.descricao.size() <= 500);
       allow update: if isRHouMaster()
                   || (isLider() && resource.data.equipe == equipeToken())
+                  || ehDelegadoDaily(resource.data.equipe)
                   || (autenticado()
                       && resource.data.responsavelId == uid()
                       && somenteAlterou(['status','justificativa','concluidaEmData','atualizadoEm']));
