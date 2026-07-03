@@ -1,24 +1,40 @@
 name: Deploy para Firebase Hosting
 
-# A cada push na branch main, publica o conteúdo de public/ no Firebase Hosting.
-# Escopo: SOMENTE Hosting. Functions e regras continuam sendo publicadas manualmente.
+# A cada push na branch main, publica public/ no Firebase Hosting.
+# Autenticacao via Workload Identity Federation (OIDC) — SEM chaves nem
+# tokens armazenados. O GitHub troca um token OIDC de curta duracao por
+# credenciais temporarias do Google, restritas a este repositorio.
+# Escopo: SOMENTE Hosting. Functions e regras seguem manuais.
 
 on:
   push:
     branches:
       - main
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do código
+      - name: Checkout do codigo
         uses: actions/checkout@v4
 
-      - name: Publicar no Firebase Hosting (canal live)
-        uses: FirebaseExtended/action-hosting-deploy@v0
+      - name: Autenticar no Google Cloud (Workload Identity Federation)
+        uses: google-github-actions/auth@v2
         with:
-          repoToken: ${{ secrets.GITHUB_TOKEN }}
-          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          projectId: pdimirae
-          channelId: live
+          workload_identity_provider: projects/458881257037/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+          service_account: github-deploy@pdimirae.iam.gserviceaccount.com
+
+      - name: Configurar Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Instalar Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: Publicar no Firebase Hosting
+        run: firebase deploy --only hosting --project pdimirae --non-interactive
