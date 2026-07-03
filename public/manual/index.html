@@ -123,6 +123,7 @@
     <li><a href="#inicio">Início (painel)</a></li>
     <li><a href="#meupdi">Meu PDI</a></li>
     <li><a href="#avaliacoes">Avaliações</a></li>
+    <li><a href="#calc-pdi">Como a nota do PDI é calculada</a></li>
     <li><a href="#denuncia">Canal de Denúncia</a></li>
     <li><a href="#daily">Daily</a></li>
     <li><a href="#tarefas">Minhas Tarefas</a></li>
@@ -270,6 +271,62 @@
   <li><span class="role r-rh">RH</span> <strong>visualiza</strong>, mas não avalia.</li>
   <li><span class="role r-colab">Colaborador</span> não acessa esta aba (vê o resultado no Meu PDI).</li>
 </ul>
+
+<!-- ══════════ COMO A NOTA É CALCULADA ══════════ -->
+<h2 id="calc-pdi">Como a nota do PDI é calculada</h2>
+<p class="lead">Existem <strong>dois tipos de avaliação</strong>, escolhidos no cadastro da pessoa (campo "Lógica de Avaliação"): <b>Administrativo (ADM)</b> e <b>Gestor de Escalas</b>. Os dois combinam o PDI (competências) com uma segunda parte, mas com <b>pesos diferentes</b>.</p>
+
+<h3>A base comum: as competências do PDI</h3>
+<p>Em ambos os tipos, cada competência é avaliada em <strong>cinco níveis</strong>, cada um valendo uma pontuação:</p>
+<table>
+  <tr><th>Nível</th><th>Pontos</th></tr>
+  <tr><td>Não Atende</td><td>0</td></tr>
+  <tr><td>Atende Parcialmente</td><td>25</td></tr>
+  <tr><td>Atende</td><td>50</td></tr>
+  <tr><td>Supera</td><td>100</td></tr>
+  <tr><td>Excepcional</td><td>110</td></tr>
+</table>
+<div class="calc"><span class="t">Média do PDI (em %)</span>
+<code>PDI% = (soma dos pontos das competências ÷ (nº de competências × 110)) × 100</code><br>
+<span style="opacity:.85;">Ou seja: quanto mais perto de "Excepcional" (110) em tudo, mais perto de 100%.</span></div>
+
+<h3>Tipo 1 — Administrativo (ADM): PDI + Super Desafio</h3>
+<p>Para funções administrativas. Combina o PDI com um <b>Super Desafio</b> (uma meta/nota de 0 a 100 definida no trimestre).</p>
+<div class="calc"><span class="t">Nota final — ADM</span>
+<code>Nota = (Super Desafio × 30%) + (PDI% × 70%)</code><br>
+<span style="opacity:.85;">Super Desafio pesa <b>30%</b> · PDI pesa <b>70%</b>.</span></div>
+
+<h3>Tipo 2 — Gestor de Escalas: PDI + KPI</h3>
+<p>Para quem gere escalas. Combina o PDI com um bloco de <b>KPI</b> (indicadores), cada um com seu peso dentro do KPI:</p>
+<table>
+  <tr><th>Indicador do KPI</th><th>Peso dentro do KPI</th></tr>
+  <tr><td>Aumento de Horas</td><td>50%</td></tr>
+  <tr><td>Margem Líquida</td><td>30%</td></tr>
+  <tr><td>NPS Instituições</td><td>10%</td></tr>
+  <tr><td>NPS Médicos</td><td>10%</td></tr>
+</table>
+<div class="calc"><span class="t">Nota final — Gestor de Escalas</span>
+<code>KPI = (Horas × 50%) + (Margem × 30%) + (NPS Inst. × 10%) + (NPS Méd. × 10%)</code><br>
+<code>Nota = (KPI × 70%) + (PDI% × 30%)</code><br>
+<span style="opacity:.85;">Aqui o KPI pesa <b>70%</b> e o PDI pesa <b>30%</b> — o inverso do ADM.</span></div>
+
+<h3>Do resultado ao percentual de bônus</h3>
+<p>A nota final vira um <strong>percentual de bônus</strong> em faixas:</p>
+<table>
+  <tr><th>Nota final</th><th>% de bônus liberado</th></tr>
+  <tr><td>≥ 80</td><td class="yes">100%</td></tr>
+  <tr><td>70 a 79,9</td><td class="partial">75%</td></tr>
+  <tr><td>60 a 69,9</td><td class="partial">50%</td></tr>
+  <tr><td>abaixo de 60</td><td class="no">0%</td></tr>
+</table>
+
+<h3>Do percentual ao valor em reais</h3>
+<p>Esse percentual, junto com a <b>configuração de bônus da equipe</b> (aba Config. Bônus), define o valor a pagar:</p>
+<div class="calc"><span class="t">Valor do bônus</span>
+• Por <b>multiplicador</b> → <code>salário × (% ÷ 100) × multiplicador</code><br>
+• Por <b>valor fixo</b> → <code>valor fixo × (% ÷ 100)</code><br>
+• Sem configuração específica → <code>salário × (% ÷ 100) × 1</code></div>
+<div class="note"><strong>Exemplo (ADM):</strong> Super Desafio 80 e PDI 90% → Nota = 80×0,3 + 90×0,7 = <b>87</b> → faixa ≥ 80 → <b>100% do bônus</b>. Com salário R$ 3.000 e multiplicador 1,5 → bônus = 3.000 × 1,00 × 1,5 = <b>R$ 4.500</b>.</div>
 
 <!-- ══════════ CANAL DE DENÚNCIA ══════════ -->
 <h2 id="denuncia">Canal de Denúncia</h2>
