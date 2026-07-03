@@ -1,4 +1,4 @@
-﻿const CACHE = 'mirae-pdi-v76';
+﻿const CACHE = 'mirae-pdi-v77';
 const ASSETS = [
     '/', '/index.html', '/manifest.json',
     '/js/globals.js', '/js/utils.js', '/js/permissoes.js', '/js/app.js',
