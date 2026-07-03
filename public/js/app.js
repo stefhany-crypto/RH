@@ -869,17 +869,22 @@ function toastInfo(msg, titulo=''){
 // ════════════════════════════════════════════════════════════════
 // MELHORIA 9 — Onboarding guiado (tour de 3 passos)
 // ════════════════════════════════════════════════════════════════
-let _tourPasso = 0;
+let _tourPasso = 0, _tourSalvando = false;
 const TOUR_PASSOS = [
-    {tab:'tabMeuPDI',    titulo:'Seu PDI',          desc:'Aqui você acompanha suas avaliações por competência e vê seu plano de ação de crescimento.', icon:'award'},
-    {tab:'tabDaily',     titulo:'Daily',             desc:'Aqui você registra sua daily, gerencia tarefas do dia e acompanha as da equipe.', icon:'calendar'},
-    {tab:'tabMeuVTVR',   titulo:'Seu VT/VR',        desc:'Aqui você lança e acompanha seus vales-transporte e refeição ou solicita reembolsos.', icon:'bus'},
+    {titulo:'Bem-vindo à Mirae',   desc:'Este é o seu espaço de pessoas e desenvolvimento. Em menos de um minuto vou te mostrar por onde começar. Você verá este guia apenas uma vez.', icon:'award'},
+    {tab:'tabHome',    titulo:'Início',            desc:'Seu ponto de partida: um resumo do dia com tarefas pendentes, sua última nota de PDI, a daily de hoje e os próximos aniversários da equipe.', icon:'home'},
+    {tab:'tabMeuPDI',  titulo:'Meu PDI',           desc:'Acompanhe suas avaliações por competência, o feedback do seu líder, seu plano de ação e o gráfico da sua evolução ao longo dos trimestres.', icon:'award'},
+    {tab:'tabDaily',   titulo:'Daily',             desc:'Registre o que você fez no dia e acompanhe as tarefas da equipe. Cada tarefa pode ser marcada como concluída, em andamento ou não realizada.', icon:'calendar'},
+    {tab:'tabTarefas', titulo:'Minhas Tarefas',    desc:'Sua lista pessoal de afazeres: organize por hoje, próximas e prioridade, e envie para a daily o que precisar acompanhar com a equipe.', icon:'tasks'},
+    {tab:'tabKanban',  titulo:'Kanban',            desc:'Organize suas tarefas em quadros visuais, arrastando os cartões entre as colunas. Cartões com prazo mostram alertas de "hoje" e "atrasado".', icon:'kanban'},
+    {tab:'tabMeuVTVR', titulo:'VT e VR',           desc:'Acompanhe seus vales de transporte e refeição. Se você é PJ, é aqui que você envia a nota fiscal dos seus reembolsos.', icon:'bus'},
+    {titulo:'Tudo pronto!',        desc:'No topo, use a busca para encontrar pessoas e tarefas, e o sino para ver suas notificações. Você pode navegar por todas as áreas pelo menu à esquerda. Bom trabalho!', icon:'check'},
 ];
 
 function iniciarOnboarding(){
-    if(!user) return;
-    db.collection('colaboradores').doc(user.uid).get().then(snap => {
-        if(snap.data()?.onboardingConcluido) return;
+    if(!user?.id) return;
+    db.collection('colaboradores').doc(user.id).get().then(snap => {
+        if(snap.data()?.onboardingConcluido) return; // já viu — nunca mais mostra
         setTimeout(() => mostrarTourPasso(0), 800);
     }).catch(() => {});
 }
@@ -889,13 +894,15 @@ function mostrarTourPasso(n){
     const box = document.getElementById('tourBox');
     if(!overlay || !box) return;
     _tourPasso = n;
-    if(n >= TOUR_PASSOS.length){ fecharTour(true); return; }
+    if(n >= TOUR_PASSOS.length){ fecharTour(); return; }
     const p = TOUR_PASSOS[n];
     const total = TOUR_PASSOS.length;
-    // Navega para a aba do passo
-    const btn = [...document.querySelectorAll('.tab-btn')]
-        .find(b => b.getAttribute('onclick')?.includes(p.tab));
-    if(btn) btn.click();
+    // Navega para a aba do passo (passos de boas-vindas/final não têm aba)
+    if(p.tab){
+        const btn = [...document.querySelectorAll('.tab-btn')]
+            .find(b => b.getAttribute('onclick')?.includes(p.tab));
+        if(btn) btn.click();
+    }
     box.innerHTML = `
         <div class="tour-passo-num">${n+1} de ${total}</div>
         <div class="tour-icone">${ico(p.icon,{size:28,color:'var(--teal)'})}</div>
@@ -903,16 +910,18 @@ function mostrarTourPasso(n){
         <div class="tour-desc">${esc(p.desc)}</div>
         <div class="tour-dots">${Array.from({length:total},(_,i)=>`<div class="tour-dot${i===n?' active':''}"></div>`).join('')}</div>
         <div class="tour-acoes">
-            <button class="btn-ghost" onclick="fecharTour(false)">Pular tour</button>
+            <button class="btn-ghost" onclick="fecharTour()">Pular tour</button>
             <button class="btn-primary" onclick="mostrarTourPasso(${n+1})">${n===total-1?'Concluir':'Próximo'}</button>
         </div>`;
     overlay.classList.add('open');
 }
 
-function fecharTour(concluido){
+// Encerra o tour (pular ou concluir) e grava a flag para nunca mais aparecer.
+function fecharTour(){
     document.getElementById('tourOverlay')?.classList.remove('open');
-    if(concluido && user){
-        db.collection('colaboradores').doc(user.uid)
+    if(user?.id && !_tourSalvando){
+        _tourSalvando = true;
+        db.collection('colaboradores').doc(user.id)
             .update({onboardingConcluido:true}).catch(()=>{});
     }
 }
