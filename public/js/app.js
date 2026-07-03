@@ -743,7 +743,7 @@ let _auditLogs = [];
 function carregarMaisAuditoria(){
     if(_auditCarregando) return;
     _auditCarregando = true;
-    let q = db.collection('logsAuditoria').orderBy('timestamp','desc').limit(50);
+    let q = db.collection('logsAuditoria').orderBy('criadoEm','desc').limit(50);
     if(_auditCursor) q = q.startAfter(_auditCursor);
     q.get().then(snap => {
         _auditCarregando = false;
@@ -766,24 +766,26 @@ function renderAuditoriaTabela(){
     const filtroAcao = (document.getElementById('auditFiltroAcao')?.value||'').toLowerCase();
     const filtroUser = (document.getElementById('auditFiltroUser')?.value||'').toLowerCase();
     const CORES_ACAO = {avaliacao:'#1E7D90',colaborador:'#3F8A6E',bonus:'#92400E',vtvr:'#214957',denuncia:'#C62828',login:'#666'};
+    const audUser = l => l.autorNome||l.usuarioNome||l.autorEmail||l.email||'sistema';
+    const audData = l => l.criadoEm||l.timestamp||l.data;
+    const audDet = l => { const d=l.detalhes||l.descricao||l.dados; if(d) return typeof d==='object'?JSON.stringify(d):String(d); const ent=[l.entidade,l.entidadeId].filter(Boolean).join(' · '); return ent||''; };
     const logs = _auditLogs.filter(l=>{
         const acao=(l.acao||l.tipo||'').toLowerCase();
-        const nomeUser=(l.usuarioNome||l.email||'').toLowerCase();
+        const nomeUser=String(audUser(l)).toLowerCase();
         if(filtroAcao && !acao.includes(filtroAcao)) return false;
         if(filtroUser && !nomeUser.includes(filtroUser)) return false;
         return true;
     });
     if(!logs.length){ tbody.innerHTML='<tr><td colspan="4" style="padding:2rem;text-align:center;color:var(--muted);">Nenhum registro encontrado.</td></tr>'; return; }
     tbody.innerHTML = logs.map(l=>{
-        const ts = l.timestamp?.toDate?.()||l.timestamp;
-        const dtStr = ts ? new Date(ts).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
+        const ts = audData(l); const tsd = ts?.toDate?.()||ts;
+        const dtStr = tsd ? new Date(tsd).toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'}) : '—';
         const acao = l.acao||l.tipo||'ação';
         const cor = CORES_ACAO[Object.keys(CORES_ACAO).find(k=>acao.toLowerCase().includes(k))||'login']||'#666';
-        const detalhes = l.detalhes||l.descricao||l.dados||'';
-        const detStr = typeof detalhes==='object'?JSON.stringify(detalhes).slice(0,120):String(detalhes).slice(0,120);
+        const detStr = audDet(l).slice(0,120);
         return`<tr style="border-bottom:1px solid var(--border);">
             <td style="padding:.6rem 1rem;color:var(--muted);white-space:nowrap;">${dtStr}</td>
-            <td style="padding:.6rem 1rem;font-weight:600;">${esc(l.usuarioNome||l.email||'sistema')}</td>
+            <td style="padding:.6rem 1rem;font-weight:600;">${esc(audUser(l))}</td>
             <td style="padding:.6rem 1rem;"><span style="background:${cor}22;color:${cor};padding:2px 8px;border-radius:6px;font-size:.75rem;font-weight:700;">${esc(acao)}</span></td>
             <td style="padding:.6rem 1rem;color:var(--muted);font-size:.8rem;">${esc(detStr)}</td>
         </tr>`;
@@ -794,9 +796,9 @@ function exportarAuditoriaExcel(){
     if(typeof XLSX==='undefined'){toastErro('Biblioteca XLSX não carregada.');return;}
     if(!_auditLogs.length){toastErro('Nenhum log carregado.');return;}
     const rows=_auditLogs.map(l=>{
-        const ts=l.timestamp?.toDate?.()||l.timestamp;
-        const det=l.detalhes||l.descricao||l.dados||'';
-        return{'Data/Hora':ts?new Date(ts).toLocaleString('pt-BR'):'-','Usuário':l.usuarioNome||l.email||'sistema','Ação':l.acao||l.tipo||'-','Detalhes':typeof det==='object'?JSON.stringify(det):String(det)};
+        const ts0=l.criadoEm||l.timestamp||l.data; const ts=ts0?.toDate?.()||ts0;
+        let det=l.detalhes||l.descricao||l.dados; if(!det) det=[l.entidade,l.entidadeId].filter(Boolean).join(' · ');
+        return{'Data/Hora':ts?new Date(ts).toLocaleString('pt-BR'):'-','Usuário':l.autorNome||l.usuarioNome||l.autorEmail||l.email||'sistema','Ação':l.acao||l.tipo||'-','Detalhes':typeof det==='object'?JSON.stringify(det):String(det||'')};
     });
     const ws=XLSX.utils.json_to_sheet(rows);
     const wb=XLSX.utils.book_new();
