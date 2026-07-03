@@ -307,6 +307,19 @@ service cloud.firestore {
       allow read, write: if isProprioDoc(docUid);
     }
 
+    // ── solicitacoesBackup ───────────────────────────────────────
+    // Padrao gatilho: o app grava um pedido; a Cloud Function
+    // processarBackup roda o backup e escreve o resultado no doc.
+    // Apenas MASTER cria/le o proprio pedido; o resultado e escrito
+    // somente pelo Admin SDK (update/delete negados ao cliente).
+    match /solicitacoesBackup/{docId} {
+      allow create: if isMaster()
+                    && request.resource.data.solicitanteId == uid()
+                    && request.resource.data.status == 'pendente';
+      allow read: if isMaster() && resource.data.solicitanteId == uid();
+      allow update, delete: if false;
+    }
+
     // ── kanbanBoards ─────────────────────────────────────────────
     match /kanbanBoards/{boardId} {
       allow read: if autenticado() && (

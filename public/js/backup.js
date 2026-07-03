@@ -104,28 +104,55 @@ async function exportarBackup(){
 
 // Roda um backup AGORA no servidor (mesma rotina do backup automático diário).
 // Os dados são salvos em Storage (pasta backups/), retidos por 90 dias.
+// Roda um backup AGORA no servidor via padrão de gatilho do Firestore.
+// A política da organização bloqueia a invocação pública de Cloud
+// Functions (allUsers), então não dá para chamar uma callable direto do
+// navegador. Em vez disso, gravamos um pedido em solicitacoesBackup/ e
+// ouvimos o resultado no mesmo doc — a função processarBackup (disparada
+// por gatilho) roda o backup e escreve o status de volta.
 async function backupAgora(btn){
     if(!P.isMaster()){ mostrarNotif('','Apenas MASTER','Somente o perfil MASTER pode rodar o backup.','',4000); return; }
     const txtOrig = btn? btn.textContent : '';
     if(btn){ btn.disabled=true; btn.textContent='Gerando backup...'; }
+    let unsub=null, finalizado=false, timeout=null;
+    const encerrar = () => {
+        if(unsub){ try{ unsub(); }catch(e){} }
+        if(timeout) clearTimeout(timeout);
+        if(btn){ btn.disabled=false; btn.textContent=txtOrig; }
+    };
     try{
-        const fn = firebase.app().functions('southamerica-east1').httpsCallable('verificarBackup');
-        const res = await fn({ rodar:true });
-        const d = res.data||{};
-        if(d.execucao && d.execucao.status==='concluido'){
-            const total = Object.values(d.execucao.resumo||{}).reduce((a,v)=>a+(typeof v==='number'?v:0),0);
-            mostrarNotif('','Backup concluído no servidor!',`${total} registros salvos com segurança. Próximo backup automático: amanhã 02:00.`,'bonus',7000);
-        } else if(d.execucao && d.execucao.status==='erro'){
-            mostrarNotif('','Falha no backup',d.execucao.erro||'Erro desconhecido.','',7000);
-        } else {
-            mostrarNotif('','Backup não confirmado','O servidor respondeu sem confirmar a execução.','',6000);
-        }
-        verificarLembreteBackup(); // atualiza a data exibida
+        const ref = await db.collection('solicitacoesBackup').add({
+            solicitanteId: user.id,
+            solicitanteNome: user.nome,
+            status: 'pendente',
+            criadoEm: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        // Timeout de segurança: se em 2 min não confirmar, libera o botão.
+        timeout = setTimeout(()=>{
+            if(finalizado) return;
+            finalizado=true; encerrar();
+            mostrarNotif('','Backup em andamento','O pedido foi enviado, mas ainda não confirmou. Recarregue em instantes para ver o status.','',7000);
+        }, 120000);
+        unsub = ref.onSnapshot(doc=>{
+            const d = doc.data(); if(!d || finalizado) return;
+            if(d.status==='concluido'){
+                finalizado=true; encerrar();
+                mostrarNotif('','Backup concluído no servidor!',`${d.total||0} registros salvos com segurança. Próximo backup automático: amanhã 05:00.`,'bonus',7000);
+                verificarLembreteBackup();
+            } else if(d.status==='erro'){
+                finalizado=true; encerrar();
+                mostrarNotif('','Falha no backup', d.erro||'Erro desconhecido.','',7000);
+            }
+        }, err=>{
+            if(finalizado) return;
+            finalizado=true; encerrar();
+            console.error('backupAgora onSnapshot:', err);
+            mostrarNotif('','Erro ao acompanhar o backup', err.message||'Verifique sua conexão.','',6000);
+        });
     }catch(err){
         console.error('backupAgora:', err);
-        mostrarNotif('','Erro ao chamar o servidor',err.message||'Verifique sua conexão.','',6000);
-    }finally{
-        if(btn){ btn.disabled=false; btn.textContent=txtOrig; }
+        encerrar();
+        mostrarNotif('','Erro ao solicitar backup', err.message||'Verifique sua conexão.','',6000);
     }
 }
 
