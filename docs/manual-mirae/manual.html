@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual do Usuário — Mirae People Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;1,400&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --teal:#023B48; --teal2:#0F5563; --gold:#BE8C45; --gold-soft:#DAB47E;
+    --cream:#F1ECE2; --ink:#1A2E38; --muted:#5A7280; --line:#E4DED2;
+    --green:#3F8A6E; --red:#C62828; --amber:#B26B12;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:'DM Sans',sans-serif; color:var(--ink); background:#fff;
+    margin:0; line-height:1.65; font-size:15px;
+  }
+  .page{max-width:900px; margin:0 auto; padding:0 40px;}
+  h1,h2,h3,h4{font-family:'Newsreader',serif; font-weight:500; color:var(--teal); line-height:1.15;}
+  h2{font-size:1.9rem; margin:2.6rem 0 .4rem; padding-top:.6rem; border-top:2px solid var(--cream);}
+  h3{font-size:1.3rem; margin:1.8rem 0 .3rem; color:var(--teal2);}
+  h4{font-size:1.02rem; margin:1.1rem 0 .2rem; color:var(--ink); font-family:'DM Sans',sans-serif; font-weight:700;}
+  p{margin:.5rem 0;}
+  a{color:var(--teal2);}
+  strong{font-weight:700;}
+  ul,ol{margin:.4rem 0 .8rem; padding-left:1.3rem;}
+  li{margin:.28rem 0;}
+  code{background:var(--cream); padding:1px 6px; border-radius:5px; font-size:.86em; font-family:ui-monospace,monospace; color:var(--teal2);}
+  .lead{font-size:1.05rem; color:var(--muted);}
+  .kicker{font-size:.72rem; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); font-weight:700;}
+
+  /* Capa */
+  .cover{background:var(--teal); color:#fff; padding:110px 60px 90px; position:relative; overflow:hidden;}
+  .cover::before{content:''; position:absolute; width:560px; height:560px; border-radius:50%; border:1px solid rgba(218,180,126,.18); right:-200px; top:-180px;}
+  .cover::after{content:''; position:absolute; width:360px; height:360px; border-radius:50%; border:1px solid rgba(218,180,126,.12); right:-80px; top:60px;}
+  .cover .mark{display:flex; align-items:center; gap:14px; margin-bottom:60px; position:relative;}
+  .cover .mark-badge{width:52px;height:52px;border-radius:13px;background:rgba(218,180,126,.15);border:1px solid rgba(218,180,126,.35);display:flex;align-items:center;justify-content:center;font-family:'Newsreader',serif;font-size:26px;color:var(--gold-soft);}
+  .cover h1{color:#fff; font-size:3.1rem; margin:0 0 14px; position:relative; max-width:620px;}
+  .cover .sub{color:rgba(255,255,255,.75); font-size:1.15rem; max-width:520px; position:relative;}
+  .cover .meta{margin-top:48px; font-size:.82rem; color:rgba(255,255,255,.55); position:relative;}
+  .cover .pill{display:inline-flex; align-items:center; gap:7px; background:rgba(218,180,126,.14); color:var(--gold-soft); font-size:.72rem; font-weight:700; letter-spacing:.1em; text-transform:uppercase; padding:5px 13px; border-radius:20px; position:relative;}
+
+  /* Sumário */
+  .toc{background:var(--cream); border-radius:14px; padding:26px 30px; margin:34px 0;}
+  .toc h4{margin:0 0 12px; color:var(--teal);}
+  .toc ol{columns:2; column-gap:36px; margin:0; padding-left:1.1rem; font-size:.92rem;}
+  .toc a{text-decoration:none; color:var(--ink);}
+  .toc a:hover{color:var(--gold);}
+
+  /* Blocos utilitários */
+  .fig{border:1.5px dashed var(--gold-soft); background:#FCFAF6; border-radius:12px; padding:22px; margin:1rem 0 1.3rem; text-align:center; color:var(--muted); font-size:.86rem;}
+  .fig .cam{color:var(--gold); font-weight:700; letter-spacing:.08em; text-transform:uppercase; font-size:.7rem; display:block; margin-bottom:6px;}
+  .fig .cap{color:var(--ink); font-weight:500;}
+  .fig img{max-width:100%; border-radius:8px; display:block; margin:0 auto;}
+
+  .note{background:rgba(30,125,144,.06); border-left:3px solid var(--teal2); border-radius:0 10px 10px 0; padding:12px 16px; margin:1rem 0; font-size:.92rem;}
+  .warn{background:rgba(198,40,40,.06); border-left:3px solid var(--red); border-radius:0 10px 10px 0; padding:12px 16px; margin:1rem 0; font-size:.92rem;}
+  .calc{background:var(--teal); color:#fff; border-radius:12px; padding:16px 20px; margin:1rem 0; font-size:.94rem;}
+  .calc .t{color:var(--gold-soft); font-weight:700; font-size:.72rem; letter-spacing:.1em; text-transform:uppercase; display:block; margin-bottom:6px;}
+  .calc code{background:rgba(255,255,255,.12); color:#fff;}
+
+  table{width:100%; border-collapse:collapse; margin:1rem 0 1.4rem; font-size:.9rem;}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{background:var(--cream); color:var(--teal); font-weight:700; font-size:.8rem; text-transform:uppercase; letter-spacing:.04em;}
+  tr:last-child td{border-bottom:none;}
+  .yes{color:var(--green); font-weight:700;}
+  .no{color:#B9B9B9;}
+  .partial{color:var(--amber); font-weight:700;}
+
+  .roles{display:flex; gap:8px; flex-wrap:wrap; margin:.6rem 0 1rem;}
+  .role{font-size:.72rem; font-weight:700; padding:3px 11px; border-radius:20px;}
+  .r-master{background:#02313b; color:var(--gold-soft);}
+  .r-rh{background:#E7EFEA; color:#2F6F58;}
+  .r-lider{background:#EAF0F2; color:var(--teal2);}
+  .r-colab{background:var(--cream); color:var(--muted);}
+
+  .btn-list{list-style:none; padding:0; margin:.6rem 0;}
+  .btn-list li{padding:9px 0; border-bottom:1px solid var(--line); margin:0;}
+  .btn-list b{color:var(--teal2);}
+
+  footer{margin:60px 0 40px; padding-top:20px; border-top:2px solid var(--cream); color:var(--muted); font-size:.82rem; text-align:center;}
+
+  @media print{
+    .cover{padding:80px 50px;}
+    h2{page-break-before:auto; break-inside:avoid;}
+    h3,h4{break-after:avoid;}
+    .fig,.calc,.note,.warn,table{break-inside:avoid;}
+    .toc{break-inside:avoid;}
+    a{color:var(--ink); text-decoration:none;}
+  }
+</style>
+</head>
+<body>
+
+<!-- ══════════ CAPA ══════════ -->
+<div class="cover">
+  <div class="mark">
+    <div class="mark-badge">M.</div>
+    <div>
+      <div style="font-family:'Newsreader',serif;font-size:22px;">Mirae</div>
+      <div style="font-size:11px;letter-spacing:.18em;color:var(--gold-soft);font-weight:700;">PEOPLE HUB</div>
+    </div>
+  </div>
+  <span class="pill">Documento interno · Audaz Health</span>
+  <h1>Manual do Usuário</h1>
+  <p class="sub">Sistema de Avaliações, PDI 360°, Daily, Benefícios e Reconhecimento — tudo o que cada tela faz, para quem serve e como calcula.</p>
+  <div class="meta">Versão 1.0 · Julho de 2026 · pdimirae.web.app</div>
+</div>
+
+<div class="page">
+
+<!-- ══════════ SUMÁRIO ══════════ -->
+<div class="toc">
+  <h4>Sumário</h4>
+  <ol>
+    <li><a href="#parte1">Parte 1 — A parte técnica</a></li>
+    <li><a href="#papeis">Papéis e o que cada um enxerga</a></li>
+    <li><a href="#acesso">Acesso e login</a></li>
+    <li><a href="#inicio">Início (painel)</a></li>
+    <li><a href="#meupdi">Meu PDI</a></li>
+    <li><a href="#avaliacoes">Avaliações</a></li>
+    <li><a href="#denuncia">Canal de Denúncia</a></li>
+    <li><a href="#daily">Daily</a></li>
+    <li><a href="#tarefas">Minhas Tarefas</a></li>
+    <li><a href="#kanban">Kanban</a></li>
+    <li><a href="#mesas">Reserva de Mesas</a></li>
+    <li><a href="#vtvr">VT / VR</a></li>
+    <li><a href="#remun">Remuneração PJ</a></li>
+    <li><a href="#analises">Análises</a></li>
+    <li><a href="#gestao-denuncias">Gestão de Denúncias</a></li>
+    <li><a href="#auditoria">Auditoria</a></li>
+    <li><a href="#talentos">Talentos</a></li>
+    <li><a href="#equipes">Equipes</a></li>
+    <li><a href="#bonus">Configuração de Bônus</a></li>
+    <li><a href="#backup">Backup</a></li>
+    <li><a href="#calculos">Resumo das fórmulas de cálculo</a></li>
+  </ol>
+</div>
+
+<div class="note"><strong>Como inserir os prints:</strong> cada tela tem um espaço tracejado com a legenda do que capturar. Abra o app, tire o print da tela indicada e substitua o espaço pela imagem (ou peça para inserirmos por você). O texto já está completo mesmo sem as imagens.</div>
+
+<!-- ══════════ PARTE 1 — TÉCNICA ══════════ -->
+<h2 id="parte1">Parte 1 — A parte técnica</h2>
+<p class="lead">O que é o sistema, com que ferramentas ele foi construído, onde ele mora e quanto ele comporta.</p>
+
+<h3>O que é</h3>
+<p>O <strong>Mirae People Hub</strong> é um aplicativo web (PWA — funciona no navegador e pode ser "instalado" como app no celular e no desktop) que concentra, num só lugar, a gestão de pessoas da Audaz Health: avaliações de desempenho (PDI 360°), plano de desenvolvimento individual, daily das equipes, tarefas, quadro Kanban, benefícios (VT/VR e remuneração PJ), reserva de mesas, canal de denúncia, reconhecimento (kudos) e relatórios.</p>
+
+<h3>Ferramentas e arquitetura</h3>
+<table>
+  <tr><th style="width:32%;">Camada</th><th>Tecnologia</th><th>Para que serve</th></tr>
+  <tr><td><b>Interface (front-end)</b></td><td>HTML, CSS e JavaScript puro (sem framework pesado), organizado em módulos</td><td>As telas que você vê e usa</td></tr>
+  <tr><td><b>Banco de dados</b></td><td>Google Firebase — <b>Firestore</b> (banco em nuvem, tempo real)</td><td>Guarda colaboradores, avaliações, dailies, tarefas, benefícios etc.</td></tr>
+  <tr><td><b>Login e permissões</b></td><td>Firebase <b>Authentication</b> + <i>custom claims</i> (papel e equipe no token)</td><td>Controla quem entra e o que cada um pode fazer</td></tr>
+  <tr><td><b>Automações (servidor)</b></td><td>Firebase <b>Cloud Functions</b></td><td>E-mails, criação de acessos, backup, sincronização de permissões, auditoria</td></tr>
+  <tr><td><b>Arquivos</b></td><td>Firebase <b>Storage</b> + Google Drive</td><td>Notas fiscais dos PJ e backups do banco</td></tr>
+  <tr><td><b>Hospedagem</b></td><td>Firebase <b>Hosting</b>, em <code>pdimirae.web.app</code></td><td>Onde o app fica no ar</td></tr>
+  <tr><td><b>Publicação</b></td><td><b>GitHub</b> + GitHub Actions → Firebase (deploy automático)</td><td>A cada alteração aprovada, o site atualiza sozinho</td></tr>
+</table>
+
+<div class="note"><strong>Segurança em duas camadas.</strong> Nada depende só da tela: além do que o app esconde/mostra por papel, o próprio banco (Firestore) tem <b>regras de segurança</b> que bloqueiam no servidor qualquer acesso indevido. Os dados financeiros (salário, VT, CNPJ) ficam numa subcoleção protegida, separada do cadastro comum. A publicação usa <b>Workload Identity Federation</b> (sem chaves ou senhas guardadas).</p>
+
+<h3>Espaço e capacidade — quanto comporta</h3>
+<p>O banco (Firestore) suporta milhões de registros; <strong>armazenamento nunca é o gargalo</strong> — com 100 colaboradores levaria décadas para encher o espaço gratuito. O que define a capacidade prática são dois padrões do app: o carregamento da lista de pessoas no login e o backup (que lê o banco inteiro). Na prática:</p>
+<table>
+  <tr><th>Colaboradores</th><th>Situação</th><th>Custo mensal estimado</th></tr>
+  <tr><td><b>Até ~50</b> (faixa atual)</td><td>Folgado. Praticamente dentro do nível gratuito. Anos sem tocar em nada.</td><td>~R$ 0</td></tr>
+  <tr><td><b>50 – 150</b></td><td>Confortável. Tudo funciona bem.</td><td>~R$ 5 – 20</td></tr>
+  <tr><td><b>150 – 300</b></td><td>Funciona bem; vale otimizar login e backup.</td><td>~R$ 30 – 60</td></tr>
+  <tr><td><b>300 – 500+</b></td><td>Requer 2 otimizações antes de escalar (busca sob demanda e backup paginado).</td><td>R$ 100+</td></tr>
+</table>
+<p><strong>Resumo:</strong> do jeito que está hoje, o app comporta <strong>confortavelmente até ~150 colaboradores por muitos anos</strong>, e continua funcionando bem até ~300. O limite prático não é o tamanho do banco — são dois padrões de código, ambos com correção conhecida quando o time crescer.</p>
+
+<!-- ══════════ PAPÉIS ══════════ -->
+<h2 id="papeis">Papéis e o que cada um enxerga</h2>
+<p>Cada pessoa tem um <strong>nível de acesso (papel)</strong>. O papel define quais abas aparecem e o que ela pode fazer. São quatro:</p>
+<div class="roles">
+  <span class="role r-master">MASTER</span>
+  <span class="role r-rh">RH</span>
+  <span class="role r-lider">LÍDER</span>
+  <span class="role r-colab">COLABORADOR</span>
+</div>
+<ul>
+  <li><span class="role r-master">MASTER</span> — acesso total. Vê e faz tudo, em todas as equipes. Único que exclui registros e roda backup manual.</li>
+  <li><span class="role r-rh">RH</span> — visão ampla de toda a empresa (pessoas, avaliações, benefícios, denúncias, relatórios). Não avalia colaboradores.</li>
+  <li><span class="role r-lider">LÍDER</span> — foco na sua equipe: avalia sua equipe, conduz a daily, vê relatórios da equipe.</li>
+  <li><span class="role r-colab">COLABORADOR</span> — foco em si: seu PDI, suas tarefas, sua daily, seus benefícios.</li>
+</ul>
+
+<h3>Matriz "quem vê o quê"</h3>
+<table>
+  <tr><th>Aba / Ação</th><th>Master</th><th>RH</th><th>Líder</th><th>Colab.</th></tr>
+  <tr><td>Início, Meu PDI, Daily, Minhas Tarefas, Kanban, Reserva de Mesas</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td><td class="yes">✓</td></tr>
+  <tr><td>Criar/editar avaliação</td><td class="yes">✓ (todas)</td><td class="no">—</td><td class="partial">✓ (só a sua equipe)</td><td class="no">—</td></tr>
+  <tr><td>Registrar/editar a daily da equipe</td><td class="yes">✓</td><td class="yes">✓</td><td class="partial">✓ (sua equipe + delegado)</td><td class="partial">✓ se autorizado</td></tr>
+  <tr><td>Talentos (cadastrar pessoas)</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+  <tr><td>Equipes</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+  <tr><td>Config. Bônus (ver / editar)</td><td class="yes">✓ / ✓</td><td class="partial">✓ / —</td><td class="no">—</td><td class="no">—</td></tr>
+  <tr><td>VT / VR (painel) e Remuneração PJ</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="partial">só o próprio</td></tr>
+  <tr><td>Análises (relatórios)</td><td class="yes">✓</td><td class="yes">✓</td><td class="partial">✓ (sua equipe)</td><td class="no">—</td></tr>
+  <tr><td>Gestão de Denúncias</td><td class="yes">✓</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td></tr>
+  <tr><td>Auditoria</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+  <tr><td>Backup manual / Excluir registros</td><td class="yes">✓</td><td class="no">—</td><td class="no">—</td><td class="no">—</td></tr>
+</table>
+
+<!-- ══════════ ACESSO ══════════ -->
+<h2 id="acesso">Acesso e login</h2>
+<div class="roles"><span class="role r-master">Todos</span></div>
+<p>O acesso é em <code>pdimirae.web.app</code>, com <strong>e-mail corporativo e senha</strong>. Cada pessoa é criada pelo RH/Master em <em>Talentos</em>, já com uma senha provisória; no primeiro acesso ela pode trocar a senha pelo botão <b>Senha</b> na barra lateral.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Tela de login: painel escuro à esquerda com a marca Mirae, campos de e-mail e senha à direita.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>E-mail / Senha</b> → credenciais corporativas.</li>
+  <li><b>Entrar</b> → valida no Firebase Authentication e carrega o app já com as permissões do papel.</li>
+</ul>
+<div class="note">No primeiro acesso de cada pessoa aparece, <strong>uma única vez</strong>, um tour de boas-vindas de 8 passos explicando as principais áreas. Depois disso ele nunca mais reaparece.</div>
+
+<!-- ══════════ INÍCIO ══════════ -->
+<h2 id="inicio">Início (painel)</h2>
+<div class="roles"><span class="role r-master">Todos</span></div>
+<p><strong>Para que serve:</strong> é a porta de entrada. Mostra uma saudação, a data e um resumo do dia, com atalhos rápidos.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Início: "Bom dia, [nome]", os 4 cartões de resumo (Tarefas pendentes, Última nota PDI, Daily de hoje, Próximo aniversário) e a fileira de estatísticas.</span></div>
+<h4>Botões e cartões</h4>
+<ul class="btn-list">
+  <li><b>Buscar pessoas, tarefas…</b> (topo) → busca global: digite e aparecem pessoas, tarefas e avaliações; clicar leva direto ao item.</li>
+  <li><b>Sino</b> (topo) → central de notificações (tarefas delegadas, avisos). O número vermelho indica quantas não lidas.</li>
+  <li><b>Atalhos rápidos</b> → <b>Registrar daily</b>, <b>Nova tarefa</b>, <b>Reservar mesa</b>, e (para quem tem acesso) <b>Talentos</b> e <b>Avaliações</b>.</li>
+  <li><b>Cartões de briefing</b> → <b>Tarefas pendentes</b>, <b>Última nota PDI</b>, <b>Daily de hoje</b> (Pendente/Registrada) e <b>Próximo aniversário</b> da equipe.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p>Todos veem o Início. Os atalhos de <em>Talentos</em> e <em>Avaliações</em> só aparecem para quem tem permissão. As estatísticas refletem os dados que aquele papel pode ver.</p>
+
+<!-- ══════════ MEU PDI ══════════ -->
+<h2 id="meupdi">Meu PDI</h2>
+<div class="roles"><span class="role r-master">Todos</span></div>
+<p><strong>Para que serve:</strong> cada pessoa acompanha aqui a <strong>própria</strong> avaliação por competências, o feedback do líder, o plano de ação e a evolução ao longo dos trimestres.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Meu PDI: barras de competências à esquerda, cartão "Média do Trimestre" (nota /5) à direita, feedback do líder e o gráfico de "Histórico de evolução".</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Abas de trimestre</b> (ex.: "2° tri", "1° tri") → alterna entre as avaliações que a pessoa já recebeu.</li>
+  <li><b>Barras de competências</b> → cada grupo do PDI com a nota naquela escala.</li>
+  <li><b>Média do Trimestre</b> → a nota final convertida para a escala de 0 a 5, com a variação em relação ao trimestre anterior.</li>
+  <li><b>Feedback do líder</b> e <b>Plano de ação</b> → texto e itens registrados pelo avaliador.</li>
+  <li><b>Histórico de evolução</b> → gráfico de linha com as notas por trimestre (aparece a partir da 2ª avaliação).</li>
+</ul>
+<div class="calc"><span class="t">Cálculo da nota exibida</span>A nota é registrada numa escala interna de 0 a 110. O que aparece para o colaborador é convertido para 0–5: <code>nota exibida = notaFinal ÷ 110 × 5</code>.</div>
+<h4>Quem vê o quê</h4>
+<p>Cada um vê <strong>apenas o próprio</strong> PDI. Ninguém vê o PDI do outro por aqui (líderes veem os da equipe pela aba <em>Avaliações</em>/<em>Análises</em>).</p>
+
+<!-- ══════════ AVALIAÇÕES ══════════ -->
+<h2 id="avaliacoes">Avaliações</h2>
+<div class="roles"><span class="role r-master">Master</span><span class="role r-lider">Líder</span><span class="role r-rh">RH (vê)</span></div>
+<p><strong>Para que serve:</strong> onde as avaliações de desempenho são criadas e consultadas.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Avaliações: botão "Nova Avaliação", lista/tabela das avaliações existentes e o formulário de avaliação por competências.</span></div>
+<h4>Botões e lógica</h4>
+<ul class="btn-list">
+  <li><b>Nova Avaliação</b> → escolhe o colaborador, o trimestre e o ano, e preenche as competências. Há duas lógicas por perfil: <b>Administrativo</b> (PDI + Super Desafio) e <b>Gestor de Escalas</b> (KPI).</li>
+  <li><b>Notas por competência</b> → cada item recebe uma nota; o sistema calcula a <b>nota final</b> e o <b>% de bônus</b>.</li>
+  <li><b>Feedback e plano de ação</b> → texto do líder + itens de desenvolvimento que aparecem no Meu PDI da pessoa.</li>
+</ul>
+<div class="note">Ao salvar, o colaborador recebe um <strong>e-mail automático</strong> avisando que a avaliação do trimestre foi registrada, com a nota e o % de bônus.</div>
+<h4>Quem vê o quê</h4>
+<ul>
+  <li><span class="role r-master">Master</span> avalia qualquer pessoa de qualquer equipe.</li>
+  <li><span class="role r-lider">Líder</span> avalia <strong>só a própria equipe</strong>.</li>
+  <li><span class="role r-rh">RH</span> <strong>visualiza</strong>, mas não avalia.</li>
+  <li><span class="role r-colab">Colaborador</span> não acessa esta aba (vê o resultado no Meu PDI).</li>
+</ul>
+
+<!-- ══════════ CANAL DE DENÚNCIA ══════════ -->
+<h2 id="denuncia">Canal de Denúncia</h2>
+<div class="roles"><span class="role r-master">Todos</span></div>
+<p><strong>Para que serve:</strong> canal seguro para registrar uma denúncia, com opção de <strong>anonimato</strong>.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Canal de Denúncia: chave "Quero permanecer anônimo", seletor de tema e campo de texto.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Quero permanecer anônimo</b> → se ligado, o nome não é exibido para ninguém; a pessoa recebe um <b>código de protocolo</b> para acompanhar.</li>
+  <li><b>Tema</b> → assédio, discriminação, fraude, conduta inadequada etc.</li>
+  <li><b>Enviar Denúncia</b> → registra com segurança; só RH/Master leem o conteúdo.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p>Todos podem <strong>registrar</strong>. Só <span class="role r-master">Master</span> e <span class="role r-rh">RH</span> leem e tratam as denúncias (na aba <em>Denúncias</em>).</p>
+
+<!-- ══════════ DAILY ══════════ -->
+<h2 id="daily">Daily</h2>
+<div class="roles"><span class="role r-master">Todos veem</span><span class="role r-lider">Líder/delegado registram</span></div>
+<p><strong>Para que serve:</strong> registrar a reunião diária da equipe — quem esteve presente, as tarefas do dia com responsável, bloqueios e pedidos de ajuda.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Daily: o card "Squad [equipe]" com o progresso ("X de Y já registraram"), a lista de quem registrou e o botão "Quem pode fazer a daily".</span></div>
+<h4>Botões e lógica</h4>
+<ul class="btn-list">
+  <li><b>Registrar daily</b> → abre o formulário do dia: presentes, tarefas (cada tarefa <b>menciona um responsável</b>), dependências, bloqueios e ajuda.</li>
+  <li><b>Status de cada tarefa</b> → Pendente, Em Andamento, Concluída ou Não Realizada (esta exige justificativa).</li>
+  <li><b>Quem pode fazer a daily</b> → o líder/master autoriza pessoas da equipe a <b>fazer e editar</b> a daily no lugar dele. A autorização é <b>permanente</b> até ser desligada.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<ul>
+  <li><strong>Todos visualizam</strong> as dailies (leitura).</li>
+  <li><strong>Registram/editam:</strong> <span class="role r-master">Master</span>, <span class="role r-rh">RH</span>, o <span class="role r-lider">Líder</span> da equipe e o(s) <b>delegado(s)</b> autorizado(s) da mesma equipe.</li>
+</ul>
+
+<!-- ══════════ MINHAS TAREFAS ══════════ -->
+<h2 id="tarefas">Minhas Tarefas</h2>
+<div class="roles"><span class="role r-master">Todos</span></div>
+<p><strong>Para que serve:</strong> um gestor de tarefas pessoais (estilo TickTick), separado do status oficial da daily.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Minhas Tarefas: listas inteligentes (Hoje, Atrasadas, Próximas, Todas, Eisenhower, Concluídas) e a lista de tarefas.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Listas inteligentes</b> → Hoje, Atrasadas, Próximas, Todas, <b>Eisenhower</b> (urgente × importante) e Concluídas.</li>
+  <li><b>Nova tarefa</b> → título, prazo, prioridade, subtarefas e recorrência.</li>
+  <li><b>Enviar para a Daily</b> → leva a tarefa selecionada para a daily da equipe.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p>Cada um vê e gerencia <strong>apenas as próprias</strong> tarefas.</p>
+
+<!-- ══════════ KANBAN ══════════ -->
+<h2 id="kanban">Kanban</h2>
+<div class="roles"><span class="role r-master">Todos</span></div>
+<p><strong>Para que serve:</strong> organizar tarefas em quadros visuais, arrastando cartões entre colunas.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Kanban: colunas (A Fazer, Em Progresso, Em Revisão, Concluído) com cartões; cartões com prazo mostram "Hoje" (amarelo) e "Atrasado" (vermelho).</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Colunas</b> → A Fazer, Em Progresso, Em Revisão, Concluído (personalizáveis).</li>
+  <li><b>Cartões</b> → título, prioridade, responsável e prazo. Arraste entre colunas para mudar o status.</li>
+  <li><b>Alertas de prazo</b> → cartão com data vencida mostra <b>"Atrasado"</b> em vermelho; vence hoje mostra <b>"Hoje"</b> em amarelo — sem precisar abrir o cartão.</li>
+  <li><b>Quadros de equipe</b> → além do quadro pessoal, é possível criar quadros compartilhados por equipe.</li>
+</ul>
+
+<!-- ══════════ RESERVA DE MESAS ══════════ -->
+<h2 id="mesas">Reserva de Mesas</h2>
+<div class="roles"><span class="role r-master">Todos</span></div>
+<p><strong>Para que serve:</strong> reservar um lugar no escritório para um dia específico.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Reserva de Mesas: o mapa da sala com as mesas, o seletor de data e as mesas livres/ocupadas.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Sala e data</b> → escolhe o ambiente e o dia.</li>
+  <li><b>Mapa de mesas</b> → clica numa mesa livre para reservar; a sua reserva pode ser cancelada por você.</li>
+</ul>
+<div class="note">O sistema garante <strong>1 reserva por mesa por dia</strong>: se alguém já reservou, a mesa aparece ocupada.</div>
+
+<!-- ══════════ VT / VR ══════════ -->
+<h2 id="vtvr">VT / VR</h2>
+<div class="roles"><span class="role r-master">Master</span><span class="role r-rh">RH</span></div>
+<p><strong>Para que serve:</strong> processar os vales de transporte e refeição de toda a empresa.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">VT/VR: no topo o botão "Como usar", a seção "Configurar VR Global do Mês" e o "Gerador de Lançamentos" com a prévia.</span></div>
+<h4>Fluxo (passo a passo)</h4>
+<ol>
+  <li><b>Configurar VR do mês</b> → informa mês, ano e valor do VR por dia. Sem isso, não dá para gerar.</li>
+  <li><b>Gerar lançamentos</b> → escolhe mês, ano, tipo e benefício. O sistema calcula os dias automaticamente.</li>
+  <li><b>Revisar a prévia</b> → ajusta os dias de cada pessoa; os totais recalculam na hora.</li>
+  <li><b>Confirmar</b> → grava tudo, notifica os PJs e cria a tarefa de emissão de NF para eles.</li>
+  <li><b>Acompanhar</b> → status da NF (Emitida/Pendente) e exportação em Excel, PDF ou OMIE.</li>
+</ol>
+<div class="calc"><span class="t">Cálculo dos dias e do valor</span>
+<b>PJ</b> → dias = <b>quintas-feiras do mês anterior</b>. &nbsp; <b>CLT</b> → dias = <b>segundas + quintas do mês seguinte</b>.<br>
+<code>Total = dias × (VT por dia + VR por dia)</code>, calculado por pessoa.</div>
+<div class="note">Botão <b>Como usar</b>: abre um tutorial em vídeo dentro do app, com narração e legendas, explicando esse fluxo.</div>
+<h4>Quem vê o quê</h4>
+<p><span class="role r-master">Master</span> e <span class="role r-rh">RH</span> operam o painel. O <span class="role r-colab">colaborador/PJ</span> vê <strong>apenas os próprios</strong> lançamentos (na aba "Meu VT/VR" / "Meus Reembolsos") e, se PJ, envia lá a nota fiscal.</p>
+
+<!-- ══════════ REMUNERAÇÃO PJ ══════════ -->
+<h2 id="remun">Remuneração PJ</h2>
+<div class="roles"><span class="role r-master">Master</span><span class="role r-rh">RH</span><span class="role r-colab">PJ (o próprio)</span></div>
+<p><strong>Para que serve:</strong> registrar e confirmar a remuneração mensal dos prestadores PJ, com upload da nota fiscal.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Remuneração PJ: lançamentos do mês por prestador, valor final e status da NF.</span></div>
+<h4>Lógica</h4>
+<ul class="btn-list">
+  <li>O RH/Master lança o valor do mês; o sistema <b>notifica o PJ</b> para emitir a NF com o valor exato.</li>
+  <li>O PJ faz o <b>upload da NF</b> (PDF, salvo no Google Drive; só metadados no banco).</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p>Master/RH veem todos; cada PJ vê <strong>só a própria</strong> remuneração e envia a própria NF.</p>
+
+<!-- ══════════ ANÁLISES ══════════ -->
+<h2 id="analises">Análises</h2>
+<div class="roles"><span class="role r-master">Master</span><span class="role r-rh">RH</span><span class="role r-lider">Líder</span></div>
+<p><strong>Para que serve:</strong> relatórios e gráficos de desempenho (PDI), VT/VR e Daily.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Análises: filtros (Ano, Trimestre, Equipe, Pessoa), atalhos de período (Q1–Q4, últimos 6 meses), cartões de estatística, gráficos e o Ranking.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Filtros e atalhos de período</b> → Ano, Trimestre, Equipe, Pessoa; atalhos "Q1–Q4", "Trimestre atual", "Últimos 6 meses", "Ano atual".</li>
+  <li><b>Excel</b> → exporta as avaliações filtradas.</li>
+  <li><b>Gráficos</b> → Performance por Equipe, Evolução por Trimestre, Distribuição das Notas, Radar de Competências, Comparativo de Anos.</li>
+  <li><b>Ranking</b> → colaboradores ordenados por média, com melhor nota, última e tendência.</li>
+  <li><b>Menu PDI / VT/VR / Daily</b> → alterna o tipo de análise.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p><span class="role r-master">Master</span> e <span class="role r-rh">RH</span> veem toda a empresa; o <span class="role r-lider">Líder</span> vê <strong>a própria equipe</strong>.</p>
+
+<!-- ══════════ GESTÃO DE DENÚNCIAS ══════════ -->
+<h2 id="gestao-denuncias">Gestão de Denúncias</h2>
+<div class="roles"><span class="role r-master">Master</span><span class="role r-rh">RH</span></div>
+<p><strong>Para que serve:</strong> onde RH/Master tratam as denúncias recebidas.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Gestão de Denúncias: estatísticas (novas/em análise/encerradas) e a lista de denúncias com status.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Estatísticas</b> → novas, em análise, encerradas.</li>
+  <li><b>Lista</b> → cada denúncia com tema, texto e status, para acompanhamento e encerramento.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p>Só <span class="role r-master">Master</span> e <span class="role r-rh">RH</span>. O denunciante anônimo acompanha pelo <b>protocolo</b>.</p>
+
+<!-- ══════════ AUDITORIA ══════════ -->
+<h2 id="auditoria">Auditoria</h2>
+<div class="roles"><span class="role r-master">Master</span></div>
+<p><strong>Para que serve:</strong> registro de ações sensíveis feitas no sistema — quem fez o quê e quando.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Auditoria: filtros (Todas as ações, Buscar por usuário), botão Excel e a tabela Data/Hora · Usuário · Ação · Detalhes.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Filtros</b> → por tipo de ação e por usuário.</li>
+  <li><b>Excel</b> → exporta o log.</li>
+  <li><b>Tabela</b> → data/hora, usuário, ação e detalhes.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p><strong>Exclusivo do <span class="role r-master">Master</span>.</strong> O log é gravado pelo servidor; ninguém edita à mão.</p>
+
+<!-- ══════════ TALENTOS ══════════ -->
+<h2 id="talentos">Talentos</h2>
+<div class="roles"><span class="role r-master">Master</span><span class="role r-rh">RH</span></div>
+<p><strong>Para que serve:</strong> cadastro das pessoas — dados, papel, contrato, benefícios e acesso.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Talentos: cards das pessoas com foto, equipe, papel e ações; e o formulário "Cadastrar/Editar Talento".</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Novo Talento</b> → cria a pessoa com nome, e-mail, equipe, cargo, contrato (CLT/PJ), salário, VT, papel e <b>senha provisória</b>. O acesso é criado automaticamente.</li>
+  <li><b>Autorizar a fazer a daily da equipe</b> → chave no cadastro que torna a pessoa delegada da daily.</li>
+  <li><b>Editar / Desativar / Reativar</b> → gerencia o cadastro. Desativar bloqueia o acesso na hora.</li>
+  <li><b>Lógica de Avaliação</b> → Administrativo (PDI) ou Gestor de Escalas (KPI).</li>
+</ul>
+<div class="note">Dados financeiros (salário, VT, CNPJ) ficam numa <strong>subcoleção protegida</strong>: só o próprio, RH/Master e (para bônus) o líder da equipe conseguem ler.</div>
+<h4>Quem vê o quê</h4>
+<p>Só <span class="role r-master">Master</span> e <span class="role r-rh">RH</span> acessam Talentos.</p>
+
+<!-- ══════════ EQUIPES ══════════ -->
+<h2 id="equipes">Equipes</h2>
+<div class="roles"><span class="role r-master">Master</span></div>
+<p><strong>Para que serve:</strong> criar e organizar as equipes/squads.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Equipes: cards de cada equipe com nome, descrição e número de integrantes.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Nova equipe / Editar / Excluir</b> → nome e descrição. A equipe é usada em avaliações, daily, bônus e relatórios.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p>Exclusivo do <span class="role r-master">Master</span>.</p>
+
+<!-- ══════════ BÔNUS ══════════ -->
+<h2 id="bonus">Configuração de Bônus</h2>
+<div class="roles"><span class="role r-master">Master (edita)</span><span class="role r-rh">RH (vê)</span></div>
+<p><strong>Para que serve:</strong> definir como o bônus é calculado por equipe/trimestre e acompanhar quanto será pago.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Config. Bônus: formulário de configuração (equipe, trimestre, tipo/multiplicador) e o painel de premiações com o total a pagar.</span></div>
+<h4>Lógica e cálculo</h4>
+<p>Cada avaliação gera um <b>% de bônus</b>. A configuração vigente da equipe define como esse % vira valor:</p>
+<div class="calc"><span class="t">Cálculo do valor do bônus</span>
+• Sem config específica → <code>salário × (% ÷ 100) × 1</code><br>
+• Config por <b>multiplicador</b> → <code>salário × (% ÷ 100) × multiplicador</code><br>
+• Config por <b>valor fixo</b> → <code>valor fixo × (% ÷ 100)</code></div>
+<h4>Quem vê o quê</h4>
+<p><span class="role r-master">Master</span> edita as configurações; <span class="role r-rh">RH</span> visualiza o painel e os valores.</p>
+
+<!-- ══════════ BACKUP ══════════ -->
+<h2 id="backup">Backup</h2>
+<div class="roles"><span class="role r-master">Master</span></div>
+<p><strong>Para que serve:</strong> proteger os dados. O backup é <strong>automático todo dia às 05:00</strong>, e o Master pode rodar um <strong>backup manual</strong> a qualquer momento.</p>
+<div class="fig"><span class="cam">◉ Print da tela</span><span class="cap">Barra lateral (rodapé): botão "Fazer backup agora" e a data do último backup automático.</span></div>
+<h4>O que tem aqui</h4>
+<ul class="btn-list">
+  <li><b>Fazer backup agora</b> → dispara um backup imediato no servidor (todas as coleções são salvas no Storage, retidas por 90 dias).</li>
+  <li><b>Backup automático</b> → roda sozinho diariamente; a data do último aparece abaixo do botão.</li>
+</ul>
+<h4>Quem vê o quê</h4>
+<p>O botão de backup manual é exclusivo do <span class="role r-master">Master</span>.</p>
+
+<!-- ══════════ CÁLCULOS ══════════ -->
+<h2 id="calculos">Resumo das fórmulas de cálculo</h2>
+<table>
+  <tr><th>O quê</th><th>Fórmula</th></tr>
+  <tr><td><b>Nota do PDI exibida</b> (0–5)</td><td><code>notaFinal ÷ 110 × 5</code></td></tr>
+  <tr><td><b>Dias de VT/VR — PJ</b></td><td>Quintas-feiras do <b>mês anterior</b></td></tr>
+  <tr><td><b>Dias de VT/VR — CLT</b></td><td>Segundas + quintas do <b>mês seguinte</b></td></tr>
+  <tr><td><b>Total de VT/VR</b></td><td><code>dias × (VT/dia + VR/dia)</code></td></tr>
+  <tr><td><b>Bônus (multiplicador)</b></td><td><code>salário × (% ÷ 100) × multiplicador</code></td></tr>
+  <tr><td><b>Bônus (valor fixo)</b></td><td><code>valor fixo × (% ÷ 100)</code></td></tr>
+</table>
+
+<footer>
+  Mirae People Hub · Audaz Health — Manual do Usuário v1.0 · Julho de 2026<br>
+  Documento interno. Para dúvidas ou atualização deste manual, fale com o time de Pessoas &amp; Desenvolvimento.
+</footer>
+
+</div>
+</body>
+</html>
