@@ -105,7 +105,8 @@
       "PowerShell(winget install --id GitHub.cli --accept-source-agreements --accept-package-agreements --disable-interactivity 2>&1)",
       "PowerShell($gh = \"$env:ProgramFiles\\\\GitHub CLI\\\\gh.exe\"; if \\(Test-Path $gh\\) { & $gh --version | Select-Object -First 1; Write-Output \"--- auth status ---\"; & $gh auth status 2>&1 | Select-Object -First 5 } else { Write-Output \"gh nao encontrado no caminho padrao\"; \\(Get-Command gh -ErrorAction SilentlyContinue\\).Source })",
       "Bash(git credential *)",
-      "Bash(git checkout *)"
+      "Bash(git checkout *)",
+      "Bash(curl -s \"https://pdimirae.web.app/?v=$\\(date +%s\\)\")"
     ]
   }
 }
