@@ -42,6 +42,7 @@ function openModalColab(id=null){
             if(t.avatarUrl){ if(fb) fb.value=t.avatarUrl; _setFotoPreview(t.avatarUrl); }
             // Só mostra role atual se está nas opções atribuíveis
             if(P.rolesAtribuiveis().includes(t.role))roleSel.value=t.role;
+            const ddChk=document.getElementById('fColDailyDelegado');if(ddChk)ddChk.checked=t.dailyDelegado===true;
         }
     }
     // Abre com 'block' (e sem flex-direction inline): a regra CSS
@@ -65,7 +66,7 @@ async function saveColab(e){
     // Dados públicos: visíveis para todos os autenticados
     // Foto (avatar): data URL compacto já redimensionado em previewFoto.
     const avatarUrl=document.getElementById('fColFotoBase64')?.value||'';
-    const data={nome:document.getElementById('fColNome').value,email:document.getElementById('fColEmail').value,equipe:document.getElementById('fColEquipe').value,cargo:document.getElementById('fColCargo').value,dataNascimento:document.getElementById('fColNascimento')?.value||'',tipoAvaliacao:document.getElementById('fColLogica').value,tipoContrato:tipoContratoVal,role:novoRole,ativo:true,avatarUrl:avatarUrl,dataAtualizacao:new Date()};
+    const data={nome:document.getElementById('fColNome').value,email:document.getElementById('fColEmail').value,equipe:document.getElementById('fColEquipe').value,cargo:document.getElementById('fColCargo').value,dataNascimento:document.getElementById('fColNascimento')?.value||'',tipoAvaliacao:document.getElementById('fColLogica').value,tipoContrato:tipoContratoVal,role:novoRole,ativo:true,avatarUrl:avatarUrl,dailyDelegado:!!document.getElementById('fColDailyDelegado')?.checked,dataAtualizacao:new Date()};
     // Dados financeiros: subcoleção protegida — só RH/Master e o próprio colaborador leem
     const dadosFinanceiros={salario:parseFloat(document.getElementById('fColSalario').value)||0,valorVT:parseFloat(document.getElementById('fColVT')?.value||0),cnpj:tipoContratoVal==='PJ'?(document.getElementById('fColCNPJ')?.value||''):'',razaoSocial:tipoContratoVal==='PJ'?(document.getElementById('fColRazaoSocial')?.value||''):'',dataAdmissao:document.getElementById('fColAdmissao')?.value||''};
     await guardado('saveColab_'+(id||'novo'), async () => {

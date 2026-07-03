@@ -15,7 +15,15 @@ const P={
     editarBonus:      ()=>user?.role==='MASTER',
     verRelatorios:    ()=>['LIDER','RH','MASTER'].includes(user?.role),
     gerenciarEquipes: ()=>user?.role==='MASTER',
-    rolesAtribuiveis: ()=>{ if(user?.role==='MASTER')return['COLABORADOR','LIDER','RH','MASTER']; if(user?.role==='RH')return['COLABORADOR','LIDER']; return[]; }
+    rolesAtribuiveis: ()=>{ if(user?.role==='MASTER')return['COLABORADOR','LIDER','RH','MASTER']; if(user?.role==='RH')return['COLABORADOR','LIDER']; return[]; },
+    // ── Daily ──────────────────────────────────────────────────
+    // Quem pode REGISTRAR/EDITAR a daily de uma equipe: RH/Master (todas),
+    // o Líder da equipe, e a pessoa autorizada (delegada) da mesma equipe.
+    podeFazerDaily:   (eq)=>{ if(P.isRH())return true; if(user?.role==='LIDER'&&user?.equipe===eq)return true; if(user?.dailyDelegado===true&&user?.equipe===eq)return true; return false; },
+    // Tem acesso a registrar a daily de ALGUMA equipe (para exibir botão/aba)
+    podeFazerDailyAlguma: ()=>P.isRH()||user?.role==='LIDER'||user?.dailyDelegado===true,
+    // Quem pode AUTORIZAR delegados da daily: Master, RH e o Líder da equipe
+    podeGerenciarDelegados: (eq)=>P.isRH()||(user?.role==='LIDER'&&user?.equipe===eq)
 };
 
 // Avaliações visíveis para o usuário

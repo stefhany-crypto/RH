@@ -561,7 +561,14 @@ function renderDaily(){
         const dailyHoje=dailys.filter(function(d){return d.data===hojeStr&&d.equipe===user.equipe;});
         const registrados=dailyHoje.length?(dailyHoje[0].presentes||[]):[];
         const total=equipeColabs.length||registrados.length;
-        if(squadCard){squadCard.style.display='';if(squadTitle)squadTitle.innerHTML=ico('users',{size:14,color:'#DAB47E'})+' Squad '+esc(user.equipe);if(squadProg)squadProg.textContent=registrados.length+' de '+(total)+' ja registraram a daily de hoje.';}
+        if(squadCard){squadCard.style.display='';if(squadTitle)squadTitle.innerHTML=ico('users',{size:14,color:'#DAB47E'})+' Squad '+esc(user.equipe);if(squadProg)squadProg.textContent=registrados.length+' de '+(total)+' ja registraram a daily de hoje.';
+            // Botão para o Líder/Master gerenciar quem pode fazer a daily
+            let delBtn=document.getElementById('btnGerenciarDelegados');
+            if(P.podeGerenciarDelegados(user.equipe)){
+                if(!delBtn&&squadProg){delBtn=document.createElement('button');delBtn.id='btnGerenciarDelegados';delBtn.className='btn-ghost';delBtn.style.cssText='margin-top:12px;font-size:0.78rem;padding:7px 12px;width:100%;';delBtn.textContent='Quem pode fazer a daily';delBtn.onclick=abrirModalDelegados;squadProg.parentElement.appendChild(delBtn);}
+                if(delBtn)delBtn.style.display='';
+            } else if(delBtn){delBtn.style.display='none';}
+        }
         const cores=['#023B48','#BE8C45','#3F8A6E','#D98E6A'];
         if(quemCard&&quemList){
             quemCard.style.display='';
@@ -601,7 +608,7 @@ function renderDaily(){
     }
     // botão registrar — líder/RH/master
     const btn=document.getElementById('btnNovaDaily');
-    if(btn)btn.style.display=(user?.role==='LIDER'||P.isRH())?'':'none';
+    if(btn)btn.style.display=P.podeFazerDailyAlguma()?'':'none';
 
     // Visão: Minhas Tarefas (do mês, agrupadas por dia) 
     if(dailyView==='minhas'){
@@ -624,7 +631,7 @@ function renderDaily(){
         const tarefas=todas.filter(t=>t.tipo!=='dependencia');
         const deps=todas.filter(t=>t.tipo==='dependencia');
         const porResp={};tarefas.forEach(t=>{(porResp[t.responsavelNome]=porResp[t.responsavelNome]||[]).push(t);});
-        const podeEditar=P.isRH()||(user?.role==='LIDER'&&user?.equipe===d.equipe);
+        const podeEditar=P.podeFazerDaily(d.equipe);
         return`<div class="card" style="padding:1.2rem;margin-bottom:1rem;">
             <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem;">
                 <h3 style="margin:0;">Daily — ${esc(d.equipe)} — ${fmtDataBR(d.data)}</h3>
@@ -733,9 +740,11 @@ async function confirmarJustificativa(){
 
 // Modal de registro 
 function openModalDaily(){
-    if(!(user?.role==='LIDER'||P.isRH()))return;
-    const eq=user?.role==='LIDER'?user.equipe:(document.getElementById('dailyEquipeFiltro')?.value||user.equipe);
+    if(!P.podeFazerDailyAlguma())return;
+    // RH/Master escolhem a equipe pelo filtro; Líder e delegado usam a própria.
+    const eq=P.isRH()?(document.getElementById('dailyEquipeFiltro')?.value||user.equipe):user.equipe;
     if(!eq){toastErro('Selecione uma equipe antes de registrar a daily.');return;}
+    if(!P.podeFazerDaily(eq)){toastErro('Você não tem permissão para registrar a daily desta equipe.');return;}
     document.getElementById('mdEquipeNome').textContent=eq;
     document.getElementById('modalDaily').dataset.equipe=eq;
     document.getElementById('mdData').value=hojeISO();
@@ -1156,4 +1165,42 @@ Object.assign(window, {
     ddLimiteISO, ddFillEquipe, ddFillPessoa, ddPopulaSelects, ddTarefas,
     iniciarListenerNotificacoes, marcarNotifLidas,
     carregarDaily,
+    abrirModalDelegados, renderDelegadosLista, toggleDelegado,
 });
+
+// ── Gerenciar quem pode fazer a daily (delegados) ─────────────────
+// Aberto pelo Líder da equipe (ou Master) na tela da Daily.
+function abrirModalDelegados(){
+    if(!user?.equipe||!P.podeGerenciarDelegados(user.equipe))return;
+    const modal=document.getElementById('modalDelegados');
+    if(!modal)return;
+    const eqLbl=document.getElementById('delegadosEquipe');if(eqLbl)eqLbl.textContent=user.equipe;
+    renderDelegadosLista();
+    modal.style.display='block';
+}
+function renderDelegadosLista(){
+    const list=document.getElementById('delegadosLista');if(!list)return;
+    // Membros da equipe (exceto o próprio líder e outros líderes — líder já pode)
+    const membros=(todosColabs.length?todosColabs:talentos)
+        .filter(c=>c.equipe===user.equipe&&c.ativo!==false&&c.id!==user.id&&c.role!=='LIDER'&&c.role!=='MASTER');
+    if(!membros.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:1rem;text-align:center;">Nenhum outro membro na equipe para autorizar.</div>';return;}
+    list.innerHTML=membros.map(c=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid var(--border);gap:12px;">
+            <div style="min-width:0;"><div style="font-weight:600;font-size:13.5px;">${esc(c.nome)}</div><div style="font-size:11.5px;color:var(--muted);">${esc(c.cargo||'')}</div></div>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;white-space:nowrap;">
+                <input type="checkbox" ${c.dailyDelegado===true?'checked':''} onchange="toggleDelegado('${c.id}',this.checked,this)" style="width:17px;height:17px;cursor:pointer;">
+                Pode fazer a daily
+            </label>
+        </div>`).join('');
+}
+async function toggleDelegado(id,valor,el){
+    if(el)el.disabled=true;
+    try{
+        await db.collection('colaboradores').doc(id).update({dailyDelegado:!!valor});
+        const c=(todosColabs.find(x=>x.id===id)||talentos.find(x=>x.id===id));if(c)c.dailyDelegado=!!valor;
+        toastOk(valor?'Autorizado(a) a fazer a daily.':'Autorização removida.');
+    }catch(e){
+        toastErro('Não foi possível salvar. '+(e.message||''));
+        if(el)el.checked=!valor;
+    }finally{ if(el)el.disabled=false; }
+}
