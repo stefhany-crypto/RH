@@ -107,8 +107,9 @@
       "Bash(git credential *)",
       "Bash(git checkout *)",
       "Bash(curl -s \"https://pdimirae.web.app/?v=$\\(date +%s\\)\")",
-      "PowerShell($key = \"AIzaSyBKqS4xPX_CrqYYrZKT8QLxxqXXMZBqGqI\"; $pw = \"Mirae@2026\"; $emails = @\\(\"romulo@sejamirae.com\",\"mariana@audazhealth.com\",\"jullia@sejamirae.com\",\"gustavo@sejamirae.com\",\"carlos@audazhealth.com\"\\); foreach \\($e in $emails\\) { $body = @{ email=$e; password=$pw; returnSecureToken=$true } | ConvertTo-Json; try { $r = Invoke-RestMethod -Method Post -Uri \"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$key\" -ContentType \"application/json\" -Body $body; Write-Output \\(\"OK   -> \" + $e\\) } catch { $sr = New-Object IO.StreamReader\\($_.Exception.Response.GetResponseStream\\(\\)\\); $msg = \\($sr.ReadToEnd\\(\\) | ConvertFrom-Json\\).error.message; Write-Output \\(\"FALHA-> \" + $e + \"  \\(\" + $msg + \"\\)\"\\) } })",
-      "PowerShell($key = \"AIzaSyCWhgLA5tPk89sB7rpUpBAcGrH80ca6fB4\"; $pw = \"Mirae@2026\"; $users = @{ \"romulo@sejamirae.com\"=\"Romulo \\(MASTER\\)\"; \"mariana@audazhealth.com\"=\"Mariana \\(RH\\)\"; \"jullia@sejamirae.com\"=\"Jullia \\(COLAB\\)\"; \"gustavo@sejamirae.com\"=\"Gustavo \\(LIDER\\)\" }; foreach \\($e in $users.Keys\\) { $body = @{ email=$e; password=$pw; returnSecureToken=$true } | ConvertTo-Json; try { $null = Invoke-RestMethod -Method Post -Uri \"https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=$key\" -ContentType \"application/json\" -Body $body; Write-Output \\(\"OK    -> \" + $users[$e] + \" : \" + $e\\) } catch { $sr = New-Object IO.StreamReader\\($_.Exception.Response.GetResponseStream\\(\\)\\); $msg = \\($sr.ReadToEnd\\(\\) | ConvertFrom-Json\\).error.message; Write-Output \\(\"FALHA -> \" + $users[$e] + \" : \" + $e + \"  \\(\" + $msg + \"\\)\"\\) } })"
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__javascript_tool",
+      "mcp__claude-in-chrome__navigate"
     ]
   }
 }
