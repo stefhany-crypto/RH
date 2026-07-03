@@ -1,0 +1,24 @@
+name: Deploy para Firebase Hosting
+
+# A cada push na branch main, publica o conteúdo de public/ no Firebase Hosting.
+# Escopo: SOMENTE Hosting. Functions e regras continuam sendo publicadas manualmente.
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Publicar no Firebase Hosting (canal live)
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: pdimirae
+          channelId: live
