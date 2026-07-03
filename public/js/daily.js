@@ -565,7 +565,7 @@ function renderDaily(){
             // Botão para o Líder/Master gerenciar quem pode fazer a daily
             let delBtn=document.getElementById('btnGerenciarDelegados');
             if(P.podeGerenciarDelegados(user.equipe)){
-                if(!delBtn&&squadProg){delBtn=document.createElement('button');delBtn.id='btnGerenciarDelegados';delBtn.className='btn-ghost';delBtn.style.cssText='margin-top:12px;font-size:0.78rem;padding:7px 12px;width:100%;';delBtn.textContent='Quem pode fazer a daily';delBtn.onclick=abrirModalDelegados;squadProg.parentElement.appendChild(delBtn);}
+                if(!delBtn&&squadProg){delBtn=document.createElement('button');delBtn.id='btnGerenciarDelegados';delBtn.className='btn-ghost';delBtn.style.cssText='margin-top:12px;font-size:0.78rem;padding:8px 12px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:7px;';delBtn.innerHTML=ico('users',{size:14})+' Quem pode fazer a daily';delBtn.onclick=abrirModalDelegados;squadProg.parentElement.appendChild(delBtn);}
                 if(delBtn)delBtn.style.display='';
             } else if(delBtn){delBtn.style.display='none';}
         }
@@ -1176,20 +1176,27 @@ function abrirModalDelegados(){
     if(!modal)return;
     const eqLbl=document.getElementById('delegadosEquipe');if(eqLbl)eqLbl.textContent=user.equipe;
     renderDelegadosLista();
-    modal.style.display='block';
+    modal.style.display='flex'; // flex centraliza (align/justify center no .modal)
 }
 function renderDelegadosLista(){
     const list=document.getElementById('delegadosLista');if(!list)return;
     // Membros da equipe (exceto o próprio líder e outros líderes — líder já pode)
     const membros=(todosColabs.length?todosColabs:talentos)
         .filter(c=>c.equipe===user.equipe&&c.ativo!==false&&c.id!==user.id&&c.role!=='LIDER'&&c.role!=='MASTER');
-    if(!membros.length){list.innerHTML='<div style="color:var(--muted);font-size:13px;padding:1rem;text-align:center;">Nenhum outro membro na equipe para autorizar.</div>';return;}
-    list.innerHTML=membros.map(c=>`
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 4px;border-bottom:1px solid var(--border);gap:12px;">
-            <div style="min-width:0;"><div style="font-weight:600;font-size:13.5px;">${esc(c.nome)}</div><div style="font-size:11.5px;color:var(--muted);">${esc(c.cargo||'')}</div></div>
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12.5px;white-space:nowrap;">
-                <input type="checkbox" ${c.dailyDelegado===true?'checked':''} onchange="toggleDelegado('${c.id}',this.checked,this)" style="width:17px;height:17px;cursor:pointer;">
-                Pode fazer a daily
+    if(!membros.length){list.innerHTML='<div class="deleg-empty">Nenhum outro membro na equipe para autorizar.</div>';return;}
+    const cores=['#023B48','#BE8C45','#3F8A6E','#D98E6A','#214957'];
+    list.innerHTML=membros.map((c,i)=>`
+        <div class="deleg-row">
+            <div class="deleg-info">
+                <div class="daily-quem-av" style="background:${cores[i%cores.length]};">${esc((c.nome||'?')[0].toUpperCase())}</div>
+                <div style="min-width:0;">
+                    <div class="deleg-nome">${esc(c.nome)}</div>
+                    ${c.cargo?`<div class="deleg-cargo">${esc(c.cargo)}</div>`:''}
+                </div>
+            </div>
+            <label class="mir-switch" title="Autorizar a fazer a daily">
+                <input type="checkbox" ${c.dailyDelegado===true?'checked':''} onchange="toggleDelegado('${c.id}',this.checked,this)">
+                <span class="mir-switch-slider"></span>
             </label>
         </div>`).join('');
 }

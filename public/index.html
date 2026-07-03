@@ -955,6 +955,30 @@
         .anonimo-toggle-label { font-size:0.88rem; font-weight:500; color:var(--dark); }
         .anonimo-toggle-sub { font-size:0.75rem; color:var(--muted); }
 
+        /* Toggle switch elegante (identidade Mirae) */
+        .mir-switch { position:relative; display:inline-block; width:44px; height:25px; flex-shrink:0; }
+        .mir-switch input { opacity:0; width:0; height:0; }
+        .mir-switch-slider { position:absolute; inset:0; background:#cdd5d6; border-radius:25px; transition:.25s cubic-bezier(.4,0,.2,1); }
+        .mir-switch-slider::before { content:''; position:absolute; width:19px; height:19px; left:3px; top:3px; background:#fff; border-radius:50%; transition:.25s cubic-bezier(.4,0,.2,1); box-shadow:0 1px 3px rgba(2,59,72,.25); }
+        .mir-switch input:checked + .mir-switch-slider { background:var(--teal); }
+        .mir-switch input:checked + .mir-switch-slider::before { transform:translateX(19px); }
+        .mir-switch input:disabled + .mir-switch-slider { opacity:.5; }
+
+        /* Modal delegados da daily */
+        .deleg-head { display:flex; align-items:center; gap:13px; margin-bottom:.2rem; }
+        .deleg-head-icon { width:44px; height:44px; border-radius:13px; background:var(--cream,#F1ECE2); color:var(--gold,#BE8C45); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+        .deleg-head-title { font-family:'Newsreader',serif; font-weight:500; font-size:1.35rem; color:var(--dark); line-height:1.1; }
+        .deleg-sub { font-size:.82rem; color:var(--muted); line-height:1.55; margin:.7rem 0 1.1rem; }
+        .deleg-team-pill { display:inline-flex; align-items:center; gap:6px; background:var(--teal-dim,rgba(30,125,144,.1)); color:var(--teal); font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:3px 10px; border-radius:20px; }
+        .deleg-list { display:flex; flex-direction:column; }
+        .deleg-row { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 2px; border-bottom:1px solid var(--border); }
+        .deleg-row:last-child { border-bottom:none; }
+        .deleg-info { display:flex; align-items:center; gap:12px; min-width:0; }
+        .deleg-nome { font-weight:600; font-size:14px; color:var(--dark); line-height:1.2; }
+        .deleg-cargo { font-size:11.5px; color:var(--muted); margin-top:2px; }
+        .deleg-foot { display:flex; align-items:flex-start; gap:8px; margin-top:1.1rem; padding:.8rem 1rem; background:rgba(23,46,56,.035); border-radius:10px; font-size:.76rem; color:var(--muted); line-height:1.5; }
+        .deleg-empty { color:var(--muted); font-size:13.5px; padding:1.6rem; text-align:center; }
+
         /* Pop-up denúncia Master */
         .denuncia-popup {
             position: fixed;
@@ -2658,12 +2682,22 @@
 <!-- MODAL DAILY -->
 <!-- Modal: gerenciar quem pode fazer a daily (delegados) -->
 <div id="modalDelegados" class="modal"><div class="modal-content" style="max-width:460px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.4rem;">
-        <h3 style="margin:0;">Quem pode fazer a daily</h3>
-        <button class="btn btn-ghost" onclick="closeModal('modalDelegados')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;display:inline-block;"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+        <div class="deleg-head">
+            <div class="deleg-head-icon"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m17 11 2 2 4-4"/></svg></div>
+            <div>
+                <div class="deleg-head-title">Delegados da daily</div>
+                <span class="deleg-team-pill"><svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M3 21v-1a6 6 0 0 1 12 0v1"/></svg><span id="delegadosEquipe"></span></span>
+            </div>
+        </div>
+        <button class="btn btn-ghost" style="flex-shrink:0;" onclick="closeModal('modalDelegados')"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-0.18em;display:inline-block;"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
-    <p style="font-size:0.82rem;color:var(--muted);margin:0 0 1rem;">Autorize membros da equipe <strong id="delegadosEquipe"></strong> a registrar e editar a daily no seu lugar. Você e o Master mantêm o acesso sempre.</p>
-    <div id="delegadosLista"></div>
+    <p class="deleg-sub">Autorize pessoas da equipe a registrar e editar a daily no seu lugar. Você e o Master mantêm o acesso sempre.</p>
+    <div class="deleg-list" id="delegadosLista"></div>
+    <div class="deleg-foot">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span>A autorização é permanente — vale até você desligar a chave.</span>
+    </div>
 </div></div>
 
 <div id="modalDaily" class="modal"><div class="modal-content" style="max-width:760px;">
