@@ -254,6 +254,48 @@ exports.backupFirestore = functions
   .timeZone("America/Sao_Paulo")
   .onRun(async () => { await rodarBackup("agendado"); });
 
+// ════════════════════════════════════════════════════════════════
+// 5b. processarBackup — gatilho Firestore para backup sob demanda.
+//     Substitui a callable verificarBackup{rodar:true}: a politica da
+//     organizacao bloqueia a invocacao publica (allUsers) de Cloud
+//     Functions, entao o navegador nao consegue chamar callables. O
+//     app grava solicitacoesBackup/{id} e ouve o resultado no doc.
+//     Gatilhos do Firestore nao exigem permissao de invocacao.
+// ════════════════════════════════════════════════════════════════
+exports.processarBackup = functions
+  .region(REGION)
+  .runWith({ memory: "512MB", timeoutSeconds: 540 })
+  .firestore.document("solicitacoesBackup/{id}")
+  .onCreate(async (snap) => {
+    const req = snap.data();
+    const uid = req.solicitanteId;
+
+    // Revalidacao server-side (defesa em profundidade): so MASTER roda backup.
+    // A regra do Firestore ja restringe a criacao a MASTER; aqui confirmamos.
+    try {
+      const meSnap = await db.collection("colaboradores").doc(uid).get();
+      if (!meSnap.exists || meSnap.data().role !== "MASTER") {
+        await snap.ref.update({ status: "erro", erro: "Apenas MASTER pode rodar o backup." });
+        return;
+      }
+    } catch (e) {
+      await snap.ref.update({ status: "erro", erro: "Falha ao validar permissao: " + e.message });
+      return;
+    }
+
+    await snap.ref.update({ status: "processando" });
+    const resultado = await rodarBackup("manual");
+    const total = Object.values(resultado.resumo || {}).reduce((a, v) => a + (typeof v === "number" ? v : 0), 0);
+    await snap.ref.update({
+      status: resultado.status === "concluido" ? "concluido" : "erro",
+      erro: resultado.erro || null,
+      resumo: resultado.resumo || null,
+      total,
+      filePath: resultado.filePath || null,
+      finalizadoEm: admin.firestore.FieldValue.serverTimestamp(),
+    });
+  });
+
 // Lógica compartilhada de backup (usada pelo agendado e pelo botão "agora")
 async function rodarBackup(origem) {
   const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
