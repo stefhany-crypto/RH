@@ -107,12 +107,9 @@
       "Bash(git credential *)",
       "Bash(git checkout *)",
       "Bash(curl -s \"https://pdimirae.web.app/?v=$\\(date +%s\\)\")",
-      "Bash(mkdir -p public/manual)",
-      "Bash(cp docs/manual-mirae/manual.html public/manual/index.html)",
-      "Bash(curl -s -o /dev/null -w \"HTTP %{http_code}\\\\n\" \"https://pdimirae.web.app/manual/\")",
-      "Bash(git restore *)",
-      "Bash(curl -s \"https://pdimirae.web.app/manual/?v=$\\(date +%s\\)\")",
-      "Bash(curl -s \"https://pdimirae.web.app/manual/\")"
+      "mcp__claude-in-chrome__navigate",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__36a40efd-4455-4d61-b281-0daf968c2b4f__notion-create-pages"
     ]
   }
 }
