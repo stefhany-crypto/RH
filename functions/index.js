@@ -1162,3 +1162,103 @@ exports.uploadNFRemuneracao = functions
 
     return { driveUrl, fileName };
   });
+
+// ════════════════════════════════════════════════════════════════
+// 26. processarNFStorage — gatilho do Storage para NF -> Drive
+//     A politica da organizacao bloqueia a invocacao publica das
+//     callables (uploadNFDrive / uploadNFRemuneracao), entao o
+//     navegador nao consegue chamalas. Em vez disso o front envia o
+//     PDF para o Storage em nf-pendentes/{colecao}/{lancId}/... e este
+//     gatilho (que nao exige permissao de invocacao) sobe para o Drive
+//     e grava os metadados no lancamento. Depois apaga o temporario.
+// ════════════════════════════════════════════════════════════════
+async function _nfParaDrive(colecao, lancId, fileBuffer, mimeType, autorNome) {
+  const col = colecao === 'remuneracao' ? 'lancamentosRemuneracao' : 'lancamentosVTVR';
+  const lancDoc = await db.collection(col).doc(lancId).get();
+  if (!lancDoc.exists) throw new Error('Lancamento nao encontrado: ' + col + '/' + lancId);
+  const lanc = lancDoc.data();
+
+  const configDoc = await db.collection('configs').doc('drive').get();
+  const rootFolderId = configDoc.exists ? configDoc.data().nfFolderId : null;
+  if (!rootFolderId) throw new Error('Pasta do Drive nao configurada (Configuracoes > Drive).');
+
+  const { google } = require('googleapis');
+  const gauth = new google.auth.GoogleAuth({ scopes: ['https://www.googleapis.com/auth/drive'] });
+  const client = await gauth.getClient();
+  const token = (await client.getAccessToken()).token;
+
+  const isRemu = colecao === 'remuneracao';
+  const mes = isRemu ? (lanc.mes || new Date().getMonth() + 1) : (lanc.mesCalculo || lanc.mes || new Date().getMonth() + 1);
+  const ano = isRemu ? (lanc.ano || new Date().getFullYear()) : (lanc.anoCalculo || lanc.ano || new Date().getFullYear());
+  const mesNome = MESES_PT[mes - 1] || String(mes);
+  const valor = isRemu ? (lanc.valorFinal || 0) : (lanc.total || 0);
+  const valorFmt = valor.toFixed(2).replace('.', ',');
+  const fileName = `${lanc.nome} - R$ ${valorFmt} - ${mesNome}.${ano}.pdf`;
+
+  let monthFolderId;
+  if (isRemu) {
+    const remuFolderId = await driveFindOrCreateFolder(token, 'Remuneracao', rootFolderId);
+    const yearFolderId = await driveFindOrCreateFolder(token, String(ano), remuFolderId);
+    monthFolderId = await driveFindOrCreateFolder(token, mesNome, yearFolderId);
+  } else {
+    const yearFolderId = await driveFindOrCreateFolder(token, String(lanc.ano || ano), rootFolderId);
+    monthFolderId = await driveFindOrCreateFolder(token, mesNome, yearFolderId);
+  }
+
+  const boundary = 'MiraeNFStorage';
+  const metaJson = JSON.stringify({ name: fileName, parents: [monthFolderId] });
+  const pre = Buffer.from(`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${metaJson}\r\n--${boundary}\r\nContent-Type: ${mimeType || 'application/pdf'}\r\n\r\n`, 'utf-8');
+  const post = Buffer.from(`\r\n--${boundary}--`, 'utf-8');
+  const body = Buffer.concat([pre, fileBuffer, post]);
+
+  const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink', {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}`, 'Content-Length': String(body.length) },
+    body,
+  });
+  const uploadData = await uploadRes.json();
+  if (!uploadData.id) throw new Error('Falha no upload para o Drive: ' + JSON.stringify(uploadData));
+
+  const driveUrl = uploadData.webViewLink || `https://drive.google.com/file/d/${uploadData.id}/view`;
+  const hist = lanc.nfHistorico || [];
+  if (lanc.nfNome) hist.push({ nfNome: lanc.nfNome, nfUrl: lanc.nfUrl || '', enviadoEm: lanc.nfUploadEm || '' });
+
+  const upd = {
+    nfNome: fileName, nfUrl: driveUrl, nfDriveId: uploadData.id,
+    nfUploadEm: new Date().toLocaleString('pt-BR'),
+    nfUploadPor: autorNome || 'colaborador',
+    statusNF: 'emitida', nfHistorico: hist,
+    nfErro: admin.firestore.FieldValue.delete(),
+  };
+  if (isRemu) upd.status = 'nf_recebida';
+  await db.collection(col).doc(lancId).update(upd);
+  return { driveUrl, fileName };
+}
+
+exports.processarNFStorage = functions
+  .region(REGION)
+  .runWith({ timeoutSeconds: 300, memory: '256MB' })
+  .storage.object()
+  .onFinalize(async (obj) => {
+    const path = obj.name || '';
+    if (!path.startsWith('nf-pendentes/')) return;
+    const parts = path.split('/'); // nf-pendentes / {colecao} / {lancId} / {arquivo}
+    if (parts.length < 4) return;
+    const colecao = parts[1], lancId = parts[2];
+    const bucket = admin.storage().bucket(obj.bucket);
+    const file = bucket.file(path);
+    try {
+      const [buf] = await file.download();
+      const autorNome = obj.metadata && obj.metadata.autorNome;
+      const res = await _nfParaDrive(colecao, lancId, buf, obj.contentType, autorNome);
+      logger.info('NF processada para o Drive', { colecao, lancId, fileName: res.fileName });
+    } catch (err) {
+      logger.error('processarNFStorage: erro', { path, err: err.message });
+      try {
+        const col = colecao === 'remuneracao' ? 'lancamentosRemuneracao' : 'lancamentosVTVR';
+        await db.collection(col).doc(lancId).update({ nfErro: err.message, nfErroEm: new Date().toLocaleString('pt-BR') });
+      } catch (e) { /* ignore */ }
+    } finally {
+      await file.delete().catch(() => {});
+    }
+  });

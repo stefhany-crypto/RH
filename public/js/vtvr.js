@@ -89,17 +89,37 @@ function _nfFileToBase64(file){
 }
 async function _uploadNFParaDrive(lancId,file,periodo,valor,onOk){
     if(file.size>10*1024*1024){mostrarNotif('','Arquivo muito grande','A NF deve ter no máximo 10 MB.','',4000);return;}
-    mostrarNotif('','Enviando NF para o Drive...','Aguarde, pode levar alguns segundos.','',4000);
+    if(file.type!=='application/pdf'){mostrarNotif('','Formato inválido','A NF precisa ser um PDF.','',4000);return;}
+    mostrarNotif('','Enviando NF...','Aguarde — o arquivo está sendo registrado no Drive.','',5000);
+    // Envia o PDF para o Storage; o gatilho processarNFStorage sobe para o Drive.
+    // (a organização bloqueia chamar a função direto do navegador)
+    const antes=(lancamentosVTVR.find(l=>l.id===lancId)||{}).nfDriveId||null;
     try{
-        const fileBase64=await _nfFileToBase64(file);
-        const fn=firebase.app().functions('southamerica-east1');
-        const {data}=await fn.httpsCallable('uploadNFDrive')({lancId,fileBase64,mimeType:file.type});
-        mostrarNotif('','NF salva no Drive!',`${data.fileName} (R$ ${valor.toFixed(2)}) enviada com sucesso.`,'bonus',6000);
-        if(onOk)await onOk();
+        const nome=(file.name||'nf.pdf').replace(/[^\w.\-]+/g,'_');
+        const ref=firebase.storage().ref(`nf-pendentes/vtvr/${lancId}/${Date.now()}_${nome}`);
+        await ref.put(file,{contentType:'application/pdf',customMetadata:{autorNome:user?.nome||user?.email||''}});
+        _aguardarNF('lancamentosVTVR',lancId,antes,onOk);
     }catch(err){
-        const msg=err.message||err.details||'Erro desconhecido';
-        mostrarNotif('','Falha no upload',msg,'',7000);
+        mostrarNotif('','Falha no envio',err.message||'Erro desconhecido','',7000);
     }
+}
+// Ouve o lançamento até o gatilho registrar a NF (nfDriveId muda) ou dar erro.
+function _aguardarNF(colecao,lancId,antesDriveId,onOk){
+    let done=false;
+    const unsub=db.collection(colecao).doc(lancId).onSnapshot(doc=>{
+        const d=doc.data(); if(!d||done)return;
+        if(d.nfDriveId&&d.nfDriveId!==antesDriveId){
+            done=true;try{unsub();}catch(e){}
+            mostrarNotif('','NF salva no Drive!',`${d.nfNome||'Nota fiscal'} registrada.`,'bonus',6000);
+            if(onOk)onOk();
+        } else if(d.nfErro){
+            done=true;try{unsub();}catch(e){}
+            mostrarNotif('','Falha ao registrar no Drive',d.nfErro,'',8000);
+            if(onOk)onOk();
+        }
+    },()=>{});
+    // Rede lenta: libera após 90s e atualiza a tela mesmo assim.
+    setTimeout(()=>{if(!done){done=true;try{unsub();}catch(e){}if(onOk)onOk();}},90000);
 }
 function uploadNFTab(lancId,periodo,valor){
     const input=document.createElement('input');input.type='file';input.accept='application/pdf';

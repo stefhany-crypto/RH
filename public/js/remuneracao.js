@@ -354,16 +354,21 @@ async function _nfToBase64Remu(file){return new Promise((res,rej)=>{const r=new 
 
 async function _uploadNFRemuneracao(lancId,file,periodo,valor){
     if(file.size>10*1024*1024){mostrarNotif('','Arquivo muito grande','A NF deve ter no máximo 10 MB.','',4000);return;}
-    mostrarNotif('','Enviando NF para o Drive...','Aguarde, pode levar alguns segundos.','',4000);
-    try{
-        const fileBase64=await _nfToBase64Remu(file);
-        const fn=firebase.app().functions('southamerica-east1');
-        const{data}=await fn.httpsCallable('uploadNFRemuneracao')({lancId,fileBase64,mimeType:file.type});
-        mostrarNotif('','NF salva no Drive!',`${data.fileName} enviada com sucesso.`,'bonus',6000);
+    if(file.type!=='application/pdf'){mostrarNotif('','Formato inválido','A NF precisa ser um PDF.','',4000);return;}
+    mostrarNotif('','Enviando NF...','Aguarde — o arquivo está sendo registrado no Drive.','',5000);
+    // Envia ao Storage; o gatilho processarNFStorage sobe para o Drive.
+    const antes=(remuLancs.find(l=>l.id===lancId)||{}).nfDriveId||null;
+    const atualizarTela=async()=>{
         await carregarRemuneracao();
         const isPJ=user?.tipoContrato==='PJ'&&!P.isRH()&&!P.isMaster();
         if(isPJ)renderMinhasRemuneracoes(); else{renderPainelRemuneracao();renderDashRemuneracao();}
-    }catch(err){mostrarNotif('','Falha no upload',err.message||'Erro desconhecido','',7000);}
+    };
+    try{
+        const nome=(file.name||'nf.pdf').replace(/[^\w.\-]+/g,'_');
+        const ref=firebase.storage().ref(`nf-pendentes/remuneracao/${lancId}/${Date.now()}_${nome}`);
+        await ref.put(file,{contentType:'application/pdf',customMetadata:{autorNome:user?.nome||user?.email||''}});
+        _aguardarNF('lancamentosRemuneracao',lancId,antes,atualizarTela);
+    }catch(err){mostrarNotif('','Falha no envio',err.message||'Erro desconhecido','',7000);}
 }
 
 // ── Exports ───────────────────────────────────────────────────
