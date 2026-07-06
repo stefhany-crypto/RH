@@ -39,5 +39,5 @@ jobs:
         run: npm ci
         working-directory: functions
 
-      - name: Publicar (hosting + functions + regras)
-        run: firebase deploy --only hosting,functions,firestore:rules,storage --project pdimirae --non-interactive
+      - name: Publicar (hosting + functions + regras do Firestore)
+        run: firebase deploy --only hosting,functions,firestore:rules --project pdimirae --non-interactive
