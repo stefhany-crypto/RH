@@ -324,6 +324,17 @@ service cloud.firestore {
       allow read, write: if isProprioDoc(docUid);
     }
 
+    // ── notificacoes/{uid}/items ─────────────────────────────────
+    // Notificações internas do sino. São gravadas pelas Cloud Functions
+    // (Admin SDK); o dono lê apenas as suas e só pode marcar como lida.
+    // Sem esta regra, o listener do sino era bloqueado e ninguém era
+    // notificado.
+    match /notificacoes/{docUid}/items/{itemId} {
+      allow read: if isProprioDoc(docUid);
+      allow update: if isProprioDoc(docUid) && somenteAlterou(['lida']);
+      allow create, delete: if false; // apenas Admin SDK
+    }
+
     // ── solicitacoesBackup ───────────────────────────────────────
     // Padrao gatilho: o app grava um pedido; a Cloud Function
     // processarBackup roda o backup e escreve o resultado no doc.
