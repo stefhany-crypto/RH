@@ -109,7 +109,14 @@
       "Bash(curl -s \"https://pdimirae.web.app/?v=$\\(date +%s\\)\")",
       "mcp__claude-in-chrome__tabs_context_mcp",
       "mcp__claude-in-chrome__javascript_tool",
-      "mcp__claude-in-chrome__navigate"
+      "mcp__claude-in-chrome__navigate",
+      "PowerShell($gc = \"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"; try { $t = \\(& $gc auth print-access-token 2>&1 | Select-Object -First 1\\); if \\($t -match \"^ya29|^ey\"\\) { Write-Output \"GCLOUD OK \\(autenticado\\)\" } else { Write-Output \\(\"GCLOUD PRECISA LOGIN: \" + $t\\) } } catch { Write-Output \"GCLOUD erro\" })",
+      "PowerShell($gc = \"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"; & $gc config set project pdimirae 2>&1 | Select-Object -Last 1; $acct = \\(& $gc auth list --filter=status:ACTIVE --format=\"value\\(account\\)\" 2>&1 | Select-Object -First 1\\); Write-Output \\(\"Conta ativa: \" + $acct\\))",
+      "Bash(ls functions/package-lock.json)",
+      "Bash(git check-ignore *)",
+      "Bash(cd C:/mirae-app && TOKEN=$\\(printf \"protocol=https\\\\nhost=github.com\\\\n\\\\n\" | git credential fill 2>/dev/null | grep '^password=' | cut -d= -f2\\); RUN=28805260074; JOB=$\\(curl -s -H \"Authorization: Bearer $TOKEN\" \"https://api.github.com/repos/stefhany-crypto/RH/actions/runs/$RUN/jobs\" | grep -m1 '\"id\"' | grep -oE '[0-9]+'\\); echo \"job: $JOB\"; curl -sL -H \"Authorization: Bearer $TOKEN\" \"https://api.github.com/repos/stefhany-crypto/RH/actions/jobs/$JOB/logs\" -o /tmp/joblog.txt; echo \"=== trechos de erro ===\"; grep -iE \"error|Error:|failed|denied|permission|HTTP Error|not have|forbidden\" /tmp/joblog.txt | grep -viE \"no error|0 error\" | tail -25; rm -f /tmp/joblog.txt)",
+      "PowerShell($gc = \"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"; $out = & $gc projects add-iam-policy-binding pdimirae --member=\"serviceAccount:github-deploy@pdimirae.iam.gserviceaccount.com\" --role=\"roles/serviceusage.serviceUsageAdmin\" --condition=None --format=\"value\\(etag\\)\" 2>&1 | Select-Object -Last 1; if \\($out -match \"ERROR|denied\"\\) { Write-Output \"FALHA: $out\" } else { Write-Output \"OK roles/serviceusage.serviceUsageAdmin\" })",
+      "PowerShell($gc = \"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"; $out = & $gc projects add-iam-policy-binding pdimirae --member=\"serviceAccount:github-deploy@pdimirae.iam.gserviceaccount.com\" --role=\"roles/cloudscheduler.admin\" --condition=None --format=\"value\\(etag\\)\" 2>&1 | Select-Object -Last 1; if \\($out -match \"ERROR|denied\"\\) { Write-Output \"FALHA: $out\" } else { Write-Output \"OK roles/cloudscheduler.admin\" })"
     ]
   }
 }
