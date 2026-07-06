@@ -106,7 +106,10 @@
       "PowerShell($gh = \"$env:ProgramFiles\\\\GitHub CLI\\\\gh.exe\"; if \\(Test-Path $gh\\) { & $gh --version | Select-Object -First 1; Write-Output \"--- auth status ---\"; & $gh auth status 2>&1 | Select-Object -First 5 } else { Write-Output \"gh nao encontrado no caminho padrao\"; \\(Get-Command gh -ErrorAction SilentlyContinue\\).Source })",
       "Bash(git credential *)",
       "Bash(git checkout *)",
-      "Bash(curl -s \"https://pdimirae.web.app/?v=$\\(date +%s\\)\")"
+      "Bash(curl -s \"https://pdimirae.web.app/?v=$\\(date +%s\\)\")",
+      "mcp__claude-in-chrome__tabs_context_mcp",
+      "mcp__claude-in-chrome__javascript_tool",
+      "mcp__claude-in-chrome__navigate"
     ]
   }
 }
