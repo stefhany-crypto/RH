@@ -116,7 +116,18 @@
       "Bash(git check-ignore *)",
       "Bash(cd C:/mirae-app && TOKEN=$\\(printf \"protocol=https\\\\nhost=github.com\\\\n\\\\n\" | git credential fill 2>/dev/null | grep '^password=' | cut -d= -f2\\); RUN=28805260074; JOB=$\\(curl -s -H \"Authorization: Bearer $TOKEN\" \"https://api.github.com/repos/stefhany-crypto/RH/actions/runs/$RUN/jobs\" | grep -m1 '\"id\"' | grep -oE '[0-9]+'\\); echo \"job: $JOB\"; curl -sL -H \"Authorization: Bearer $TOKEN\" \"https://api.github.com/repos/stefhany-crypto/RH/actions/jobs/$JOB/logs\" -o /tmp/joblog.txt; echo \"=== trechos de erro ===\"; grep -iE \"error|Error:|failed|denied|permission|HTTP Error|not have|forbidden\" /tmp/joblog.txt | grep -viE \"no error|0 error\" | tail -25; rm -f /tmp/joblog.txt)",
       "PowerShell($gc = \"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"; $out = & $gc projects add-iam-policy-binding pdimirae --member=\"serviceAccount:github-deploy@pdimirae.iam.gserviceaccount.com\" --role=\"roles/serviceusage.serviceUsageAdmin\" --condition=None --format=\"value\\(etag\\)\" 2>&1 | Select-Object -Last 1; if \\($out -match \"ERROR|denied\"\\) { Write-Output \"FALHA: $out\" } else { Write-Output \"OK roles/serviceusage.serviceUsageAdmin\" })",
-      "PowerShell($gc = \"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"; $out = & $gc projects add-iam-policy-binding pdimirae --member=\"serviceAccount:github-deploy@pdimirae.iam.gserviceaccount.com\" --role=\"roles/cloudscheduler.admin\" --condition=None --format=\"value\\(etag\\)\" 2>&1 | Select-Object -Last 1; if \\($out -match \"ERROR|denied\"\\) { Write-Output \"FALHA: $out\" } else { Write-Output \"OK roles/cloudscheduler.admin\" })"
+      "PowerShell($gc = \"$env:LOCALAPPDATA\\\\Google\\\\Cloud SDK\\\\google-cloud-sdk\\\\bin\\\\gcloud.cmd\"; $out = & $gc projects add-iam-policy-binding pdimirae --member=\"serviceAccount:github-deploy@pdimirae.iam.gserviceaccount.com\" --role=\"roles/cloudscheduler.admin\" --condition=None --format=\"value\\(etag\\)\" 2>&1 | Select-Object -Last 1; if \\($out -match \"ERROR|denied\"\\) { Write-Output \"FALHA: $out\" } else { Write-Output \"OK roles/cloudscheduler.admin\" })",
+      "Bash(python -c \"import fitz; print\\('fitz OK', fitz.__doc__[:40] if fitz.__doc__ else 'ok'\\)\")",
+      "mcp__PDF_Tools_-_Fill__Sign__Merge__Split__Extract__search_pdf_text",
+      "mcp__PDF_Tools_-_Fill__Sign__Merge__Split__Extract__render_pdf_page",
+      "mcp__pdf-viewer__display_pdf",
+      "mcp__pdf-viewer__list_pdfs",
+      "Bash(gh pr create --title 'feat: secao Quem somos na Inicio \\(fundadores\\)' --body 'Nova secao '\\\\''Quem somos'\\\\'' na pagina Inicio, baseada na apresentacao institucional da Mirae. *)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
+      "Bash(git revert *)",
+      "Bash(gh auth *)",
+      "Bash(git commit -q -m 'chore: atualizar permissoes locais da sessao *)"
     ]
   }
 }
