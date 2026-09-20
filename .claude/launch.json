@@ -6,6 +6,18 @@
       "runtimeExecutable": "npx",
       "runtimeArgs": ["-y", "serve", "public", "-l", "5599", "--no-clipboard"],
       "port": 5599
+    },
+    {
+      "name": "financas-estatico",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["C:/Users/PC/AppData/Local/Temp/claude/C--mirae-app/0060d8f0-01ad-4d47-8802-bbd23c8880fe/scratchpad/estatico.js"],
+      "port": 5611
+    },
+    {
+      "name": "audazes-experience",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "C:/audazes-experience", "run", "dev", "--", "--port", "3100"],
+      "port": 3100
     }
   ]
 }
